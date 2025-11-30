@@ -18,6 +18,7 @@ import java.awt.event.ActionEvent;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 
 /// 导圆角
 public class RoundCornersAction extends JosmAction {
@@ -28,7 +29,7 @@ public class RoundCornersAction extends JosmAction {
         super(
                 "路径倒圆角",  // 菜单显示文本
                 "temp_icon",  // 图标
-                "对选定线段每个拐角指定半径倒圆角。",  // 工具提示
+                "对选定路径的每个拐角节点按指定半径倒圆角。",  // 工具提示
                 null,  // 不指定快捷键
                 false  // 不启用工具栏按钮
         );
@@ -80,14 +81,16 @@ public class RoundCornersAction extends JosmAction {
         for (Way w : selection) {
             try {
                 // 生成平滑路径
-                List<Node> newNodes = FilletGenerator.buildSmoothPolyline(w, radius, layer);
+                List<Node> newNodes = FilletGenerator.buildSmoothPolyline(w, radius);
 
                 if (newNodes != null && !newNodes.isEmpty()) {
                     // 创建新的圆角路径
                     Way newWay = new Way();
                     for (Node n : newNodes) newWay.addNode(n);  // 添加所有新节点
+                    // 复制原Way标签
+                    Map<String, String> wayTags = w.getInterestingTags();  // 读取原Way的tag
+                    newWay.setKeys(wayTags);
 
-                    // TODO:复制原Way标签
                     // TODO:没有倒角成功时警告
                     // TODO:处理闭合路径
                     // TODO:绘制完后选择新路径

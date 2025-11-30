@@ -89,7 +89,7 @@ public class FilletGenerator {
         return arc;
     }
 
-    public static List<Node> buildSmoothPolyline(Way way, double radiusMeters, OsmDataLayer layer) {
+    public static List<Node> buildSmoothPolyline(Way way, double radiusMeters) {
         // 1. 获取道路的所有节点
         List<Node> nodes = new ArrayList<>(way.getNodes());
         int nPts = nodes.size();
