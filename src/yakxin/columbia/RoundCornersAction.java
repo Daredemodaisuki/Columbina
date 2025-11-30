@@ -28,6 +28,7 @@ import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 /// 导圆角
 public class RoundCornersAction extends JosmAction {
@@ -105,19 +106,14 @@ public class RoundCornersAction extends JosmAction {
             try {
                 // 计算路径
                 FilletResult filletResult = FilletGenerator.buildSmoothPolyline(w, radius, pointNum);
-                List<Node> newNodes = filletResult.newNodes;  // 计算平滑路径，获取待画的新节点（按新路径节点顺序排列）
+                List<Node> newNodes = null;  // 计算平滑路径，获取待画的新节点（按新路径节点顺序排列）
+                if (filletResult != null) {
+                    newNodes = filletResult.newNodes;
+                }
                 if (newNodes != null && !newNodes.isEmpty()) {
                     // 创建新的圆角路径
                     Way newWay = new Way();
                     for (Node n : newNodes) newWay.addNode(n);  // 向新路径添加所有新节点
-                    if (w.isClosed()) newWay.addNode(newNodes.get(0));  // 闭合路径再次添加第0个节点
-                    else {  // 非闭合路径复用原首末节点（先删后加），并且待绘制newNodes不再绘制首末点
-                        utils.wayReplaceNode(newWay, 0, w.getNode(0));
-                        utils.wayReplaceNode(newWay, newWay.getNodesCount() - 1, w.getNode(w.getNodesCount() - 1));
-                        newNodes.remove(0);
-                        newNodes.remove(newNodes.size() - 1);
-                    }
-                    // TODO:两端节点复用了，中间如果说没有画出曲线呢？
 
                     // 复制原Way标签
                     if (copyTag) {
@@ -127,11 +123,10 @@ public class RoundCornersAction extends JosmAction {
 
                     // 正式绘制
                     List<Command> addCommands = new LinkedList<>();  // 指令
-                    for (Node n : newNodes) {
-                        // ds.addPrimitive(n);  // 直接动数据库
-                        addCommands.add(new AddCommand(ds, n));  // 添加节点到命令序列
+                    for (Node n : newNodes.stream().distinct().toList()) {  // 路径内部可能有节点复用（如闭合线），去重
+                        if (!ds.containsNode(n))  // 新路径的节点在ds中未绘制（不是复用的）才准备绘制
+                            addCommands.add(new AddCommand(ds, n));  // 添加节点到命令序列
                     }
-                    // ds.addPrimitive(newWay);
                     addCommands.add(new AddCommand(ds, newWay));  // 添加线到命令序列
                     // 执行到命令序列
                     Command cmdAdd = new SequenceCommand(

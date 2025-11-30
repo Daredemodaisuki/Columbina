@@ -129,7 +129,7 @@ public class FilletGenerator {
                 arcs.add(arc);
             }
         }
-        if (way.isClosed()) {  // 闭合曲线首尾相连的那个拐角
+        if (way.isClosed()) {  // 闭合曲线首尾相连的首末点曲线
             List<EastNorth> arcEnd = filletArcEN(
                     en.get(nPts - 2), en.get(0), en.get(1),  // en.get(0) == en.get(-1)
                     radiusMeters, pointNum);
@@ -147,54 +147,92 @@ public class FilletGenerator {
         }
 
         // 最终的经纬度坐标序列
-        List<LatLon> finalLatLons = new ArrayList<>();
-        finalLatLons.add(toLatLon(en.get(0)));  // 添加起始点（第一个节点）
-
-        for (int i = 0; i < nPts - 1; i ++){  // 遍历所有线段，用圆弧替换拐角
-            boolean filletAtNext = (i < nPts - 2) && (arcs.get(i) != null);  // 检查本次的拐角B是否有有效圆角
-
-            if (filletAtNext){
-                // 使用圆角路径
+        // TODO:也许该直接试试在这里就写List<Node> newNodes
+        // for里面直接加Node元素
+        List<Node> finalNodes = new ArrayList<>();
+        // 添加起始点：如果原路径闭合，且首末点有曲线，则以首末点曲线（arcs最后一个）终点为整个新路径起点；否则使用原路径第一个节点
+        boolean useLastArcLastNode = way.isClosed() && arcs.getLast() != null;
+        if (useLastArcLastNode) finalNodes.add(new Node(toLatLon(arcs.getLast().getLast())));
+        else finalNodes.add(way.getNode(0));
+        // 遍历除最后一个节点以外所有路径节点，用圆弧替换拐角
+        for (int i = 0; i < nPts - 2; i ++) {
+            boolean filletExist = arcs.get(i) != null;  // 检查本次的拐角B（i+1）是否有有效圆角
+            if (filletExist) {  // 圆弧存在则使用圆角路径
                 double[] T1 = T1s.get(i);
-                LatLon llT1 = toLatLon(new EastNorth(T1[0], T1[1]));
-
-                // 添加第一个切点（如果与上个点不同）
-                if (!finalLatLons.get(finalLatLons.size() - 1).equals(llT1))
-                    finalLatLons.add(llT1);
-
-                // 添加圆弧上的所有点（跳过第一个点，避免重复）
+                Node curveFirst = new Node(toLatLon(new EastNorth(T1[0], T1[1])));
+                // 添加圆弧上第一个切点（如果与上个点不同）
+                if (!finalNodes.getLast().equals(curveFirst)) finalNodes.add(curveFirst);
+                // 添加圆弧上其余点（跳过第一个点，避免重复）
                 List<EastNorth> arc = arcs.get(i);
                 for (int k = 1; k < arc.size(); k ++)
-                    finalLatLons.add(toLatLon(arc.get(k)));
-            } else {
-                // 无法生成圆角，使用原始路径点（包括终点）
-                LatLon llNext = toLatLon(en.get(i + 1));
-                if (!finalLatLons.get(finalLatLons.size() - 1).equals(llNext))
-                    finalLatLons.add(llNext);
+                    finalNodes.add(new Node(toLatLon(arc.get(k))));
+            } else {  // 圆弧不存在则直接将拐点节点加进来
+                finalNodes.add(way.getNode(i + 1));
             }
         }
-        if (way.isClosed()) {  // 闭合曲线首尾相连的那个拐角
-            List<EastNorth> arcEnd = arcs.get(nPts - 2);
-            if (arcEnd != null) {
-                // 前面的for产生了起点0→圆角→圆角→终点0，现在需要舍弃这个点
-                // finalLatLons起点替换为最后一条曲线的最后一个点
-                // finalLatLons目前的终点替换为最后一条曲线的第一个点
-                // finalLatLons最终的终点替换为最后一条曲线的倒数第二个点（不重复添加最后一条曲线的最后一个点，Action类负责连接）
-                finalLatLons.set(0, toLatLon(arcEnd.get(arcEnd.size() - 1)));
-                finalLatLons.set(finalLatLons.size() - 1, toLatLon(arcEnd.get(0)));
-                for (int k = 1; k < arcEnd.size() - 1; k ++)
-                    finalLatLons.add(toLatLon(arcEnd.get(k)));
-            }
+        // 终点处理
+        if (way.isClosed()) {
+            if (arcs.getLast() != null) {  // 如果原路径闭合，且首末点有曲线，拼上最后一条曲线并连上起点
+                List<EastNorth> arcClosedEnd = arcs.getLast();  // 对于闭合路径nPts-2倒数第2个点，nPts-1最后一个点=0起点，1表示第2个点
+                for (int k = 0; k < arcClosedEnd.size(); k ++)
+                    finalNodes.add(new Node(toLatLon(arcClosedEnd.get(k))));
+                finalNodes.add(finalNodes.getFirst());
+            } else finalNodes.add(way.getNode(0));
+        } else {
+            finalNodes.add(way.getNode(way.getNodesCount() - 1));
         }
 
-        // 创建新的节点对象
-        List<Node> newNodes = new ArrayList<>();
-        for (LatLon ll : finalLatLons) {
-            Node nn = new Node(ll);  // 创建新节点
-            newNodes.add(nn);
-        }
-//        return newNodes;
-        return new FilletResult(newNodes, failedNodes);
+        return new FilletResult(finalNodes, failedNodes);
+
+        // 老实现
+//        List<LatLon> finalLatLons = new ArrayList<>();
+//        finalLatLons.add(toLatLon(en.get(0)));  // 添加起始点（第一个节点）
+//
+//        for (int i = 0; i < nPts - 1; i ++){  // 遍历所有线段，用圆弧替换拐角
+//            boolean filletAtNext = (i < nPts - 2) && (arcs.get(i) != null);  // 检查本次的拐角B是否有有效圆角
+//
+//            if (filletAtNext){
+//                // 使用圆角路径
+//                double[] T1 = T1s.get(i);
+//                LatLon llT1 = toLatLon(new EastNorth(T1[0], T1[1]));
+//
+//                // 添加第一个切点（如果与上个点不同）
+//                if (!finalLatLons.get(finalLatLons.size() - 1).equals(llT1))
+//                    finalLatLons.add(llT1);
+//
+//                // 添加圆弧上的所有点（跳过第一个点，避免重复）
+//                List<EastNorth> arc = arcs.get(i);
+//                for (int k = 1; k < arc.size(); k ++)
+//                    finalLatLons.add(toLatLon(arc.get(k)));
+//            } else {
+//                // 无法生成圆角，使用原始路径点（包括终点）
+//                LatLon llNext = toLatLon(en.get(i + 1));
+//                if (!finalLatLons.get(finalLatLons.size() - 1).equals(llNext))
+//                    finalLatLons.add(llNext);
+//            }
+//        }
+//        if (way.isClosed()) {  // 闭合曲线首尾相连的那个拐角
+//            List<EastNorth> arcEnd = arcs.get(nPts - 2);
+//            if (arcEnd != null) {
+//                // 前面的for产生了起点0→圆角→圆角→终点0，现在需要舍弃这个点
+//                // finalLatLons起点替换为最后一条曲线的最后一个点
+//                // finalLatLons目前的终点替换为最后一条曲线的第一个点
+//                // finalLatLons最终的终点替换为最后一条曲线的倒数第二个点（不重复添加最后一条曲线的最后一个点，Action类负责连接）
+//                finalLatLons.set(0, toLatLon(arcEnd.get(arcEnd.size() - 1)));
+//                finalLatLons.set(finalLatLons.size() - 1, toLatLon(arcEnd.get(0)));
+//                for (int k = 1; k < arcEnd.size() - 1; k ++)
+//                    finalLatLons.add(toLatLon(arcEnd.get(k)));
+//            }
+//        }
+//
+//        // 创建新的节点对象
+//        List<Node> newNodes = new ArrayList<>();
+//        for (LatLon ll : finalLatLons) {
+//            Node nn = new Node(ll);  // 创建新节点
+//            newNodes.add(nn);
+//        }
+////        return newNodes;
+//        return new FilletResult(newNodes, failedNodes);
     }
 }
 
