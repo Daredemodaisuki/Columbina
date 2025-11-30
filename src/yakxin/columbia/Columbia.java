@@ -13,7 +13,7 @@ public class Columbia extends Plugin {
     public Columbia(PluginInformation info) {
         super(info);
 
-        // 添加菜单
+        // 注册菜单
         new RoundCornersAction();  // 倒圆角
     }
 }

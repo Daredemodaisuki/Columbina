@@ -95,26 +95,25 @@ public class FilletGenerator {
     }
 
     public static List<Node> buildSmoothPolyline(Way way, double radiusMeters, int pointNum) {
-        // 1. 获取道路的所有节点
+        // 获取路径的所有节点
         List<Node> nodes = new ArrayList<>(way.getNodes());
         int nPts = nodes.size();
         if (nPts < 2) return null;  // 道路至少需要2个点
 
-        // 2. 将所有节点转换为平面坐标
+        // 将所有节点转换为平面坐标
         List<EastNorth> en = new ArrayList<>();
         for (Node n : nodes) en.add(toEastNorth(n.getCoor()));
 
-        // 3. 为每个拐角预计算圆角
+        // 为每个拐角预计算圆角
         List<double[]> T1s = new ArrayList<>();  // 存储每个拐角的第一个切点
         List<double[]> T2s = new ArrayList<>();  // 存储每个拐角的第二个切点
         List<List<EastNorth>> arcs = new ArrayList<>();  // 存储每个拐角的圆弧
+        for (int i = 0; i < nPts - 2; i ++){
+            EastNorth A = en.get(i);      // 起点    B → C
+            EastNorth B = en.get(i + 1);  // 拐点    ↑
+            EastNorth C = en.get(i + 2);  // 终点    A
 
-        for (int i = 0;i < nPts - 2; i ++){
-            EastNorth A = en.get(i);      // 前一个点
-            EastNorth B = en.get(i + 1);    // 拐角点
-            EastNorth C = en.get(i + 2);    // 后一个点
-
-            List<EastNorth> arc = filletArcEN(A,B,C,radiusMeters, pointNum);  // 生成PNum个点的圆弧
+            List<EastNorth> arc = filletArcEN(A, B, C, radiusMeters, pointNum);  // 为每个拐角生成PNum个点的圆弧
 
             if (arc == null) {
                 // 该拐角无法生成圆角（半径过大或角度问题）
@@ -123,22 +122,34 @@ public class FilletGenerator {
                 arcs.add(null);
             } else {
                 // 存储切点和圆弧
-                EastNorth t1 = arc.get(0), t2 = arc.get(arc.size()-1);
+                EastNorth t1 = arc.get(0), t2 = arc.get(arc.size() - 1);
                 T1s.add(new double[]{t1.getX(), t1.getY()});
                 T2s.add(new double[]{t2.getX(), t2.getY()});
                 arcs.add(arc);
             }
         }
+        if (way.isClosed()) {  // 闭合曲线首尾相连的那个拐角
+            List<EastNorth> arcEnd = filletArcEN(
+                    en.get(nPts - 2), en.get(0), en.get(1),  // en.get(0) == en.get(-1)
+                    radiusMeters, pointNum);
+            if (arcEnd == null) {
+                T1s.add(null);
+                T2s.add(null);
+                arcs.add(null);
+            } else {
+                EastNorth t1End = arcEnd.get(0), t2End = arcEnd.get(arcEnd.size() - 1);
+                T1s.add(new double[]{t1End.getX(), t1End.getY()});
+                T2s.add(new double[]{t2End.getX(), t2End.getY()});
+                arcs.add(arcEnd);
+            }
+        }
 
-        // 4. 构建最终的经纬度坐标序列
+        // 最终的经纬度坐标序列
         List<LatLon> finalLatLons = new ArrayList<>();
+        finalLatLons.add(toLatLon(en.get(0)));  // 添加起始点（第一个节点）
 
-        // 添加起始点（第一个节点）
-        finalLatLons.add(toLatLon(en.get(0)));
-
-        // 5. 遍历所有线段，用圆弧替换拐角
-        for (int i = 0; i < nPts - 1; i ++){
-            boolean filletAtNext = (i <= nPts - 3) && (arcs.get(i) != null);  // 检查下一个拐角是否有有效圆角
+        for (int i = 0; i < nPts - 1; i ++){  // 遍历所有线段，用圆弧替换拐角
+            boolean filletAtNext = (i < nPts - 2) && (arcs.get(i) != null);  // 检查本次的拐角B是否有有效圆角
 
             if (filletAtNext){
                 // 使用圆角路径
@@ -151,7 +162,7 @@ public class FilletGenerator {
 
                 // 添加圆弧上的所有点（跳过第一个点，避免重复）
                 List<EastNorth> arc = arcs.get(i);
-                for (int k=1;k<arc.size();k++)
+                for (int k = 1; k < arc.size(); k ++)
                     finalLatLons.add(toLatLon(arc.get(k)));
             } else {
                 // 无法生成圆角，使用原始路径点
@@ -160,8 +171,21 @@ public class FilletGenerator {
                     finalLatLons.add(llNext);
             }
         }
+        if (way.isClosed()) {  // 闭合曲线首尾相连的那个拐角
+            List<EastNorth> arcEnd = arcs.get(nPts - 2);
+            if (arcEnd != null) {
+                // 前面的for产生了起点0→圆角→圆角→终点0，现在需要舍弃这个点
+                // finalLatLons起点替换为最后一条曲线的最后一个点
+                // finalLatLons目前的终点替换为最后一条曲线的第一个点
+                // finalLatLons最终的终点替换为最后一条曲线的倒数第二个点（不重复添加最后一条曲线的最后一个点，Action类负责连接）
+                finalLatLons.set(0, toLatLon(arcEnd.get(arcEnd.size() - 1)));
+                finalLatLons.set(finalLatLons.size() - 1, toLatLon(arcEnd.get(0)));
+                for (int k = 1; k < arcEnd.size() - 1; k ++)
+                    finalLatLons.add(toLatLon(arcEnd.get(k)));
+            }
+        }
 
-        // 6. 创建新的节点对象
+        // 创建新的节点对象
         List<Node> newNodes = new ArrayList<>();
         for (LatLon ll : finalLatLons) {
             Node nn = new Node(ll);  // 创建新节点

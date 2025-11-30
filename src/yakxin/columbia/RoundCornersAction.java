@@ -99,6 +99,7 @@ public class RoundCornersAction extends JosmAction {
                     // 创建新的圆角路径
                     Way newWay = new Way();
                     for (Node n : newNodes) newWay.addNode(n);  // 添加所有新节点
+                    if (w.isClosed()) newWay.addNode(newNodes.get(0));  // 闭合曲线再次添加第0个节点
                     // 复制原Way标签
                     if (copyTag) {
                         Map<String, String> wayTags = w.getInterestingTags();  // 读取原Way的tag
@@ -106,7 +107,6 @@ public class RoundCornersAction extends JosmAction {
                     }
 
                     // TODO:没有倒角成功时警告
-                    // TODO:处理闭合路径
                     // TODO:记录上次的半径
 
                     // 正式绘制
