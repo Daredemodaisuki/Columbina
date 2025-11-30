@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="Columbia" default="dist" basedir=".">
+    <description>构建JOSM插件</description>
+
+    <!-- 配置属性 -->
+    <property name="plugin.name" value="Columbia"/>
+    <property name="plugin.dir" location="."/>
+    <property name="src.dir" location="src"/>
+    <property name="build.dir" location="Ant/build"/>
+    <property name="dist.dir" location="Ant/dist"/>
+
+    <!-- JOSM核心路径 -->
+    <property name="josm.dir" location="JOSM"/>
+
+    <!-- 类路径 -->
+    <path id="classpath">
+        <fileset dir="${josm.dir}">
+            <include name="josm-tested.jar"/>
+        </fileset>
+    </path>
+
+    <!-- 清理 -->
+    <target name="clean">
+        <delete dir="${build.dir}"/>
+        <delete dir="${dist.dir}"/>
+    </target>
+
+    <!-- 编译 -->
+    <target name="compile">
+        <mkdir dir="${build.dir}"/>
+        <javac srcdir="${src.dir}" destdir="${build.dir}"
+               debug="true" debuglevel="lines,vars,source"
+               source="11" target="11" includeantruntime="false">
+            <classpath refid="classpath"/>
+        </javac>
+
+        <!-- 复制资源文件（如果有的话） -->
+        <copy todir="${build.dir}/images">
+            <fileset dir="images">
+                <include name="**/*.properties"/>
+                <include name="**/*.xml"/>
+                <include name="**/*.png"/>
+                <include name="**/*.svg"/>
+            </fileset>
+        </copy>
+    </target>
+
+    <!-- 构建分发包 -->
+    <target name="dist" depends="compile">
+        <mkdir dir="${dist.dir}"/>
+        <jar destfile="${dist.dir}/${plugin.name}.jar" basedir="${build.dir}">
+            <manifest>
+                <!-- 必需的清单属性 -->
+                <attribute name="Plugin-Mainversion" value="18600"/>
+                <attribute name="Plugin-Version" value="1.0.0"/>
+                <attribute name="Plugin-Class"
+                           value="yakxin.columbia.Columbia"/>
+                <attribute name="Plugin-Description"
+                           value="测试。"/>
+                <attribute name="Author" value="Yakxin"/>
+                <attribute name="Plugin-Icon" value="images/temp_icon.png"/>
+            </manifest>
+        </jar>
+        <echo message="插件已构建: ${dist.dir}/${plugin.name}.jar"/>
+    </target>
+</project>
