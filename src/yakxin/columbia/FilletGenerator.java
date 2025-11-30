@@ -167,7 +167,7 @@ public class FilletGenerator {
                 for (int k = 1; k < arc.size(); k ++)
                     finalLatLons.add(toLatLon(arc.get(k)));
             } else {
-                // 无法生成圆角，使用原始路径点
+                // 无法生成圆角，使用原始路径点（包括终点）
                 LatLon llNext = toLatLon(en.get(i + 1));
                 if (!finalLatLons.get(finalLatLons.size() - 1).equals(llNext))
                     finalLatLons.add(llNext);

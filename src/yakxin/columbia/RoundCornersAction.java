@@ -105,12 +105,20 @@ public class RoundCornersAction extends JosmAction {
             try {
                 // 计算路径
                 FilletResult filletResult = FilletGenerator.buildSmoothPolyline(w, radius, pointNum);
-                List<Node> newNodes = filletResult.newNodes;  // 计算平滑路径
+                List<Node> newNodes = filletResult.newNodes;  // 计算平滑路径，获取待画的新节点（按新路径节点顺序排列）
                 if (newNodes != null && !newNodes.isEmpty()) {
                     // 创建新的圆角路径
                     Way newWay = new Way();
-                    for (Node n : newNodes) newWay.addNode(n);  // 添加所有新节点
-                    if (w.isClosed()) newWay.addNode(newNodes.get(0));  // 闭合曲线再次添加第0个节点
+                    for (Node n : newNodes) newWay.addNode(n);  // 向新路径添加所有新节点
+                    if (w.isClosed()) newWay.addNode(newNodes.get(0));  // 闭合路径再次添加第0个节点
+                    else {  // 非闭合路径复用原首末节点（先删后加），并且待绘制newNodes不再绘制首末点
+                        utils.wayReplaceNode(newWay, 0, w.getNode(0));
+                        utils.wayReplaceNode(newWay, newWay.getNodesCount() - 1, w.getNode(w.getNodesCount() - 1));
+                        newNodes.remove(0);
+                        newNodes.remove(newNodes.size() - 1);
+                    }
+                    // TODO:两端节点复用了，中间如果说没有画出曲线呢？
+
                     // 复制原Way标签
                     if (copyTag) {
                         Map<String, String> wayTags = w.getInterestingTags();  // 读取原Way的tag

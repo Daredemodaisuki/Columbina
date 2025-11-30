@@ -1,5 +1,7 @@
 package yakxin.columbia;
 
+import org.openstreetmap.josm.data.osm.Node;
+import org.openstreetmap.josm.data.osm.Way;
 import org.openstreetmap.josm.tools.GBC;
 
 import javax.swing.*;
@@ -33,6 +35,11 @@ public class utils {
         panel.add(checkbox, GBC.eol().fill(GridBagConstraints.HORIZONTAL));
         checkbox.setSelected(initialCheck);
         return checkbox;
+    }
+
+    static void wayReplaceNode(Way way, int index, Node newNode) {
+        way.removeNode(way.getNode(index));
+        way.addNode(index, newNode);
     }
 }
 
