@@ -65,6 +65,7 @@ public class RoundCornersAction extends JosmAction {
         }
 
         /// 圆角半径对话框
+        RoundCornersDialog dlg = new RoundCornersDialog();  // TODO:新对话框
         String s = JOptionPane.showInputDialog(MainApplication.getMainFrame(), "圆角半径（m）：", "150");
         if (s == null) return;  // 点击取消，退出
 
@@ -99,16 +100,16 @@ public class RoundCornersAction extends JosmAction {
                     // TODO:记录上次的半径
 
                     // 正式绘制
-                    List<Command> cmds = new LinkedList<>();  // 指令
+                    List<Command> commands = new LinkedList<>();  // 指令
                     for (Node n : newNodes) {
                         // ds.addPrimitive(n);  // 直接动数据库
-                        cmds.add(new AddCommand(ds, n));  // 添加节点到命令序列
+                        commands.add(new AddCommand(ds, n));  // 添加节点到命令序列
                     }
                     // ds.addPrimitive(newWay);
-                    cmds.add(new AddCommand(ds, newWay));  // 添加线到命令序列
+                    commands.add(new AddCommand(ds, newWay));  // 添加线到命令序列
                     Command c = new SequenceCommand(
                             "对路径 " + (w.getId() != 0 ? String.valueOf(w.getId()) : w.getUniqueId()) + " 倒圆角：" + radius + "m",
-                            cmds);
+                            commands);
                     UndoRedoHandler.getInstance().add(c);  // 执行到命令序列
 
                     newWays.add(newWay);
