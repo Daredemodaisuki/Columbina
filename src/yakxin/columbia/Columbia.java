@@ -13,18 +13,8 @@ public class Columbia extends Plugin {
     public Columbia(PluginInformation info) {
         super(info);
 
-        JMenuItem item = new JMenuItem(new AbstractAction("Hello JOSM") {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                JOptionPane.showMessageDialog(
-                        null,
-                        "Hello, JOSM!",
-                        "Columbia",
-                        JOptionPane.INFORMATION_MESSAGE
-                );
-            }
-        });
-        MainApplication.getMenu().moreToolsMenu.add(item);
+        // 添加菜单
+        new RoundCornersAction();  // 倒圆角
     }
 }
 
