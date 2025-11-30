@@ -18,11 +18,11 @@ public class RoundCornersDialog extends ExtendedDialog {
 
     // 窗体组件
     protected final JPanel panel = new JPanel(new GridBagLayout());
-    private JFormattedTextField filletR;
-    private JFormattedTextField filletPointNum;
-    private JCheckBox deleteOldWays;
-    private JCheckBox selectNewWays;
-    private JCheckBox copyTag;
+    private final JFormattedTextField filletR;
+    private final JFormattedTextField filletPointNum;
+    private final JCheckBox deleteOldWays;
+    private final JCheckBox selectNewWays;
+    private final JCheckBox copyTag;
 
     // 构建窗口
     protected RoundCornersDialog() {
@@ -68,6 +68,6 @@ public class RoundCornersDialog extends ExtendedDialog {
     public boolean getIfCopyTag() {return copyTag.isSelected();}
     public boolean getIfDeleteOld() {return deleteOldWays.isSelected();}
     public boolean getIfSelectNew() {return selectNewWays.isSelected();}
-
-
 }
+
+

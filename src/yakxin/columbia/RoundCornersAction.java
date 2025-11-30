@@ -1,6 +1,6 @@
 package yakxin.columbia;
 
-// 导入JOSM GUI和数据处理类
+// JOSM GUI和数据处理类
 import org.openstreetmap.josm.command.DeleteCommand;
 import org.openstreetmap.josm.data.osm.OsmPrimitive;
 import org.openstreetmap.josm.actions.JosmAction;
@@ -14,9 +14,12 @@ import org.openstreetmap.josm.data.osm.Way;
 import org.openstreetmap.josm.gui.MainApplication;
 import org.openstreetmap.josm.gui.Notification;
 import org.openstreetmap.josm.gui.layer.OsmDataLayer;
+
+// Utilsplugin2插件
 import org.openstreetmap.josm.plugins.utilsplugin2.replacegeometry.ReplaceGeometryCommand;
 import org.openstreetmap.josm.plugins.utilsplugin2.replacegeometry.ReplaceGeometryException;
 import org.openstreetmap.josm.plugins.utilsplugin2.replacegeometry.ReplaceGeometryUtils;
+import yakxin.columbia.data.FilletResult;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
@@ -35,7 +38,7 @@ public class RoundCornersAction extends JosmAction {
                 "路径倒圆角",  // 菜单显示文本
                 "temp_icon",  // 图标
                 "对选定路径的每个拐角节点按指定半径倒圆角。",  // 工具提示
-                null,  // 不指定快捷键
+                null,  // 不指定快捷键  // TODO:快捷键
                 false  // 不启用工具栏按钮
         );
 
@@ -91,10 +94,12 @@ public class RoundCornersAction extends JosmAction {
 
         /// 处理每条路径
         List<Way> newWays = new ArrayList<>();
+        List<Long> failedNodes = new ArrayList<>();
         for (Way w : selection) {
             try {
                 // 计算路径
-                List<Node> newNodes = FilletGenerator.buildSmoothPolyline(w, radius, pointNum);  // 计算平滑路径
+                FilletResult filletResult = FilletGenerator.buildSmoothPolyline(w, radius, pointNum);
+                List<Node> newNodes = filletResult.newNodes;  // 计算平滑路径
                 if (newNodes != null && !newNodes.isEmpty()) {
                     // 创建新的圆角路径
                     Way newWay = new Way();
@@ -106,7 +111,6 @@ public class RoundCornersAction extends JosmAction {
                         newWay.setKeys(wayTags);
                     }
 
-                    // TODO:没有倒角成功时警告
                     // TODO:记录上次的半径
 
                     // 正式绘制
@@ -142,7 +146,7 @@ public class RoundCornersAction extends JosmAction {
                                         "Columbia尝试调用Utilsplugin2插件之「替换几何图形」功能替换旧路径，但失败。\n\n"
                                                 + "来自Utilsplugin2的消息：\n"
                                                 + utils2Info.getMessage()
-                                                + "\n\n旧路径" +  + w.getUniqueId() + "未被移除。"
+                                                + "\n\n旧路径" + w.getUniqueId() + "未被移除。"
                                 )).setIcon(JOptionPane.WARNING_MESSAGE).show();
                             }
                         }
@@ -164,16 +168,33 @@ public class RoundCornersAction extends JosmAction {
                             UndoRedoHandler.getInstance().add(cmdDel);
                         }
                     }
+
+                    // 其他
                     newWays.add(newWay);  // 记录新路径以供选中
+                    failedNodes.addAll(filletResult.failedNodes);
                 }
                 else {
-                    (new Notification("Columbia\n\n路径倒圆角没有返回节点。")).setIcon(JOptionPane.ERROR_MESSAGE).show();
+                    (new Notification(
+                            "Columbia\n\n处理路径" + w.getUniqueId() + "倒圆角函数没有返回节点。"
+                    )).setIcon(JOptionPane.ERROR_MESSAGE).show();
+                }
+                if (!failedNodes.isEmpty()) {  // 没有倒角成功时警告
+                    (new Notification(
+                            "Columbia\n\n下列拐点节点因与相邻节点距离过短未能倒角：\n"
+                                     + failedNodes
+                    )).setIcon(JOptionPane.WARNING_MESSAGE).show();
                 }
             } catch (Exception ex) {  // 处理单个路径处理时的错误，不影响其他路径
-                JOptionPane.showMessageDialog(MainApplication.getMainFrame(), "Error processing way: " + ex.getMessage());
+                (new Notification(
+                        "Columbia\n\n处理路径" + w.getUniqueId() + "时出现了错误：\n\n"
+                                + ex.getMessage()
+                                + "该路径可能未产生倒圆角结果或结果错误。"
+                )).setIcon(JOptionPane.ERROR_MESSAGE).show();
             }
         }
         // 选中新路径
         if (selectNew) ds.setSelected(newWays);
     }
 }
+
+

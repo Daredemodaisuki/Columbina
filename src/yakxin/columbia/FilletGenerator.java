@@ -5,10 +5,10 @@ import org.openstreetmap.josm.data.coor.LatLon;
 import org.openstreetmap.josm.data.osm.Node;
 import org.openstreetmap.josm.data.osm.Way;
 import org.openstreetmap.josm.data.projection.ProjectionRegistry;
+import yakxin.columbia.data.FilletResult;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 
 
 // 圆角计算器
@@ -89,16 +89,16 @@ public class FilletGenerator {
         return arc;
     }
 
-    public static List<Node> buildSmoothPolyline(Way way, double radiusMeters) {
-        List<Node> nodes = buildSmoothPolyline(way, radiusMeters, 20);
-        return nodes;
+    public static FilletResult buildSmoothPolyline(Way way, double radiusMeters) {
+        return buildSmoothPolyline(way, radiusMeters, 20);
     }
 
-    public static List<Node> buildSmoothPolyline(Way way, double radiusMeters, int pointNum) {
+    public static FilletResult buildSmoothPolyline(Way way, double radiusMeters, int pointNum) {
+        List<Long> failedNodes = new ArrayList<>();
         // 获取路径的所有节点
         List<Node> nodes = new ArrayList<>(way.getNodes());
         int nPts = nodes.size();
-        if (nPts < 2) return null;  // 道路至少需要2个点
+        if (nPts < 2) return null;  // 路径至少需要2个点
 
         // 将所有节点转换为平面坐标
         List<EastNorth> en = new ArrayList<>();
@@ -120,6 +120,7 @@ public class FilletGenerator {
                 T1s.add(null);
                 T2s.add(null);
                 arcs.add(null);
+                failedNodes.add(nodes.get(i).getUniqueId());
             } else {
                 // 存储切点和圆弧
                 EastNorth t1 = arc.get(0), t2 = arc.get(arc.size() - 1);
@@ -136,6 +137,7 @@ public class FilletGenerator {
                 T1s.add(null);
                 T2s.add(null);
                 arcs.add(null);
+                failedNodes.add(nodes.get(0).getUniqueId());
             } else {
                 EastNorth t1End = arcEnd.get(0), t2End = arcEnd.get(arcEnd.size() - 1);
                 T1s.add(new double[]{t1End.getX(), t1End.getY()});
@@ -191,6 +193,9 @@ public class FilletGenerator {
             Node nn = new Node(ll);  // 创建新节点
             newNodes.add(nn);
         }
-        return newNodes;
+//        return newNodes;
+        return new FilletResult(newNodes, failedNodes);
     }
 }
+
+
