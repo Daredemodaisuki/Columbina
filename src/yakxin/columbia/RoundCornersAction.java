@@ -1,6 +1,7 @@
 package yakxin.columbia;
 
 // 导入JOSM GUI和数据处理类
+import com.sun.jdi.event.StepEvent;
 import org.openstreetmap.josm.data.osm.OsmPrimitive;
 import org.openstreetmap.josm.actions.JosmAction;
 import org.openstreetmap.josm.command.AddCommand;
@@ -57,7 +58,6 @@ public class RoundCornersAction extends JosmAction {
         for (OsmPrimitive p : layer.data.getSelected()) {
             if (p instanceof Way) selection.add((Way) p);
         }
-
         // 检查是否有选中的way
         if (selection.isEmpty()) {
             JOptionPane.showMessageDialog(MainApplication.getMainFrame(), "没有选中路径");
@@ -65,22 +65,18 @@ public class RoundCornersAction extends JosmAction {
         }
 
         /// 圆角半径对话框
-        RoundCornersDialog dlg = new RoundCornersDialog();  // TODO:新对话框
-        String s = JOptionPane.showInputDialog(MainApplication.getMainFrame(), "圆角半径（m）：", "150");
-        if (s == null) return;  // 点击取消，退出
-
+        RoundCornersDialog dlg = new RoundCornersDialog();
+        // utils.testMsgWindow(dlg.getFilletRadius() + " " + dlg.getValue());
+        if (dlg.getValue() != 1) return;  // 按ESC（0）或点击取消（2），退出；点击确定继续是1
         // 检查输入的半径值
-        double radius;
-        try {
-            radius = Double.parseDouble(s);
-        } catch (NumberFormatException ex) {
+        double radius = dlg.getFilletRadius();
+        if (radius <= 0.0) {
             JOptionPane.showMessageDialog(MainApplication.getMainFrame(), "半径无效");
             return;  // 输入无效，退出
         }
 
         /// 处理每条路径
         List<Way> newWays = new ArrayList<>();
-
         for (Way w : selection) {
             try {
                 // 计算路径
