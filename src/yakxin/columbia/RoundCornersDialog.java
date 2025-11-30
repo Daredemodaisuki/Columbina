@@ -69,5 +69,8 @@ public class RoundCornersDialog extends ExtendedDialog {
             return 0;
         }
     }
+    public boolean getIfDeleteOld() {return deleteOldWays.isSelected();}
+    public boolean getIfSelectNew() {return selectNewWays.isSelected();}
+
 
 }

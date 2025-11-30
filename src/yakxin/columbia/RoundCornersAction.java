@@ -1,7 +1,7 @@
 package yakxin.columbia;
 
 // 导入JOSM GUI和数据处理类
-import com.sun.jdi.event.StepEvent;
+import org.openstreetmap.josm.command.DeleteCommand;
 import org.openstreetmap.josm.data.osm.OsmPrimitive;
 import org.openstreetmap.josm.actions.JosmAction;
 import org.openstreetmap.josm.command.AddCommand;
@@ -80,6 +80,9 @@ public class RoundCornersAction extends JosmAction {
             JOptionPane.showMessageDialog(MainApplication.getMainFrame(), "曲线点数无效");
             return;  // 输入无效，退出
         }
+        // 是否删除旧路径和选择新路径
+        boolean deleteOld = dlg.getIfDeleteOld();
+        boolean selectNew = dlg.getIfSelectNew();
 
         /// 处理每条路径
         List<Way> newWays = new ArrayList<>();
@@ -97,7 +100,6 @@ public class RoundCornersAction extends JosmAction {
 
                     // TODO:没有倒角成功时警告
                     // TODO:处理闭合路径
-                    // TODO:是否替换原路径可选项
                     // TODO:记录上次的半径
 
                     // 正式绘制
@@ -108,19 +110,23 @@ public class RoundCornersAction extends JosmAction {
                     }
                     // ds.addPrimitive(newWay);
                     commands.add(new AddCommand(ds, newWay));  // 添加线到命令序列
+
+                    // 移除原路径
+                    // TODO:使用替换而不是删除
+                    if (deleteOld) commands.add(new DeleteCommand(ds, w));
+
+                    // 执行到命令序列
                     Command c = new SequenceCommand(
                             "对路径 " + (w.getId() != 0 ? String.valueOf(w.getId()) : w.getUniqueId()) + " 倒圆角：" + radius + "m",
                             commands);
-                    UndoRedoHandler.getInstance().add(c);  // 执行到命令序列
-
-                    newWays.add(newWay);
+                    UndoRedoHandler.getInstance().add(c);
+                    newWays.add(newWay);  // 记录以供选中
                 }
             } catch (Exception ex) {  // 处理单个路径处理时的错误，不影响其他路径
                 JOptionPane.showMessageDialog(MainApplication.getMainFrame(), "Error processing way: " + ex.getMessage());
             }
         }
-
         // 选中新路径
-        ds.setSelected(newWays);
+        if (selectNew) ds.setSelected(newWays);
     }
 }
