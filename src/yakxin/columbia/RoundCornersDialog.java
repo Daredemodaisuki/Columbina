@@ -4,15 +4,9 @@ import java.awt.*;
 import java.text.NumberFormat;
 import java.text.ParseException;
 
-import javax.swing.ButtonGroup;
-import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JFormattedTextField;
-import javax.swing.JRadioButton;
-import javax.swing.JLabel;
 import javax.swing.JPanel;
-
-import org.openstreetmap.josm.tools.GBC;
 
 import org.openstreetmap.josm.gui.ExtendedDialog;
 import org.openstreetmap.josm.gui.MainApplication;
@@ -28,6 +22,7 @@ public class RoundCornersDialog extends ExtendedDialog {
     private JFormattedTextField filletPointNum;
     private JCheckBox deleteOldWays;
     private JCheckBox selectNewWays;
+    private JCheckBox copyTag;
 
     // 构建窗口
     protected RoundCornersDialog() {
@@ -43,6 +38,7 @@ public class RoundCornersDialog extends ExtendedDialog {
         // 窗体
         filletR = utils.addInput(panel, "倒角半径（m）：", "100");
         filletPointNum = utils.addInput(panel, "每段曲线点数：", "20");
+        copyTag = utils.addCheckbox(panel, "复制原有路径标签", true);
         deleteOldWays = utils.addCheckbox(panel, "绘制后移除原有路径", false);
         selectNewWays = utils.addCheckbox(panel, "绘制后切换选择新路径", true);
 
@@ -69,6 +65,7 @@ public class RoundCornersDialog extends ExtendedDialog {
             return 0;
         }
     }
+    public boolean getIfCopyTag() {return copyTag.isSelected();}
     public boolean getIfDeleteOld() {return deleteOldWays.isSelected();}
     public boolean getIfSelectNew() {return selectNewWays.isSelected();}
 

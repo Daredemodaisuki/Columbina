@@ -12,7 +12,11 @@ import org.openstreetmap.josm.data.osm.DataSet;
 import org.openstreetmap.josm.data.osm.Node;
 import org.openstreetmap.josm.data.osm.Way;
 import org.openstreetmap.josm.gui.MainApplication;
+import org.openstreetmap.josm.gui.Notification;
 import org.openstreetmap.josm.gui.layer.OsmDataLayer;
+import org.openstreetmap.josm.plugins.utilsplugin2.replacegeometry.ReplaceGeometryCommand;
+import org.openstreetmap.josm.plugins.utilsplugin2.replacegeometry.ReplaceGeometryException;
+import org.openstreetmap.josm.plugins.utilsplugin2.replacegeometry.ReplaceGeometryUtils;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
@@ -46,9 +50,7 @@ public class RoundCornersAction extends JosmAction {
         // 检查当前的编辑图层
         OsmDataLayer layer = MainApplication.getLayerManager().getEditLayer();
         if (layer == null) {
-            JOptionPane.showMessageDialog(
-                    MainApplication.getMainFrame(),
-                    "当前图层不可编辑");
+            (new Notification("Columbia\n\n当前图层不可用。")).setIcon(JOptionPane.ERROR_MESSAGE).show();
             return;  // 图层不可用，退出
         }
         DataSet ds = MainApplication.getLayerManager().getEditDataSet();
@@ -60,7 +62,7 @@ public class RoundCornersAction extends JosmAction {
         }
         // 检查是否有选中的way
         if (selection.isEmpty()) {
-            JOptionPane.showMessageDialog(MainApplication.getMainFrame(), "没有选中路径");
+            (new Notification("Columbia\n\n没有选中路径。")).setIcon(JOptionPane.ERROR_MESSAGE).show();
             return;  // 没有选中道路，退出
         }
 
@@ -71,18 +73,21 @@ public class RoundCornersAction extends JosmAction {
         // 输入半径
         double radius = dlg.getFilletRadius();
         if (radius <= 0.0) {
-            JOptionPane.showMessageDialog(MainApplication.getMainFrame(), "半径无效");
+            (new Notification("Columbia\n\n路径倒圆角半径无效。")).setIcon(JOptionPane.ERROR_MESSAGE).show();
             return;  // 输入无效，退出
         }
         // 曲线点数
         int pointNum = dlg.getFilletPointNum();
         if (pointNum <= 0) {
-            JOptionPane.showMessageDialog(MainApplication.getMainFrame(), "曲线点数无效");
+            (new Notification("Columbia\n\n路径倒圆角曲线点数无效。")).setIcon(JOptionPane.ERROR_MESSAGE).show();
             return;  // 输入无效，退出
+        } else if (pointNum < 5) {
+            (new Notification("Columbia\n\n路径倒圆角曲线点数较少，效果可能不理想。")).setIcon(JOptionPane.WARNING_MESSAGE).show();
         }
         // 是否删除旧路径和选择新路径
         boolean deleteOld = dlg.getIfDeleteOld();
         boolean selectNew = dlg.getIfSelectNew();
+        boolean copyTag = dlg.getIfCopyTag();
 
         /// 处理每条路径
         List<Way> newWays = new ArrayList<>();
@@ -95,8 +100,10 @@ public class RoundCornersAction extends JosmAction {
                     Way newWay = new Way();
                     for (Node n : newNodes) newWay.addNode(n);  // 添加所有新节点
                     // 复制原Way标签
-                    Map<String, String> wayTags = w.getInterestingTags();  // 读取原Way的tag
-                    newWay.setKeys(wayTags);
+                    if (copyTag) {
+                        Map<String, String> wayTags = w.getInterestingTags();  // 读取原Way的tag
+                        newWay.setKeys(wayTags);
+                    }
 
                     // TODO:没有倒角成功时警告
                     // TODO:处理闭合路径
@@ -111,30 +118,56 @@ public class RoundCornersAction extends JosmAction {
                     // ds.addPrimitive(newWay);
                     addCommands.add(new AddCommand(ds, newWay));  // 添加线到命令序列
                     // 执行到命令序列
-                    Command cAdd = new SequenceCommand(
+                    Command cmdAdd = new SequenceCommand(
                             "对路径 " + (w.getId() != 0 ? String.valueOf(w.getId()) : w.getUniqueId()) + " 倒圆角：" + radius + "m",
                             addCommands);
-                    UndoRedoHandler.getInstance().add(cAdd);
+                    UndoRedoHandler.getInstance().add(cmdAdd);
 
                     // 移除原路径
-                    // TODO:使用替换而不是删除
-                    List<Command> delCommands = new LinkedList<>();
-                    if (deleteOld) delCommands.add(new DeleteCommand(ds, w));  // 去除路径
-                    for (Node n : w.getNodes()) {  // 去除节点
-                        boolean canBeDeleted = !n.isTagged();  // 有tag不删
-                        for (OsmPrimitive ref : n.getReferrers()) {
-                            if (!(ref instanceof Way && ref.equals(w))) {
-                                canBeDeleted = false;  // 如果被其他线或关系使用，不删
-                                break;
+                    if (deleteOld) {
+                        // 既有路径替换
+                        if (w.getId() != 0) {
+                            try {
+                                ReplaceGeometryCommand cmdRep = ReplaceGeometryUtils.buildReplaceWithNewCommand(w, newWay);
+                                if (cmdRep == null) {
+                                    (new Notification(
+                                            "Columbia尝试调用Utilsplugin2插件之「替换几何图形」功能替换旧路径，但失败。\n\n"
+                                                    + "用户在Utilsplugin2的窗口中取消了替换操作。\n"
+                                                    + "\n\n旧路径" + w.getUniqueId() + "未被移除。"
+                                    )).setIcon(JOptionPane.WARNING_MESSAGE).show();
+                                }
+                                else UndoRedoHandler.getInstance().add(cmdRep);
+                            } catch (ReplaceGeometryException | IllegalArgumentException utils2Info) {
+                                (new Notification(
+                                        "Columbia尝试调用Utilsplugin2插件之「替换几何图形」功能替换旧路径，但失败。\n\n"
+                                                + "来自Utilsplugin2的消息：\n"
+                                                + utils2Info.getMessage()
+                                                + "\n\n旧路径" +  + w.getUniqueId() + "未被移除。"
+                                )).setIcon(JOptionPane.WARNING_MESSAGE).show();
                             }
                         }
-                        if (canBeDeleted) delCommands.add(new DeleteCommand(ds, n));
+                        // 新路径删除
+                        else {
+                            List<Command> delCommands = new LinkedList<>();
+                            delCommands.add(new DeleteCommand(ds, w));  // 去除路径
+                            for (Node n : w.getNodes()) {  // 去除节点
+                                boolean canBeDeleted = !n.isTagged();  // 有tag不删
+                                for (OsmPrimitive ref : n.getReferrers()) {
+                                    if (!(ref instanceof Way && ref.equals(w))) {
+                                        canBeDeleted = false;  // 被其他路径或关系使用，不删
+                                        break;
+                                    }
+                                }
+                                if (canBeDeleted) delCommands.add(new DeleteCommand(ds, n));
+                            }
+                            Command cmdDel = new SequenceCommand("移除原有路径", delCommands);
+                            UndoRedoHandler.getInstance().add(cmdDel);
+                        }
                     }
-                    Command cDel = new SequenceCommand("移除原有路径", delCommands);
-                    UndoRedoHandler.getInstance().add(cDel);
-
-
-                    newWays.add(newWay);  // 记录以供选中
+                    newWays.add(newWay);  // 记录新路径以供选中
+                }
+                else {
+                    (new Notification("Columbia\n\n路径倒圆角没有返回节点。")).setIcon(JOptionPane.ERROR_MESSAGE).show();
                 }
             } catch (Exception ex) {  // 处理单个路径处理时的错误，不影响其他路径
                 JOptionPane.showMessageDialog(MainApplication.getMainFrame(), "Error processing way: " + ex.getMessage());

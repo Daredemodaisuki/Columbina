@@ -12,10 +12,14 @@
     <!-- JOSM核心路径 -->
     <property name="josm.dir" location="lib"/>
 
+    <!-- 外部引用 -->
+    <property name="plugin.requires" value="utilsplugin2" />
+
     <!-- 类路径 -->
     <path id="classpath">
         <fileset dir="${josm.dir}">
             <include name="josm-tested.jar"/>
+            <include name="utilsplugin2.jar"/>
         </fileset>
     </path>
 
@@ -59,6 +63,7 @@
                            value="测试。"/>
                 <attribute name="Author" value="Yakxin"/>
                 <attribute name="Plugin-Icon" value="images/temp_icon.png"/>
+                <attribute name="Plugin-Requires" value="${plugin.requires}" />
             </manifest>
         </jar>
         <echo message="插件已构建: ${dist.dir}/${plugin.name}.jar"/>
