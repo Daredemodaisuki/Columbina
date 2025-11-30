@@ -4,7 +4,7 @@ import org.openstreetmap.josm.data.osm.Node;
 
 import java.util.List;
 
-public class FilletResult {
+public final class FilletResult {
     public List<Node> newNodes;
     public List<Long> failedNodes;
 

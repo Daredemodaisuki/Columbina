@@ -10,6 +10,7 @@ import javax.swing.JPanel;
 
 import org.openstreetmap.josm.gui.ExtendedDialog;
 import org.openstreetmap.josm.gui.MainApplication;
+import yakxin.columbia.data.Preference;
 
 /// 倒圆角对话框
 public class RoundCornersDialog extends ExtendedDialog {
@@ -36,11 +37,11 @@ public class RoundCornersDialog extends ExtendedDialog {
         setDefaultButton(1);  // ESC取消
 
         // 窗体
-        filletR = utils.addInput(panel, "倒角半径（m）：", "100");
-        filletPointNum = utils.addInput(panel, "每段曲线点数：", "20");
-        copyTag = utils.addCheckbox(panel, "复制原有路径标签", true);
-        deleteOldWays = utils.addCheckbox(panel, "绘制后移除原有路径", false);
-        selectNewWays = utils.addCheckbox(panel, "绘制后切换选择新路径", true);
+        filletR = utils.addInput(panel, "倒角半径（m）：", String.valueOf(Preference.getRadius()));
+        filletPointNum = utils.addInput(panel, "每段曲线点数：", String.valueOf(Preference.getNumPoint()));
+        copyTag = utils.addCheckbox(panel, "复制原有路径标签", Preference.isCopyTag());
+        deleteOldWays = utils.addCheckbox(panel, "绘制后移除原有路径", Preference.isDeleteOldWays());
+        selectNewWays = utils.addCheckbox(panel, "绘制后切换选择新路径", Preference.isSelectNewWays());
 
         contentInsets = new Insets(15, 15, 5, 15);  // 内容边距
         setContent(panel);

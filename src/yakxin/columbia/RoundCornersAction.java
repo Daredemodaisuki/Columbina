@@ -20,6 +20,7 @@ import org.openstreetmap.josm.plugins.utilsplugin2.replacegeometry.ReplaceGeomet
 import org.openstreetmap.josm.plugins.utilsplugin2.replacegeometry.ReplaceGeometryException;
 import org.openstreetmap.josm.plugins.utilsplugin2.replacegeometry.ReplaceGeometryUtils;
 import yakxin.columbia.data.FilletResult;
+import yakxin.columbia.data.Preference;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
@@ -70,9 +71,10 @@ public class RoundCornersAction extends JosmAction {
         }
 
         /// 圆角设置
-        RoundCornersDialog dlg = new RoundCornersDialog();  /// 创建设置对话框
+        RoundCornersDialog dlg = new RoundCornersDialog();  // 创建设置对话框
         // utils.testMsgWindow(dlg.getFilletRadius() + " " + dlg.getValue());
         if (dlg.getValue() != 1) return;  // 按ESC（0）或点击取消（2），退出；点击确定继续是1
+
         // 输入半径
         double radius = dlg.getFilletRadius();
         if (radius <= 0.0) {
@@ -92,6 +94,10 @@ public class RoundCornersAction extends JosmAction {
         boolean selectNew = dlg.getIfSelectNew();
         boolean copyTag = dlg.getIfCopyTag();
 
+        // 保存设置
+        Preference.setPreferenceFromDialog(dlg);
+        Preference.savePreference();
+
         /// 处理每条路径
         List<Way> newWays = new ArrayList<>();
         List<Long> failedNodes = new ArrayList<>();
@@ -110,8 +116,6 @@ public class RoundCornersAction extends JosmAction {
                         Map<String, String> wayTags = w.getInterestingTags();  // 读取原Way的tag
                         newWay.setKeys(wayTags);
                     }
-
-                    // TODO:记录上次的半径
 
                     // 正式绘制
                     List<Command> addCommands = new LinkedList<>();  // 指令
