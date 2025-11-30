@@ -28,7 +28,6 @@ import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 /// 导圆角
 public class RoundCornersAction extends JosmAction {
@@ -161,7 +160,9 @@ public class RoundCornersAction extends JosmAction {
                         else {
                             List<Command> delCommands = new LinkedList<>();
                             delCommands.add(new DeleteCommand(ds, w));  // 去除路径
-                            for (Node n : w.getNodes()) {  // 去除节点
+                            // 去除节点（闭合曲线会删闭合点2次，自交路径也会导致重复删除，需要去重）
+                            // 不能用ds.ContainsNode(n)判断，因为cmdDel还没提交，是delCommands内部重复删除了
+                            for (Node n : w.getNodes().stream().distinct().toList()) {
                                 boolean canBeDeleted = !n.isTagged();  // 有tag不删
                                 for (OsmPrimitive ref : n.getReferrers()) {
                                     if (!(ref instanceof Way && ref.equals(w))) {
@@ -195,7 +196,7 @@ public class RoundCornersAction extends JosmAction {
                 (new Notification(
                         "Columbia\n\n处理路径" + w.getUniqueId() + "时出现了错误：\n\n"
                                 + ex.getMessage()
-                                + "该路径可能未产生倒圆角结果或结果错误。"
+                                + "\n\n该路径可能未产生倒圆角结果或结果错误。"
                 )).setIcon(JOptionPane.ERROR_MESSAGE).show();
             }
         }
