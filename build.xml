@@ -7,7 +7,7 @@
     <property name="plugin.dir" location="."/>
     <property name="src.dir" location="src"/>
     <property name="build.dir" location="Ant/build"/>
-    <property name="dist.dir" location="Ant/dist"/>
+    <property name="dist.dir" location="Ant"/>
 
     <!-- JOSM核心路径 -->
     <property name="josm.dir" location="JOSM"/>
