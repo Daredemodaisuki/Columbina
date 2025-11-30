@@ -103,23 +103,37 @@ public class RoundCornersAction extends JosmAction {
                     // TODO:记录上次的半径
 
                     // 正式绘制
-                    List<Command> commands = new LinkedList<>();  // 指令
+                    List<Command> addCommands = new LinkedList<>();  // 指令
                     for (Node n : newNodes) {
                         // ds.addPrimitive(n);  // 直接动数据库
-                        commands.add(new AddCommand(ds, n));  // 添加节点到命令序列
+                        addCommands.add(new AddCommand(ds, n));  // 添加节点到命令序列
                     }
                     // ds.addPrimitive(newWay);
-                    commands.add(new AddCommand(ds, newWay));  // 添加线到命令序列
+                    addCommands.add(new AddCommand(ds, newWay));  // 添加线到命令序列
+                    // 执行到命令序列
+                    Command cAdd = new SequenceCommand(
+                            "对路径 " + (w.getId() != 0 ? String.valueOf(w.getId()) : w.getUniqueId()) + " 倒圆角：" + radius + "m",
+                            addCommands);
+                    UndoRedoHandler.getInstance().add(cAdd);
 
                     // 移除原路径
                     // TODO:使用替换而不是删除
-                    if (deleteOld) commands.add(new DeleteCommand(ds, w));
+                    List<Command> delCommands = new LinkedList<>();
+                    if (deleteOld) delCommands.add(new DeleteCommand(ds, w));  // 去除路径
+                    for (Node n : w.getNodes()) {  // 去除节点
+                        boolean canBeDeleted = !n.isTagged();  // 有tag不删
+                        for (OsmPrimitive ref : n.getReferrers()) {
+                            if (!(ref instanceof Way && ref.equals(w))) {
+                                canBeDeleted = false;  // 如果被其他线或关系使用，不删
+                                break;
+                            }
+                        }
+                        if (canBeDeleted) delCommands.add(new DeleteCommand(ds, n));
+                    }
+                    Command cDel = new SequenceCommand("移除原有路径", delCommands);
+                    UndoRedoHandler.getInstance().add(cDel);
 
-                    // 执行到命令序列
-                    Command c = new SequenceCommand(
-                            "对路径 " + (w.getId() != 0 ? String.valueOf(w.getId()) : w.getUniqueId()) + " 倒圆角：" + radius + "m",
-                            commands);
-                    UndoRedoHandler.getInstance().add(c);
+
                     newWays.add(newWay);  // 记录以供选中
                 }
             } catch (Exception ex) {  // 处理单个路径处理时的错误，不影响其他路径
