@@ -5,10 +5,10 @@ import org.openstreetmap.josm.data.coor.LatLon;
 import org.openstreetmap.josm.data.osm.Node;
 import org.openstreetmap.josm.data.osm.Way;
 import org.openstreetmap.josm.data.projection.ProjectionRegistry;
-import org.openstreetmap.josm.gui.layer.OsmDataLayer;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 
 // 圆角计算器
@@ -68,7 +68,7 @@ public class FilletGenerator {
         double ang2 = Math.atan2(T2[1] - center[1], T2[0] - center[0]);  // 圆心到T2的角度
 
         // 圆弧方向（顺时针或逆时针）
-        double crossz = u1[0]*u2[1] - u1[1]*u2[0];  // 向量叉积的Z分量
+        double crossz = u1[0] * u2[1] - u1[1] * u2[0];  // 向量叉积的Z分量
         if (crossz < 0) {
             // 逆时针方向，确保ang2 > ang1
             if (ang2 < ang1) ang2 += 2*Math.PI;
@@ -80,7 +80,7 @@ public class FilletGenerator {
         // 生成圆弧上的点
         List<EastNorth> arc = new ArrayList<>();
         for (int i=0;i<=numPoints;i++){
-            double tt = (double)i/numPoints;          // 插值参数 [0,1]
+            double tt = (double)i / numPoints;          // 插值参数 [0,1]
             double ang = ang1 + (ang2 - ang1) * tt;   // 当前角度
             double x = center[0] + R * Math.cos(ang); // 圆弧点X坐标
             double y = center[1] + R * Math.sin(ang); // 圆弧点Y坐标
@@ -90,6 +90,11 @@ public class FilletGenerator {
     }
 
     public static List<Node> buildSmoothPolyline(Way way, double radiusMeters) {
+        List<Node> nodes = buildSmoothPolyline(way, radiusMeters, 20);
+        return nodes;
+    }
+
+    public static List<Node> buildSmoothPolyline(Way way, double radiusMeters, int pointNum) {
         // 1. 获取道路的所有节点
         List<Node> nodes = new ArrayList<>(way.getNodes());
         int nPts = nodes.size();
@@ -104,12 +109,12 @@ public class FilletGenerator {
         List<double[]> T2s = new ArrayList<>();  // 存储每个拐角的第二个切点
         List<List<EastNorth>> arcs = new ArrayList<>();  // 存储每个拐角的圆弧
 
-        for (int i=0;i<nPts-2;i++){
+        for (int i = 0;i < nPts - 2; i ++){
             EastNorth A = en.get(i);      // 前一个点
-            EastNorth B = en.get(i+1);    // 拐角点
-            EastNorth C = en.get(i+2);    // 后一个点
+            EastNorth B = en.get(i + 1);    // 拐角点
+            EastNorth C = en.get(i + 2);    // 后一个点
 
-            List<EastNorth> arc = filletArcEN(A,B,C,radiusMeters, 20);  // 生成20个点的圆弧
+            List<EastNorth> arc = filletArcEN(A,B,C,radiusMeters, pointNum);  // 生成PNum个点的圆弧
 
             if (arc == null) {
                 // 该拐角无法生成圆角（半径过大或角度问题）
@@ -132,8 +137,8 @@ public class FilletGenerator {
         finalLatLons.add(toLatLon(en.get(0)));
 
         // 5. 遍历所有线段，用圆弧替换拐角
-        for (int i=0;i<nPts-1;i++){
-            boolean filletAtNext = (i <= nPts-3) && (arcs.get(i) != null);  // 检查下一个拐角是否有有效圆角
+        for (int i = 0; i < nPts - 1; i ++){
+            boolean filletAtNext = (i <= nPts - 3) && (arcs.get(i) != null);  // 检查下一个拐角是否有有效圆角
 
             if (filletAtNext){
                 // 使用圆角路径
@@ -141,7 +146,7 @@ public class FilletGenerator {
                 LatLon llT1 = toLatLon(new EastNorth(T1[0], T1[1]));
 
                 // 添加第一个切点（如果与上个点不同）
-                if (!finalLatLons.get(finalLatLons.size()-1).equals(llT1))
+                if (!finalLatLons.get(finalLatLons.size() - 1).equals(llT1))
                     finalLatLons.add(llT1);
 
                 // 添加圆弧上的所有点（跳过第一个点，避免重复）
@@ -150,8 +155,8 @@ public class FilletGenerator {
                     finalLatLons.add(toLatLon(arc.get(k)));
             } else {
                 // 无法生成圆角，使用原始路径点
-                LatLon llNext = toLatLon(en.get(i+1));
-                if (!finalLatLons.get(finalLatLons.size()-1).equals(llNext))
+                LatLon llNext = toLatLon(en.get(i + 1));
+                if (!finalLatLons.get(finalLatLons.size() - 1).equals(llNext))
                     finalLatLons.add(llNext);
             }
         }

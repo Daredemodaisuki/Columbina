@@ -10,7 +10,7 @@
     <property name="dist.dir" location="Ant"/>
 
     <!-- JOSM核心路径 -->
-    <property name="josm.dir" location="JOSM"/>
+    <property name="josm.dir" location="lib"/>
 
     <!-- 类路径 -->
     <path id="classpath">

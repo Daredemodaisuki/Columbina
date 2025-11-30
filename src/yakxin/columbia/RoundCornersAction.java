@@ -78,11 +78,12 @@ public class RoundCornersAction extends JosmAction {
         }
 
         /// 处理每条路径
+        List<Way> newWays = new ArrayList<>();
+
         for (Way w : selection) {
             try {
-                // 生成平滑路径
-                List<Node> newNodes = FilletGenerator.buildSmoothPolyline(w, radius);
-
+                // 计算路径
+                List<Node> newNodes = FilletGenerator.buildSmoothPolyline(w, radius);  // 计算平滑路径
                 if (newNodes != null && !newNodes.isEmpty()) {
                     // 创建新的圆角路径
                     Way newWay = new Way();
@@ -93,7 +94,6 @@ public class RoundCornersAction extends JosmAction {
 
                     // TODO:没有倒角成功时警告
                     // TODO:处理闭合路径
-                    // TODO:绘制完后选择新路径
                     // TODO:是否替换原路径可选项
                     // TODO:每段曲线最大点数
                     // TODO:记录上次的半径
@@ -101,20 +101,24 @@ public class RoundCornersAction extends JosmAction {
                     // 正式绘制
                     List<Command> cmds = new LinkedList<>();  // 指令
                     for (Node n : newNodes) {
-//                        ds.addPrimitive(n);  // 直接动数据库
+                        // ds.addPrimitive(n);  // 直接动数据库
                         cmds.add(new AddCommand(ds, n));  // 添加节点到命令序列
                     }
-//                    ds.addPrimitive(newWay);
+                    // ds.addPrimitive(newWay);
                     cmds.add(new AddCommand(ds, newWay));  // 添加线到命令序列
-
                     Command c = new SequenceCommand(
                             "对路径 " + (w.getId() != 0 ? String.valueOf(w.getId()) : w.getUniqueId()) + " 倒圆角：" + radius + "m",
                             cmds);
                     UndoRedoHandler.getInstance().add(c);  // 执行到命令序列
+
+                    newWays.add(newWay);
                 }
             } catch (Exception ex) {  // 处理单个路径处理时的错误，不影响其他路径
                 JOptionPane.showMessageDialog(MainApplication.getMainFrame(), "Error processing way: " + ex.getMessage());
             }
         }
+
+        // 选中新路径
+        ds.setSelected(newWays);
     }
 }
