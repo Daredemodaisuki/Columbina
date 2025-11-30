@@ -64,14 +64,20 @@ public class RoundCornersAction extends JosmAction {
             return;  // 没有选中道路，退出
         }
 
-        /// 圆角半径对话框
-        RoundCornersDialog dlg = new RoundCornersDialog();
+        /// 圆角设置
+        RoundCornersDialog dlg = new RoundCornersDialog();  /// 创建设置对话框
         // utils.testMsgWindow(dlg.getFilletRadius() + " " + dlg.getValue());
         if (dlg.getValue() != 1) return;  // 按ESC（0）或点击取消（2），退出；点击确定继续是1
-        // 检查输入的半径值
+        // 输入半径
         double radius = dlg.getFilletRadius();
         if (radius <= 0.0) {
             JOptionPane.showMessageDialog(MainApplication.getMainFrame(), "半径无效");
+            return;  // 输入无效，退出
+        }
+        // 曲线点数
+        int pointNum = dlg.getFilletPointNum();
+        if (pointNum <= 0) {
+            JOptionPane.showMessageDialog(MainApplication.getMainFrame(), "曲线点数无效");
             return;  // 输入无效，退出
         }
 
@@ -80,7 +86,7 @@ public class RoundCornersAction extends JosmAction {
         for (Way w : selection) {
             try {
                 // 计算路径
-                List<Node> newNodes = FilletGenerator.buildSmoothPolyline(w, radius);  // 计算平滑路径
+                List<Node> newNodes = FilletGenerator.buildSmoothPolyline(w, radius, pointNum);  // 计算平滑路径
                 if (newNodes != null && !newNodes.isEmpty()) {
                     // 创建新的圆角路径
                     Way newWay = new Way();
@@ -92,7 +98,6 @@ public class RoundCornersAction extends JosmAction {
                     // TODO:没有倒角成功时警告
                     // TODO:处理闭合路径
                     // TODO:是否替换原路径可选项
-                    // TODO:每段曲线最大点数
                     // TODO:记录上次的半径
 
                     // 正式绘制

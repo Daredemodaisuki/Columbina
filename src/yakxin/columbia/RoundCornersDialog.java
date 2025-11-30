@@ -25,6 +25,7 @@ public class RoundCornersDialog extends ExtendedDialog {
     // 窗体组件
     protected final JPanel panel = new JPanel(new GridBagLayout());
     private JFormattedTextField filletR;
+    private JFormattedTextField filletPointNum;
     private JCheckBox deleteOldWays;
     private JCheckBox selectNewWays;
 
@@ -41,6 +42,7 @@ public class RoundCornersDialog extends ExtendedDialog {
 
         // 窗体
         filletR = utils.addInput(panel, "倒角半径（m）：", "100");
+        filletPointNum = utils.addInput(panel, "每段曲线点数：", "20");
         deleteOldWays = utils.addCheckbox(panel, "绘制后移除原有路径", false);
         selectNewWays = utils.addCheckbox(panel, "绘制后切换选择新路径", true);
 
@@ -56,6 +58,13 @@ public class RoundCornersDialog extends ExtendedDialog {
     public double getFilletRadius() {
         try {
             return NumberFormat.getInstance().parse(filletR.getText()).doubleValue();
+        } catch (ParseException e) {
+            return 0;
+        }
+    }
+    public int getFilletPointNum() {
+        try {
+            return NumberFormat.getInstance().parse(filletPointNum.getText()).intValue();
         } catch (ParseException e) {
             return 0;
         }
