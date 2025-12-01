@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project name="Columbia" default="dist" basedir=".">
+<project name="Columbina" default="dist" basedir=".">
     <description>构建JOSM插件</description>
 
     <!-- 配置属性 -->
-    <property name="plugin.name" value="Columbia"/>
+    <property name="plugin.name" value="Columbina"/>
     <property name="plugin.dir" location="."/>
     <property name="src.dir" location="src"/>
     <property name="build.dir" location="Ant/build"/>
@@ -58,7 +58,7 @@
                 <attribute name="Plugin-Mainversion" value="18600"/>
                 <attribute name="Plugin-Version" value="1.0.0"/>
                 <attribute name="Plugin-Class"
-                           value="yakxin.columbia.Columbia"/>
+                           value="yakxin.columbina.Columbina"/>
                 <attribute name="Plugin-Description"
                            value="测试。"/>
                 <attribute name="Author" value="Yakxin"/>

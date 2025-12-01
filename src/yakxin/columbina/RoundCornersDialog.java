@@ -1,4 +1,4 @@
-package yakxin.columbia;
+package yakxin.columbina;
 
 import java.awt.*;
 import java.text.NumberFormat;
@@ -10,7 +10,7 @@ import javax.swing.JPanel;
 
 import org.openstreetmap.josm.gui.ExtendedDialog;
 import org.openstreetmap.josm.gui.MainApplication;
-import yakxin.columbia.data.Preference;
+import yakxin.columbina.data.Preference;
 
 /// 倒圆角对话框
 public class RoundCornersDialog extends ExtendedDialog {

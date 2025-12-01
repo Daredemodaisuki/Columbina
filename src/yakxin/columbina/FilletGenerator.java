@@ -1,11 +1,11 @@
-package yakxin.columbia;
+package yakxin.columbina;
 
 import org.openstreetmap.josm.data.coor.EastNorth;
 import org.openstreetmap.josm.data.coor.LatLon;
 import org.openstreetmap.josm.data.osm.Node;
 import org.openstreetmap.josm.data.osm.Way;
 import org.openstreetmap.josm.data.projection.ProjectionRegistry;
-import yakxin.columbia.data.FilletResult;
+import yakxin.columbina.data.FilletResult;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -183,6 +183,7 @@ public class FilletGenerator {
         }
 
         return new FilletResult(finalNodes, failedNodes);
+        // 正式绘制前注意去重
     }
 }
 

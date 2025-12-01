@@ -1,4 +1,4 @@
-package yakxin.columbia.data;
+package yakxin.columbina.data;
 
 import org.openstreetmap.josm.data.osm.Node;
 

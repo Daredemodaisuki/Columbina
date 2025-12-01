@@ -1,7 +1,7 @@
-package yakxin.columbia.data;
+package yakxin.columbina.data;
 
 import org.openstreetmap.josm.spi.preferences.Config;
-import yakxin.columbia.RoundCornersDialog;
+import yakxin.columbina.RoundCornersDialog;
 
 public final class Preference {
     private Preference() {
@@ -81,3 +81,5 @@ public final class Preference {
         Config.getPref().putBoolean("columbia.need-slc-new-ways", selectNewWays);
     }
 }
+
+
