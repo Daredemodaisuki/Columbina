@@ -26,7 +26,6 @@ import yakxin.columbina.data.Preference;
 import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.util.*;
-import java.util.stream.Collectors;
 
 /// 导圆角
 public class RoundCornersAction extends JosmAction {
@@ -38,7 +37,7 @@ public class RoundCornersAction extends JosmAction {
                 "路径倒圆角",  // 菜单显示文本
                 "temp_icon",  // 图标
                 "对选定路径的每个拐角节点按指定半径倒圆角。",  // 工具提示
-                null,  // 不指定快捷键  // TODO:快捷键
+                null,  // 暂不指定快捷键  // TODO:快捷键
                 false  // 不启用工具栏按钮
         );
 
@@ -113,6 +112,7 @@ public class RoundCornersAction extends JosmAction {
             return null;
         }
         List<Node> newNodes = filletResult.newNodes;
+        List<Long> failedNodeIds = filletResult.failedNodes;
 
         // 画新线
         Way newWay = new Way();
@@ -134,14 +134,16 @@ public class RoundCornersAction extends JosmAction {
 
         results.put("newWay", newWay);
         results.put("addCommands", addCommands);
+        results.put("failedNodeIds", failedNodeIds);
         return results;
     }
 
-    // TODO：try catch在actionPerformed中实现，有需要提前return的就throw了，事后结果警告还是直接现实弹窗
+    // 汇总全部添加指令
     public Map<String, Object> addCommand(DataSet ds, List<Way> selectedWays, double radius, int pointNum, boolean copyTag) {
         Map<String, Object> result = new HashMap<>();
         List<Command> commands = new ArrayList<>();
         Map<Way, Way> oldNewWayPairs = new HashMap<>();
+        Map<Way, List<Long>> failedNodeIds = new HashMap<>();
 
         // 处理路径
         // List<Way> newWays = new ArrayList<>();
@@ -151,7 +153,8 @@ public class RoundCornersAction extends JosmAction {
 
                 if (newNWCmd != null) {  // TODO：检查会否和已提交但未执行（进入ds）的重复提交？
                     commands.addAll((List<Command>) newNWCmd.get("addCommands"));
-                    oldNewWayPairs.put(w, (Way) newNWCmd.get("way"));
+                    oldNewWayPairs.put(w, (Way) newNWCmd.get("newWay"));
+                    failedNodeIds.put(w, (List<Long>) newNWCmd.get("failedNodeIds"));
                 }
                 else utils.warnInfo("处理路径" + w.getUniqueId() + "时算法没有返回足以构成路径的至少2个节点，该路径未处理。");
             } catch (Exception exAdd) {
@@ -162,50 +165,38 @@ public class RoundCornersAction extends JosmAction {
         if (commands.isEmpty()) {  // 未能成功生成一条线
             throw new ColumbinaException("未能成功生成一条新路径。");
         }
+        // 去重防止提交重复添加
+        commands = commands.stream().distinct().toList();
+
         result.put("commands", commands);
         result.put("oldNewWayPairs", oldNewWayPairs);
+        result.put("failedNodeIds", failedNodeIds);
         return result;
     }
 
-    // 移除一条旧路径
-    public List<Command> removeCommand(DataSet ds, Way oldWay, Way newWay) {
-        List<Command> commands = new ArrayList<>();
+    // 移除/替换一条旧路径及无用节点的指令
+    public List<Command> getRemoveCmd(DataSet ds, Way oldWay, Way newWay) {
+        List<Command> removeCommands = new ArrayList<>();
 
         // 既有路径替换
         if (oldWay.getId() != 0) {
-            try {
-                ReplaceGeometryCommand seqCmdRep = ReplaceGeometryUtils.buildReplaceWithNewCommand(oldWay, newWay);
-                if (seqCmdRep == null) {
-                    (new Notification(
-                            "Columbina尝试调用Utilsplugin2插件之「替换几何图形」功能替换旧路径，但失败。\n\n"
-                                    + "用户在Utilsplugin2的窗口中取消了替换操作。\n"
-                                    + "\n\n旧路径" + oldWay.getUniqueId() + "未被移除。"
-                    )).setIcon(JOptionPane.WARNING_MESSAGE).show();
+            ReplaceGeometryCommand seqCmdRep = ReplaceGeometryUtils.buildReplaceWithNewCommand(oldWay, newWay);
+            if (seqCmdRep == null) {
+                utils.warnInfo("Columbina尝试调用Utilsplugin2插件之「替换几何图形」功能替换旧路径，但失败。\n\n"
+                        + "用户在Utilsplugin2的窗口中取消了替换操作。\n"
+                        + "\n\n旧路径" + oldWay.getUniqueId() + "未被移除。");
+            }
+            else {
+                List<Command> cmdRep = utils.tryGetCommandsFromSeqCmd(seqCmdRep);
+                removeCommands.addAll(cmdRep);
 
-                }
-                else {
-                    List<Command> cmdRep = utils.tryGetCommandsFromSeqCmd(seqCmdRep);
-                    String testInfo = "解析出" + cmdRep.size() + "条命令";
-                    for (int i = 0; i < cmdRep.size(); i ++) {
-                        testInfo = testInfo + "\n" + cmdRep.get(i).getDescriptionText();
-                    }
-                    utils.testMsgWindow(testInfo);
-                }
-                    // UndoRedoHandler.getInstance().add(seqCmdRep);
-            } catch (ReplaceGeometryException | IllegalArgumentException utils2Info) {
-                (new Notification(
-                        "Columbina尝试调用Utilsplugin2插件之「替换几何图形」功能替换旧路径，但失败。\n\n"
-                                + "来自Utilsplugin2的消息：\n"
-                                + utils2Info.getMessage()
-                                + "\n\n旧路径" + oldWay.getUniqueId() + "未被移除。"
-                )).setIcon(JOptionPane.WARNING_MESSAGE).show();
             }
         }
         // 新路径删除
         else {
-            List<Command> delCommands = new LinkedList<>();
+            // List<Command> delCommands = new LinkedList<>();
             if (oldWay.getReferrers().isEmpty()) {  // 旧路径有关系，连同节点都不删
-                delCommands.add(new DeleteCommand(ds, oldWay));  // 去除路径
+                removeCommands.add(new DeleteCommand(ds, oldWay));  // 去除路径
                 // 去除节点（闭合曲线会删闭合点2次，自交路径也会导致重复删除，需要去重）
                 // 不能用ds.ContainsNode(n)判断删没删，因为cmdDel还没提交，delCommands内部重复删除会炸
                 for (Node n : oldWay.getNodes().stream().distinct().toList()) {
@@ -216,19 +207,58 @@ public class RoundCornersAction extends JosmAction {
                             break;
                         }
                     }
-                    if (canBeDeleted) delCommands.add(new DeleteCommand(ds, n));
+                    if (canBeDeleted) removeCommands.add(new DeleteCommand(ds, n));
                 }
+            } else {
+                utils.warnInfo("旧路径" + oldWay.getUniqueId() + "仍被关系引用，未移除。");
             }
-
-//            Command cmdDel = new SequenceCommand("移除原有路径", delCommands);
-//            UndoRedoHandler.getInstance().add(cmdDel);
         }
-
-        return null;
+        return removeCommands;
     }
 
-    // 汇总提交指令
-    public void action(){
+    // 汇总全部移除指令
+    public List<Command> removeCommand(DataSet ds, Map<Way, Way> oldNewWayPairs) {
+        List<Command> commands = new ArrayList<>();
+        for (Map.Entry<Way, Way> oldNewWayEntry: oldNewWayPairs.entrySet()) {
+            Way oldWay = oldNewWayEntry.getKey();
+            Way newWay = oldNewWayEntry.getValue();
+            if (oldWay == null)
+                throw new ColumbinaException(
+                        "移除某条旧路径时产生了内部错误：\n\n"
+                                + "旧路径返回值异常（null），无法获取旧路径。"
+                                + "该路径可能未被正确倒角或移除。"
+                );
+            if (newWay == null)
+                throw new ColumbinaException(
+                        "移除旧路径" + oldWay.getUniqueId() + "时产生了内部错误：\n\n"
+                                + "新路径返回值异常（null），无法获取新路径。"
+                                + "\n\n旧路径" + oldWay.getUniqueId() + "可能未被正确倒角或移除。"
+                );
+
+            try {
+                List<Command> cmdRmv = getRemoveCmd(ds, oldWay, newWay);
+                if (cmdRmv != null && !cmdRmv.isEmpty()) {
+                    commands.addAll(cmdRmv);
+                }
+            } catch (ReplaceGeometryException | IllegalArgumentException exUtils2) {
+                utils.warnInfo("Columbina尝试调用Utilsplugin2插件之「替换几何图形」功能替换旧路径，但失败。\n\n"
+                        + "来自Utilsplugin2的消息：\n"
+                        + exUtils2.getMessage()
+                        + "\n\n旧路径" + oldWay.getUniqueId() + "未被移除。");
+            } catch (Exception exRmv) {
+                utils.errorInfo("移除路径" + oldWay.getUniqueId() + "时产生了意外错误：" + exRmv.getMessage());
+            }
+        }
+
+        // 去重防止提交重复删除
+        commands = commands.stream().distinct().toList();
+        return commands;
+    }
+
+
+    /// 点击事件
+    @Override
+    public void actionPerformed(ActionEvent e) {
         // 检查部分
         final Map<String, Object> lyDsWs = getLayerDatasetAndWaySlc();
         if (lyDsWs == null) return;  // 用户取消操作
@@ -246,192 +276,64 @@ public class RoundCornersAction extends JosmAction {
         boolean copyTag = (boolean) params.get("copyTag");
 
         // 绘制新路径
-        Map<String, Object> cmdsAddAndWayPairs = new HashMap<>();
-        List<Command> cmdsAdd = new ArrayList<>();
-        Map<Way, Way> oldNewWayPairs = new HashMap<>();
+        Map<String, Object> cmdsAddAndWayPairs;
+        List<Command> cmdsAdd;
+        Map<Way, Way> oldNewWayPairs;
+        Map<Way, List<Long>> failedNodeIds;
         try{
             cmdsAddAndWayPairs = addCommand(dataset, selectedWays, radius, pointNum, copyTag);
             cmdsAdd = (List<Command>) cmdsAddAndWayPairs.get("commands");
             oldNewWayPairs = (Map<Way, Way>) cmdsAddAndWayPairs.get("oldNewWayPairs");
-        } catch (ColumbinaException | IllegalArgumentException exception) {
-            utils.errorInfo(exception.getMessage());
+            failedNodeIds = (Map<Way, List<Long>>) cmdsAddAndWayPairs.get("failedNodeIds");
+        } catch (ColumbinaException | IllegalArgumentException exAdd) {
+            utils.errorInfo(exAdd.getMessage());
             return;
         }
-        String undoRedoInfo = "";
+        String undoRedoInfo;
         if (selectedWays.size() == 1) undoRedoInfo = "对路径" + selectedWays.getFirst().getUniqueId() + "倒圆角：" + radius + "m";
         else if (selectedWays.size() <= 5) undoRedoInfo = "对路径" + selectedWays.stream().map(Way::getId).toList() + "倒圆角：" + radius + "m";
         else undoRedoInfo = "对" + selectedWays.size() + "条路径倒圆角：" + radius + "m";
-        Command cmdAdd = new SequenceCommand(undoRedoInfo, cmdsAdd);
-        UndoRedoHandler.getInstance().add(cmdAdd);  // 正式提交执行到命令序列
+        if (!cmdsAdd.isEmpty()) {
+            Command cmdAdd = new SequenceCommand(undoRedoInfo, cmdsAdd);
+            UndoRedoHandler.getInstance().add(cmdAdd);  // 正式提交执行到命令序列
+        }
+
+        // 有角未倒成功时提示
+        if (failedNodeIds != null && !failedNodeIds.isEmpty()) {
+            boolean hasFailedNodes = false;
+            String failedInfo = "下列拐点节点因与相邻节点距离过短未能倒角：";
+            for (Map.Entry<Way, List<Long>> failedEntry : failedNodeIds.entrySet()) {
+                if (failedEntry.getValue().isEmpty()) continue;
+                failedInfo = failedInfo
+                        + "\n路径" + failedEntry.getKey().getUniqueId()
+                        + "：" + failedEntry.getValue();
+                hasFailedNodes = true;
+            }
+            if (hasFailedNodes) utils.warnInfo(failedInfo);
+        }
 
         // 移除旧路径
         if (deleteOld) {
-            for (Map.Entry<Way, Way> oldNewWayEntry: oldNewWayPairs.entrySet()) {
-                Way oldWay = oldNewWayEntry.getKey();
-                Way newWay = oldNewWayEntry.getValue();
-
-//                Command cmdDel = new SequenceCommand("移除原有路径", delCommands);
-//                UndoRedoHandler.getInstance().add(cmdDel);
+            try {
+                List<Command> cmdsRmv = removeCommand(dataset, oldNewWayPairs);
+                if (!cmdsRmv.isEmpty()) {  // 如果全部都没有删除/替换，cmdsRmv为空会错错爆;
+                    Command cmdRmv = new SequenceCommand("移除原有路径", cmdsRmv);
+                    UndoRedoHandler.getInstance().add(cmdRmv);
                 }
+            } catch (ColumbinaException | IllegalArgumentException | ReplaceGeometryException exRemove) {
+                utils.warnInfo(exRemove.getMessage());
+                // return;
             }
+            // TODO:选中的旧路径之间有交点且不与其他路径连接时，因为现在删/换数条线是打包到一次undoRedo中同时操作，
+            //  删way1时认为交点在way2上，way2认为在way1上，一起做这些交点不会被删除/替换，需要手动处理
         }
 
-    /// 点击事件
-    @Override
-    public void actionPerformed(ActionEvent e) {
-        action();
-//        /// 检查
-//        // 检查当前的编辑图层
-//        OsmDataLayer layer = MainApplication.getLayerManager().getEditLayer();
-//        if (layer == null) {
-//            (new Notification("Columbina\n\n当前图层不可用。")).setIcon(JOptionPane.ERROR_MESSAGE).show();
-//            return;  // 图层不可用，退出
-//        }
-//        DataSet ds = MainApplication.getLayerManager().getEditDataSet();
-//
-//        // 收集所有选中的way
-//        List<Way> selection = new ArrayList<>();
-//        for (OsmPrimitive p : layer.data.getSelected()) {
-//            if (p instanceof Way) selection.add((Way) p);
-//        }
-//        // 检查是否有选中的way
-//        if (selection.isEmpty()) {
-//            (new Notification("Columbina\n\n没有选中路径。")).setIcon(JOptionPane.ERROR_MESSAGE).show();
-//            return;  // 没有选中道路，退出
-//        }
-//
-//        /// 圆角设置
-//        RoundCornersDialog dlg = new RoundCornersDialog();  // 创建设置对话框
-//        // utils.testMsgWindow(dlg.getFilletRadius() + " " + dlg.getValue());
-//        if (dlg.getValue() != 1) return;  // 按ESC（0）或点击取消（2），退出；点击确定继续是1
-//
-//        // 输入半径
-//        double radius = dlg.getFilletRadius();
-//        if (radius <= 0.0) {
-//            (new Notification("Columbina\n\n路径倒圆角半径无效。")).setIcon(JOptionPane.ERROR_MESSAGE).show();
-//            return;  // 输入无效，退出
-//        }
-//        // 曲线点数
-//        int pointNum = dlg.getFilletPointNum();
-//        if (pointNum <= 0) {
-//            (new Notification("Columbina\n\n路径倒圆角曲线点数无效。")).setIcon(JOptionPane.ERROR_MESSAGE).show();
-//            return;  // 输入无效，退出
-//        } else if (pointNum < 5) {
-//            (new Notification("Columbina\n\n路径倒圆角曲线点数较少，效果可能不理想。")).setIcon(JOptionPane.WARNING_MESSAGE).show();
-//        }
-//        // 是否删除旧路径和选择新路径
-//        boolean deleteOld = dlg.getIfDeleteOld();
-//        boolean selectNew = dlg.getIfSelectNew();
-//        boolean copyTag = dlg.getIfCopyTag();
-//
-//        // 保存设置
-//        Preference.setPreferenceFromDialog(dlg);
-//        Preference.savePreference();
-//
-//        /// 处理每条路径
-//        List<Way> newWays = new ArrayList<>();
-//        for (Way w : selection) {
-//            List<Long> failedNodes = new ArrayList<>();
-//            try {
-//                // 计算路径
-//                FilletResult filletResult = FilletGenerator.buildSmoothPolyline(w, radius, pointNum);
-//                List<Node> newNodes = null;  // 计算平滑路径，获取待画的新节点（按新路径节点顺序排列）
-//                if (filletResult != null) {
-//                    newNodes = filletResult.newNodes;
-//                }
-//                if (newNodes != null && !newNodes.isEmpty()) {
-//                    // 创建新的圆角路径
-//                    Way newWay = new Way();
-//                    for (Node n : newNodes) newWay.addNode(n);  // 向新路径添加所有新节点
-//
-//                    // 复制原Way标签
-//                    if (copyTag) {
-//                        Map<String, String> wayTags = w.getInterestingTags();  // 读取原Way的tag
-//                        newWay.setKeys(wayTags);
-//                    }
-//
-//                    // 正式绘制
-//                    List<Command> addCommands = new LinkedList<>();  // 指令
-//                    for (Node n : newNodes.stream().distinct().toList()) {  // 路径内部可能有节点复用（如闭合线），去重
-//                        if (!ds.containsNode(n))  // 新路径的节点在ds中未绘制（不是复用的）才准备绘制
-//                            addCommands.add(new AddCommand(ds, n));  // 添加节点到命令序列
-//                    }
-//                    addCommands.add(new AddCommand(ds, newWay));  // 添加线到命令序列
-//                    // 执行到命令序列
-//                    Command cmdAdd = new SequenceCommand(
-//                            "对路径 " + (w.getId() != 0 ? String.valueOf(w.getId()) : w.getUniqueId()) + " 倒圆角：" + radius + "m",
-//                            addCommands);
-//                    UndoRedoHandler.getInstance().add(cmdAdd);
-//
-//                    // 移除原路径
-//                    if (deleteOld) {
-//                        // 既有路径替换
-//                        if (w.getId() != 0) {
-//                            try {
-//                                ReplaceGeometryCommand cmdRep = ReplaceGeometryUtils.buildReplaceWithNewCommand(w, newWay);
-//                                if (cmdRep == null) {
-//                                    (new Notification(
-//                                            "Columbina尝试调用Utilsplugin2插件之「替换几何图形」功能替换旧路径，但失败。\n\n"
-//                                                    + "用户在Utilsplugin2的窗口中取消了替换操作。\n"
-//                                                    + "\n\n旧路径" + w.getUniqueId() + "未被移除。"
-//                                    )).setIcon(JOptionPane.WARNING_MESSAGE).show();
-//                                }
-//                                else UndoRedoHandler.getInstance().add(cmdRep);
-//                            } catch (ReplaceGeometryException | IllegalArgumentException utils2Info) {
-//                                (new Notification(
-//                                        "Columbina尝试调用Utilsplugin2插件之「替换几何图形」功能替换旧路径，但失败。\n\n"
-//                                                + "来自Utilsplugin2的消息：\n"
-//                                                + utils2Info.getMessage()
-//                                                + "\n\n旧路径" + w.getUniqueId() + "未被移除。"
-//                                )).setIcon(JOptionPane.WARNING_MESSAGE).show();
-//                            }
-//                        }
-//                        // 新路径删除
-//                        else {
-//                            List<Command> delCommands = new LinkedList<>();
-//                            delCommands.add(new DeleteCommand(ds, w));  // 去除路径
-//                            // 去除节点（闭合曲线会删闭合点2次，自交路径也会导致重复删除，需要去重）
-//                            // 不能用ds.ContainsNode(n)判断删没删，因为cmdDel还没提交，delCommands内部重复删除会炸
-//                            for (Node n : w.getNodes().stream().distinct().toList()) {
-//                                boolean canBeDeleted = !n.isTagged();  // 有tag不删
-//                                for (OsmPrimitive ref : n.getReferrers()) {
-//                                    if (!(ref instanceof Way && ref.equals(w))) {
-//                                        canBeDeleted = false;  // 被其他路径或关系使用，不删
-//                                        break;
-//                                    }
-//                                }
-//                                if (canBeDeleted) delCommands.add(new DeleteCommand(ds, n));
-//                            }
-//                            Command cmdDel = new SequenceCommand("移除原有路径", delCommands);
-//                            UndoRedoHandler.getInstance().add(cmdDel);
-//                        }
-//                    }
-//
-//                    // 其他
-//                    newWays.add(newWay);  // 记录新路径以供选中
-//                    failedNodes.addAll(filletResult.failedNodes);
-//                }
-//                else {
-//                    (new Notification(
-//                            "Columbina\n\n处理路径" + w.getUniqueId() + "时倒圆角函数没有返回节点。"
-//                    )).setIcon(JOptionPane.ERROR_MESSAGE).show();
-//                }
-//                if (!failedNodes.isEmpty()) {  // 没有倒角成功时警告
-//                    (new Notification(
-//                            "Columbina\n\n处理路径" + w.getUniqueId() + "时下列拐点节点因与相邻节点距离过短未能倒角：\n"
-//                                     + failedNodes
-//                    )).setIcon(JOptionPane.WARNING_MESSAGE).show();
-//                }
-//            } catch (Exception ex) {  // 处理单个路径处理时的错误，不影响其他路径
-//                (new Notification(
-//                        "Columbina\n\n处理路径" + w.getUniqueId() + "时出现了错误：\n\n"
-//                                + ex.getMessage()
-//                                + "\n\n该路径可能未产生倒圆角结果或结果错误。"
-//                )).setIcon(JOptionPane.ERROR_MESSAGE).show();
-//            }
-//        }
-//        // 选中新路径
-//        if (selectNew) ds.setSelected(newWays);
+        // 选中新路径
+        if (selectNew) {
+            List<Way> newWays = new ArrayList<>();
+            for (Map.Entry<Way, Way> oldNewWayEntry: oldNewWayPairs.entrySet()) newWays.add(oldNewWayEntry.getValue());
+            dataset.setSelected(newWays);
+        }
     }
 }
 

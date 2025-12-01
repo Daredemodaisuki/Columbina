@@ -147,8 +147,6 @@ public class FilletGenerator {
         }
 
         // 最终的经纬度坐标序列
-        // TODO:也许该直接试试在这里就写List<Node> newNodes
-        // for里面直接加Node元素
         List<Node> finalNodes = new ArrayList<>();
         // 添加起始点：如果原路径闭合，且首末点有曲线，则以首末点曲线（arcs最后一个）终点为整个新路径起点；否则使用原路径第一个节点
         boolean useLastArcLastNode = way.isClosed() && arcs.getLast() != null;

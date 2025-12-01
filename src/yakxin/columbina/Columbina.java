@@ -14,8 +14,6 @@ public class Columbina extends Plugin {
         // TODO：检查拐点两侧是否基本没弯
         // TODO：检查结果中曲线错开导致的尖角
         // TODO：实现一个统一的异常类及其处理
-        // TODO：未能成功倒角的list没有清空，每条线都弹越来越长【done】
-        // TODO：你真的要倒这么多路径吗？
     }
 }
 
