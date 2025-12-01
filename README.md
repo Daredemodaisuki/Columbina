@@ -10,6 +10,8 @@ Then in JOSM's plugin preference, search and select *Columbina* and restart. Now
 
 ## Functions · 功能
 
+All functions are located under the More Tools (M) menu. <br> 所有功能均在更多工具（M）菜单下。
+
 ### Round Corners · 圆角 〔Alt+Ctrl+Shift+C〕
 
 Allows users to fillet each corner node of the selected ways with a specified radius. <br> 允许用户对选定路径的每个拐角节点按指定半径倒圆角。
@@ -17,7 +19,7 @@ Allows users to fillet each corner node of the selected ways with a specified ra
 The plugin provides options for fillet radius, number of points per arc, copying tags from the original way, removing the original ways after drawing, and toggling selection to the new ways after drawing. <br> 插件提供倒角半径、每段曲线点数、复制原有路径标签、绘制后移除原有路径、绘制后切换选择新路径选项。
 
 ## Known Issues · 已知问题
-* When there are intersections between the ways that need to be filleted and these intersections are only referenced by the ways being filleted, they will not be removed when the old ways are deleted; <br> 当需要圆角的路径间存在交点且交点只由需要圆角的路径引用，移除旧路径时交点不会被移除；
+* When there are shared nodes between the ways that need to be filleted and these shared nodes are only referenced by the ways being filleted, they will not be removed when the old ways are deleted; <br> 当需要圆角的路径间存在交点且交点只由需要圆角的路径引用，移除旧路径时交点不会被移除；
 * Since the plugin draws the fillet first and then connects the lines, when the segment between two vertices is not long enough, the middle section between two curves may be misaligned, resulting in a sharp corner; <br> 由于是先画圆角再连线，路径折点宽度不够长时，曲线之间可能会错开导致连出尖角；
 * An arc will still be drawn when the deflection angle at a vertex is close to 180° (not exactly straight, but almost straight, meaning the central angle of the arc is almost 0°), which may lead to very dense nodes. <br> 当拐点张角接近180°时（不是直的、但几乎直的，或者说圆弧圆心角几乎为0°）也会画圆弧，可能会导致节点很密集。
 
@@ -28,4 +30,4 @@ I hope it can also be useful for everyone in the OSM community. <br> 希望对OS
 
 <s>Oops, it's turning into CAD. <br> 坏了，成CAD了</s>
 
-<sub><s>The name of this plugin has absolutely no connection to Kuutar or Columbina Hyposelenia. xd <br> 本插件的名称绝对与库塔尔或哥伦比娅·希珀塞莱尼娅无关。（笑</s></sub>
+<sub><s>The name of this plugin has absolutely no connection to Kuutar or Columbina Hyposelenia, and it's definitely not an attempt to fit the meme. xd <br> 本插件的名称绝对与库塔尔或哥伦比娅·希珀塞莱尼娅无关，绝对不是凑的名字。（笑</s></sub>
