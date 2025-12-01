@@ -12,23 +12,30 @@ import org.openstreetmap.josm.data.osm.DataSet;
 import org.openstreetmap.josm.data.osm.Node;
 import org.openstreetmap.josm.data.osm.Way;
 import org.openstreetmap.josm.gui.MainApplication;
-import org.openstreetmap.josm.gui.Notification;
 import org.openstreetmap.josm.gui.layer.OsmDataLayer;
 
 // Utilsplugin2插件
 import org.openstreetmap.josm.plugins.utilsplugin2.replacegeometry.ReplaceGeometryCommand;
 import org.openstreetmap.josm.plugins.utilsplugin2.replacegeometry.ReplaceGeometryException;
 import org.openstreetmap.josm.plugins.utilsplugin2.replacegeometry.ReplaceGeometryUtils;
+import org.openstreetmap.josm.tools.Shortcut;
 import yakxin.columbina.data.ColumbinaException;
 import yakxin.columbina.data.FilletResult;
 import yakxin.columbina.data.Preference;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
+import java.awt.event.KeyEvent;
 import java.util.*;
 
 /// 导圆角
 public class RoundCornersAction extends JosmAction {
+    private static final Shortcut shortcutRoundCorners = Shortcut.registerShortcut(
+            "tools:roundCorners",
+            "More tools: Columbina/Round corners",
+            KeyEvent.VK_C,
+            Shortcut.ALT_CTRL_SHIFT
+    );
 
     /// 添加菜单（构造函数）
     public RoundCornersAction() {
@@ -37,12 +44,10 @@ public class RoundCornersAction extends JosmAction {
                 "路径倒圆角",  // 菜单显示文本
                 "temp_icon",  // 图标
                 "对选定路径的每个拐角节点按指定半径倒圆角。",  // 工具提示
-                null,  // 暂不指定快捷键  // TODO:快捷键
-                false  // 不启用工具栏按钮
+                shortcutRoundCorners,  // 暂不指定快捷键  // TODO:快捷键
+                true,  // 启用工具栏按钮
+                false
         );
-
-        // 将动作添加到JOSM主菜单
-        MainApplication.getMenu().moreToolsMenu.add(new JMenuItem(this));
     }
 
     private Map<String, Object> getLayerDatasetAndWaySlc() {
@@ -259,21 +264,31 @@ public class RoundCornersAction extends JosmAction {
     /// 点击事件
     @Override
     public void actionPerformed(ActionEvent e) {
-        // 检查部分
-        final Map<String, Object> lyDsWs = getLayerDatasetAndWaySlc();
-        if (lyDsWs == null) return;  // 用户取消操作
-        OsmDataLayer layer = (OsmDataLayer) lyDsWs.get("layer");
-        DataSet dataset = (DataSet) lyDsWs.get("dataset");
-        List<Way> selectedWays = (List<Way>) lyDsWs.get("selectedWays");
+        OsmDataLayer layer; DataSet dataset; List<Way> selectedWays;
+        double radius; int pointNum;
+        boolean deleteOld; boolean selectNew; boolean copyTag;
 
-        // 倒角参数设置
-        final Map<String, Object> params = getParams();
-        if (params == null) return;  // 用户取消操作
-        double radius = (double) params.get("radius");
-        int pointNum = (int) params.get("pointNum");
-        boolean deleteOld = (boolean) params.get("deleteOld");
-        boolean selectNew = (boolean) params.get("selectNew");
-        boolean copyTag = (boolean) params.get("copyTag");
+        // 检查部分
+        try {
+            final Map<String, Object> lyDsWs = getLayerDatasetAndWaySlc();
+            if (lyDsWs == null) return;  // 用户取消操作
+            layer = (OsmDataLayer) lyDsWs.get("layer");
+            dataset = (DataSet) lyDsWs.get("dataset");
+            selectedWays = (List<Way>) lyDsWs.get("selectedWays");
+
+            // 倒角参数设置
+            final Map<String, Object> params = getParams();
+            if (params == null) return;  // 用户取消操作
+            radius = (double) params.get("radius");
+            pointNum = (int) params.get("pointNum");
+            deleteOld = (boolean) params.get("deleteOld");
+            selectNew = (boolean) params.get("selectNew");
+            copyTag = (boolean) params.get("copyTag");
+        } catch (ColumbinaException | IllegalArgumentException exCheck) {
+            utils.errorInfo(exCheck.getMessage());
+            return;
+        }
+
 
         // 绘制新路径
         Map<String, Object> cmdsAddAndWayPairs;
