@@ -1,1 +1,5 @@
-A JOSM pulgin.
+# Cartographic-Oriented Line Utility Modifier with Bevel and Incurve through Node Automation (Columbina)
+
+A JOSM pulgin providing convinient incurve (fillet/round corner) darwing, and ...
+
+might provides bevel and transition curve fuctions in the future.
