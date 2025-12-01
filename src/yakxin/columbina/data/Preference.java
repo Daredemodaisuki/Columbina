@@ -58,11 +58,11 @@ public final class Preference {
     }
 
     public static void readPreference() {
-        radius = Config.getPref().getDouble("columbia.radius", 150);  // 150为默认值
-        numPoint = Config.getPref().getInt("columbia.num-of-point", 20);
-        copyTag = Config.getPref().getBoolean("columbia.need-copy-tags", true);
-        deleteOldWays = Config.getPref().getBoolean("columbia.need-del-old-ways", false);
-        selectNewWays = Config.getPref().getBoolean("columbia.need-slc-new-ways", true);
+        radius = Config.getPref().getDouble("columbina.round-corner.radius", 150);  // 150为默认值
+        numPoint = Config.getPref().getInt("columbina.round-corner.num-of-point", 20);
+        copyTag = Config.getPref().getBoolean("columbina.round-corner.need-copy-tags", true);
+        deleteOldWays = Config.getPref().getBoolean("columbina.round-corner.need-del-old-ways", false);
+        selectNewWays = Config.getPref().getBoolean("columbina.round-corner.need-slc-new-ways", true);
     }
 
     public static void setPreferenceFromDialog(RoundCornersDialog dlg) {
@@ -74,11 +74,11 @@ public final class Preference {
     }
 
     public static void savePreference() {
-        Config.getPref().putDouble("columbia.radius", radius);
-        Config.getPref().putInt("columbia.num-of-point", numPoint);
-        Config.getPref().putBoolean("columbia.need-copy-tags", copyTag);
-        Config.getPref().putBoolean("columbia.need-del-old-ways", deleteOldWays);
-        Config.getPref().putBoolean("columbia.need-slc-new-ways", selectNewWays);
+        Config.getPref().putDouble("columbina.round-corner.radius", radius);
+        Config.getPref().putInt("columbina.round-corner.num-of-point", numPoint);
+        Config.getPref().putBoolean("columbina.round-corner.need-copy-tags", copyTag);
+        Config.getPref().putBoolean("columbina.round-corner.need-del-old-ways", deleteOldWays);
+        Config.getPref().putBoolean("columbina.round-corner.need-slc-new-ways", selectNewWays);
     }
 }
 
