@@ -60,9 +60,9 @@
                 <attribute name="Plugin-Class"
                            value="yakxin.columbina.Columbina"/>
                 <attribute name="Plugin-Description"
-                           value="测试。"/>
+                           value="自动倒角插件。"/>
                 <attribute name="Author" value="Yakxin"/>
-                <attribute name="Plugin-Icon" value="images/temp_icon.png"/>
+                <attribute name="Plugin-Icon" value="images/Columbina.png"/>
                 <attribute name="Plugin-Requires" value="${plugin.requires}" />
             </manifest>
         </jar>

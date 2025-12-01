@@ -42,7 +42,7 @@ public class RoundCornersAction extends JosmAction {
         // 调用父类构造函数设置动作属性
         super(
                 "路径倒圆角",  // 菜单显示文本
-                "temp_icon",  // 图标
+                "RoundCorners",  // 图标
                 "对选定路径的每个拐角节点按指定半径倒圆角。",  // 工具提示
                 shortcutRoundCorners,  // 暂不指定快捷键  // TODO:快捷键
                 true,  // 启用工具栏按钮
