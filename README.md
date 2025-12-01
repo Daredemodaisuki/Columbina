@@ -16,12 +16,12 @@ Allows users to fillet each corner node of the selected ways with a specified ra
 
 The plugin provides options for fillet radius, number of points per arc, copying tags from the original way, removing the original ways after drawing, and toggling selection to the new ways after drawing. <br> 插件提供倒角半径、每段曲线点数、复制原有路径标签、绘制后移除原有路径、绘制后切换选择新路径选项。
 
-# Known Issues · 已知问题
+## Known Issues · 已知问题
 * When there are intersections between the ways that need to be filleted and these intersections are only referenced by the ways being filleted, they will not be removed when the old ways are deleted; <br> 当需要圆角的路径间存在交点且交点只由需要圆角的路径引用，移除旧路径时交点不会被移除；
 * Since the plugin draws the fillet first and then connects the lines, when the segment between two vertices is not long enough, the middle section between two curves may be misaligned, resulting in a sharp corner; <br> 由于是先画圆角再连线，路径折点宽度不够长时，曲线之间可能会错开导致连出尖角；
 * An arc will still be drawn when the deflection angle at a vertex is close to 180° (not exactly straight, but almost straight, meaning the central angle of the arc is almost 0°), which may lead to very dense nodes. <br> 当拐点张角接近180°时（不是直的、但几乎直的，或者说圆弧圆心角几乎为0°）也会画圆弧，可能会导致节点很密集。
 
-# About · 关于
+## About · 关于
 Actually, this plugin was developed for OpenGeofiction (OGF), a fictional world mapping project based on the OpenStreetMap (OSM) framework. It addresses the difficulty in JOSM of drawing long-distance transportation features (such as railways and highways) and small-radius fillets (like the rounded corners at airport taxiway intersections). This plugin is a small contribution to the OGF community. <br> 其实这个插件是为了OpenGeofiction（OGF）开发，这是一个基于OpenStreetMap（OSM）框架的架空地图项目，其中的长距离交通设置（如铁路、高速公路）和一些小拐角（如机场滑行道交叉点的圆角）在JOSM中很难实现，故开发了这个插件，算是对OGF社区的一点微小的贡献。
 
 I hope it can also be useful for everyone in the OSM community. <br> 希望对OSM社区的大家也有用处。
