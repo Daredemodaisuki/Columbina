@@ -1,22 +1,29 @@
 # Cartographic-Oriented Line Utility Modifier with Bevel through Interpolated Node Automation (*Columbina*) <br> 制图向节点插值自动化倒角路径实用修改器
 
-A Java OpenStreetMap (JOSM) pulgin providing convinient fillet (round corner) darwing, and … <br> might provide bevel and transition curve fuctions in the future. <br> 一个提供圆角工具的Java OpenStreetMap（JOSM）插件，未来计划开发倒角和缓和曲线功能。
+A Java OpenStreetMap (JOSM) pulgin providing convenient fillet (round corner) drawing, and … <br> might provide bevel and transition curve functions in the future. <br> 一个提供圆角工具的Java OpenStreetMap（JOSM）插件，未来计划开发倒角和缓和曲线功能。
 
 ## Quick Start · 快速开始
 
-To get quick start, please download the release and copy it to you JOSM plugin filder<code> %APPDATA%\JOSM\plugins\ </code>(for Windows). <br> 如欲快速开始，劳烦您下载发布版本，并复制到JOSM的插件文件夹<code> %APPDATA%\JOSM\plugins\ </code>（视窗系统）下。
+To get quick start, please download the release and copy it to your JOSM plugin folder<code> %APPDATA%\JOSM\plugins\ </code>(for Windows). <br> 如欲快速开始，劳烦您下载发布版本，并复制到JOSM的插件文件夹<code> %APPDATA%\JOSM\plugins\ </code>（视窗系统）下。
 
 Then in JOSM's plugin preference, search and select *Columbina* and restart. Now you could use this plugin. <br> 随后在JOSM首选项之插件设置中，搜寻*Columbina*并勾选启用，重启JOSM后即可使用插件。
 
+This plugin depends on another plugin, Utilsplugin2, which is typically included with JOSM by default. If your JOSM does not have Utilsplugin2 installed, JOSM will prompt you to install it. <br> 本插件依赖另一插件Utilsplugin2，其通常由JOSM自带，如果您的JOSM没有安装Utilsplugin2，JOSM会要求你一并安装。
+
 ## Functions · 功能
 
-All functions are located under the More Tools (M) menu. <br> 所有功能均在更多工具（M）菜单下。
+All functions are located under the More Tools (M) menu. <br> 所有功能均在更多工具〔M〕菜单下。
 
 ### Round Corners · 圆角 〔Alt+Ctrl+Shift+C〕
 
 Allows users to fillet each corner node of the selected ways with a specified radius. <br> 允许用户对选定路径的每个拐角节点按指定半径倒圆角。
 
 The plugin provides options for fillet radius, number of points per arc, copying tags from the original way, removing the original ways after drawing, and toggling selection to the new ways after drawing. <br> 插件提供倒角半径、每段曲线点数、复制原有路径标签、绘制后移除原有路径、绘制后切换选择新路径选项。
+
+When "Remove original way after drawing" is enabled: <br> 注意：启用「绘制后移除原有路径」时：
+
+* For old ways that have already been uploaded, the plugin will invoke the "Replace Geometry" function of the Utilsplugin2 to replace the old way in order to preserve its data history. Therefore, if the old way does not meet the requirements for the Replace Geometry function (e.g., it is not entirely within the downloaded area), the replacement will fail and the old way will be retained. <br> 对于已上传的旧路径，插件将调用Utilsplgin2之「替换几何图形」功能替换旧路径以保留数据历史版本，故当旧路径不满足替换几何图形功能的要求时（如未完全在下载区域中），替换将失败，旧路径将保留；对于新绘制、未上传的旧路径，插件将会直接删除。
+* For newly drawn, unuploaded old ways, the plugin will delete them directly. <br> 对于新绘制、未上传的旧路径，插件将会直接删除。
 
 ## Known Issues · 已知问题
 * When there are shared nodes between the ways that need to be filleted and these shared nodes are only referenced by the ways being filleted, they will not be removed when the old ways are deleted; <br> 当需要圆角的路径间存在交点且交点只由需要圆角的路径引用，移除旧路径时交点不会被移除；

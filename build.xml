@@ -60,7 +60,7 @@
                 <attribute name="Plugin-Class"
                            value="yakxin.columbina.Columbina"/>
                 <attribute name="Plugin-Description"
-                           value="自动倒角插件。"/>
+                           value="Cartographic-Oriented Line Utility Modifier with Bevel through Interpolated Node Automation。"/>
                 <attribute name="Author" value="Yakxin"/>
                 <attribute name="Plugin-Icon" value="images/Columbina.png"/>
                 <attribute name="Plugin-Requires" value="${plugin.requires}" />
