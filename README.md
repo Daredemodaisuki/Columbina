@@ -2,6 +2,10 @@
 
 A Java OpenStreetMap (JOSM) pulgin providing convenient fillet (round corner) drawing, and … <br> might provide bevel and transition curve Features in the future. <br> 一个提供圆角工具的Java OpenStreetMap（JOSM）插件，未来计划开发倒角和缓和曲线功能。
 
+<p align="right">
+  <img src="ColumbinaRC.png" alt="Round Corner Menu" width="40%">
+</p>
+
 ## Quick Start · 快速开始
 
 To get quick start, please download the release and copy it to your JOSM plugin folder<code> %APPDATA%\JOSM\plugins\ </code>(for Windows). <br> 如欲快速开始，劳烦您下载发布版本，并复制到JOSM的插件文件夹<code> %APPDATA%\JOSM\plugins\ </code>（视窗系统）下。
@@ -14,7 +18,7 @@ This plugin depends on another plugin, Utilsplugin2, which is typically included
 
 All features are located under the More Tools (M) menu. <br> 所有功能均在更多工具〔M〕菜单下。
 
-### Round Corners · 圆角 〔Alt+Ctrl+Shift+C〕
+### Round Corner · 圆角 〔Alt+Ctrl+Shift+C〕
 
 Allows users to fillet each corner node of the selected ways with a specified radius. <br> 允许用户对选定路径的每个拐角节点按指定半径倒圆角。
 
