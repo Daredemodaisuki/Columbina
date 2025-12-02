@@ -1,6 +1,6 @@
 # Cartographic-Oriented Line Utility Modifier with Bevel through Interpolated Node Automation (*Columbina*) <br> 制图向节点插值自动化倒角路径实用修改器
 
-A Java OpenStreetMap (JOSM) pulgin providing convenient fillet (round corner) drawing, and … <br> might provide bevel and transition curve functions in the future. <br> 一个提供圆角工具的Java OpenStreetMap（JOSM）插件，未来计划开发倒角和缓和曲线功能。
+A Java OpenStreetMap (JOSM) pulgin providing convenient fillet (round corner) drawing, and … <br> might provide bevel and transition curve Features in the future. <br> 一个提供圆角工具的Java OpenStreetMap（JOSM）插件，未来计划开发倒角和缓和曲线功能。
 
 ## Quick Start · 快速开始
 
@@ -10,15 +10,15 @@ Then in JOSM's plugin preference, search and select *Columbina* and restart. Now
 
 This plugin depends on another plugin, Utilsplugin2, which is typically included with JOSM by default. If your JOSM does not have Utilsplugin2 installed, JOSM will prompt you to install it. <br> 本插件依赖另一插件Utilsplugin2，其通常由JOSM自带，如果您的JOSM没有安装Utilsplugin2，JOSM会要求你一并安装。
 
-## Functions · 功能
+## Features · 功能
 
-All functions are located under the More Tools (M) menu. <br> 所有功能均在更多工具〔M〕菜单下。
+All features are located under the More Tools (M) menu. <br> 所有功能均在更多工具〔M〕菜单下。
 
 ### Round Corners · 圆角 〔Alt+Ctrl+Shift+C〕
 
 Allows users to fillet each corner node of the selected ways with a specified radius. <br> 允许用户对选定路径的每个拐角节点按指定半径倒圆角。
 
-The plugin provides options for fillet radius, number of points per arc, copying tags from the original way, removing the original ways after drawing, and toggling selection to the new ways after drawing. <br> 插件提供倒角半径、每段曲线点数、复制原有路径标签、绘制后移除原有路径、绘制后切换选择新路径选项。
+The plugin supports specifying the arc radius for fillets. Node density can be controlled via central angle increments, and a maximum number of points per curve segment is also provided for control. Additionally, the plugin offers options to copy tags from the original way, remove the original way after drawing, and toggle selection to the new way after drawing. <br> 插件支持指定圆角的圆弧半径，可以通过圆心角步进控制节点密度并提供每段曲线最大点数控制。插件亦提供复制原有路径标签、绘制后移除原有路径、绘制后切换选择新路径的选项。
 
 When "Remove original way after drawing" is enabled: <br> 注意：启用「绘制后移除原有路径」时：
 
@@ -27,8 +27,7 @@ When "Remove original way after drawing" is enabled: <br> 注意：启用「绘�
 
 ## Known Issues · 已知问题
 * When there are shared nodes between the ways that need to be filleted and these shared nodes are only referenced by the ways being filleted, they will not be removed when the old ways are deleted; <br> 当需要圆角的路径间存在交点且交点只由需要圆角的路径引用，移除旧路径时交点不会被移除；
-* Since the plugin draws the fillet first and then connects the lines, when the segment between two vertices is not long enough, the middle section between two curves may be misaligned, resulting in a sharp corner; <br> 由于是先画圆角再连线，路径折点宽度不够长时，曲线之间可能会错开导致连出尖角；
-* An arc will still be drawn when the deflection angle at a vertex is close to 180° (not exactly straight, but almost straight, meaning the central angle of the arc is almost 0°), which may lead to very dense nodes. <br> 当拐点张角接近180°时（不是直的、但几乎直的，或者说圆弧圆心角几乎为0°）也会画圆弧，可能会导致节点很密集。
+* Since the plugin draws the fillet first and then connects the lines, when the segment between two vertices is not long enough, the middle section between two curves may be misaligned, resulting in a sharp corner. <br> 由于是先画圆角再连线，路径折点宽度不够长时，曲线之间可能会错开导致连出尖角。
 
 ## About · 关于
 Actually, this plugin was developed for OpenGeofiction (OGF), a fictional world mapping project based on the OpenStreetMap (OSM) framework. It addresses the difficulty in JOSM of drawing long-distance transportation features (such as railways and highways) and small-radius fillets (like the rounded corners at airport taxiway intersections). This plugin is a small contribution to the OGF community. <br> 其实这个插件是为了OpenGeofiction（OGF）开发，这是一个基于OpenStreetMap（OSM）框架的架空地图项目，其中的长距离交通设置（如铁路、高速公路）和一些小拐角（如机场滑行道交叉点的圆角）在JOSM中很难实现，故开发了这个插件，算是对OGF社区的一点微小的贡献。
