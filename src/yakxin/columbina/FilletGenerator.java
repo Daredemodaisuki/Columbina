@@ -87,8 +87,8 @@ public class FilletGenerator {
 
         // 生成圆弧上的点
         int numAngleSteps = Math.max(  // 步进段数，不算开头结尾的点数=步进段数-2
-                Math.min((int) (theta / Math.toRadians(angleStep)), maxNumPoints + 1),  // 最大50点的话步进有51段
-                1
+                Math.min((int) ((Math.PI - theta) / Math.toRadians(angleStep)), maxNumPoints + 1),  // 最大50点的话步进有51段
+                1  // 注意θ是张角，张角越小圆心角越大、弧长越长，点数越多
         );  // 至少1段0点（相当于切角），至多maxNumPoints+1段maxNumPoints点
         // TODO：切角可以快速实现了
         List<EastNorth> arc = new ArrayList<>();

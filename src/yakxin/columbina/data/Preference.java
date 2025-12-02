@@ -5,7 +5,7 @@ import yakxin.columbina.RoundCornersDialog;
 
 public final class Preference {
     private Preference() {
-    }
+    }  // 不让创建实例？
 
     static {
         readPreference();

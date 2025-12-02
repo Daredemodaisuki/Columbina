@@ -19,6 +19,8 @@ import org.openstreetmap.josm.plugins.utilsplugin2.replacegeometry.ReplaceGeomet
 import org.openstreetmap.josm.plugins.utilsplugin2.replacegeometry.ReplaceGeometryException;
 import org.openstreetmap.josm.plugins.utilsplugin2.replacegeometry.ReplaceGeometryUtils;
 import org.openstreetmap.josm.tools.Shortcut;
+
+// 哥伦比娅.data
 import yakxin.columbina.data.ColumbinaException;
 import yakxin.columbina.data.FilletResult;
 import yakxin.columbina.data.Preference;
@@ -50,8 +52,8 @@ public class RoundCornersAction extends JosmAction {
         );
     }
 
-    private Map<String, Object> getLayerDatasetAndWaySlc() {
-        Map<String, Object> result = new HashMap<>();
+    private LayerDatasetAndWaySlc getLayerDatasetAndWaySlc() {
+        // Map<String, Object> result = new HashMap<>();
 
         OsmDataLayer layer = MainApplication.getLayerManager().getEditLayer();  // 当前的编辑图层
         if (layer == null) throw new ColumbinaException("当前图层不可用。");
@@ -75,60 +77,72 @@ public class RoundCornersAction extends JosmAction {
             if (confirmTooMany == JOptionPane.NO_OPTION) return null;
         }
 
-        result.put("layer", layer);
-        result.put("dataset", dataset);
-        result.put("selectedWays", waySelection);
-        return result;
+        // result.put("layer", layer);
+        // result.put("dataset", dataset);
+        // result.put("selectedWays", waySelection);
+        return new LayerDatasetAndWaySlc(layer, dataset, waySelection);
     }
 
-    private Map<String, Object> getParams() {
-        Map<String, Object> result = new HashMap<>();
+    private Params getParams() {
+        // Map<String, Object> result = new HashMap<>();
         RoundCornersDialog dialog = new RoundCornersDialog();  // 创建设置对话框
 
         if (dialog.getValue() != 1) return null;  // 按ESC（0）或点击取消（2），退出；点击确定继续是1
 
         double radius = dialog.getFilletRadius();  // 圆角半径
         if (radius <= 0.0) throw new IllegalArgumentException("路径倒圆角半径无效，应高于0m。");
-        result.put("radius", radius);
+        // result.put("radius", radius);
 
         double angleStep = dialog.getFilletAngleStep();  // 圆角步进
         if (angleStep < 0.1) throw new IllegalArgumentException("路径倒圆角步进无效，应至少为0.1°。");
         else if (angleStep > 10.0) utils.warnInfo("圆角步进较大，效果可能不理想。");
-        result.put("angleStep", angleStep);
+        // result.put("angleStep", angleStep);
 
         int maxPointNum = dialog.getFilletMaxPointNum();  // 曲线点数
         if (maxPointNum < 1) throw new IllegalArgumentException("路径最大倒圆角曲线点数无效，应至少为1。");
         else if (maxPointNum < 5) utils.warnInfo("最大路径倒圆角曲线点数较少，效果可能不理想。");
-        result.put("maxPointNum", maxPointNum);
+        // result.put("maxPointNum", maxPointNum);
 
         double minAngleDeg = dialog.getMinAngleDeg();  // 最小张角
-        if (minAngleDeg < 0.0) utils.warnInfo("最小张角应至少为0°，已设置为0°。");  // 窗口类的getMinAngleDeg返回里做了判断，最小返回0
-        result.put("minAngleDeg", minAngleDeg);
+        if (minAngleDeg < 0.0) {
+            minAngleDeg = 0.0;
+            dialog.setMinAngleDeg(0.0);
+            utils.warnInfo("最小张角应至少为0°，已设置为0°。");
+        }
+        // result.put("minAngleDeg", minAngleDeg);
 
         double maxAngleDeg = dialog.getMaxAngleDeg();  // 最大张角
-        if (maxAngleDeg > 180.0) utils.warnInfo("最大张角应至多为180°，已设置为180°。");  // 窗口类的getMinAngleDeg返回里做了判断，最大返回180
-        result.put("maxAngleDeg", maxAngleDeg);
+        if (maxAngleDeg > 180.0) {
+            maxAngleDeg = 180.0;
+            dialog.setMaxAngleDeg(180.0);
+            utils.warnInfo("最大张角应至多为180°，已设置为180°。");
+        }
+        // result.put("maxAngleDeg", maxAngleDeg);
 
 
         // 是否删除旧路径、选择新路径、复制旧路径标签
-        result.put("deleteOld", dialog.getIfDeleteOld());
-        result.put("selectNew", dialog.getIfSelectNew());
-        result.put("copyTag", dialog.getIfCopyTag());
+        // result.put("deleteOld", dialog.getIfDeleteOld());
+        // result.put("selectNew", dialog.getIfSelectNew());
+        // result.put("copyTag", dialog.getIfCopyTag());
 
         // 保存设置
         Preference.setPreferenceFromDialog(dialog);
         Preference.savePreference();
-        return result;
+        return new Params(
+                radius, angleStep, maxPointNum,
+                minAngleDeg, maxAngleDeg,
+                dialog.getIfDeleteOld(), dialog.getIfSelectNew(), dialog.getIfCopyTag()
+        );
     }
 
     // 画一条线及其新节点的指令
-    private Map<String, Object> getNewNodeWayCmd(
+    private NewNodeWayCmd getNewNodeWayCmd(
             DataSet ds, Way w,
             double radius, double angleStep, int pointNum,
             double minAngleDeg, double maxAngleDeg,
             boolean copyTag
     ) {
-        Map<String, Object> results = new HashMap<>();
+        // Map<String, Object> results = new HashMap<>();
 
         // 计算平滑路径，获取待画的新节点（按新路径节点顺序排列）
         FilletResult filletResult = FilletGenerator.buildSmoothPolyline(
@@ -159,20 +173,20 @@ public class RoundCornersAction extends JosmAction {
         }
         addCommands.add(new AddCommand(ds, newWay));  // 添加线到命令序列
 
-        results.put("newWay", newWay);
-        results.put("addCommands", addCommands);
-        results.put("failedNodeIds", failedNodeIds);
-        return results;
+        // results.put("newWay", newWay);
+        // results.put("addCommands", addCommands);
+        // results.put("failedNodeIds", failedNodeIds);
+        return new NewNodeWayCmd(newWay, addCommands, failedNodeIds);
     }
 
     // 汇总全部添加指令
-    public Map<String, Object> addCommand(
+    public AddCommandsCollected addCommand(
             DataSet ds, List<Way> selectedWays,
             double radius, double angleStep, int maxPointNum,
             double minAngleDeg, double maxAngleDeg,
             boolean copyTag
     ) {
-        Map<String, Object> result = new HashMap<>();
+        // Map<String, Object> result = new HashMap<>();
         List<Command> commands = new ArrayList<>();
         Map<Way, Way> oldNewWayPairs = new HashMap<>();
         Map<Way, List<Long>> failedNodeIds = new HashMap<>();
@@ -181,16 +195,16 @@ public class RoundCornersAction extends JosmAction {
         // List<Way> newWays = new ArrayList<>();
         for (Way w : selectedWays) {  // 分别处理每条路径
             try {  // 一条路径出错尽可能不影响其他的
-                Map<String, Object> newNWCmd = getNewNodeWayCmd(
+                NewNodeWayCmd newNWCmd = getNewNodeWayCmd(
                         ds, w,
                         radius, angleStep, maxPointNum,
                         minAngleDeg, maxAngleDeg,
                         copyTag);
 
                 if (newNWCmd != null) {  // TODO：检查会否和已提交但未执行（进入ds）的重复提交？
-                    commands.addAll((List<Command>) newNWCmd.get("addCommands"));
-                    oldNewWayPairs.put(w, (Way) newNWCmd.get("newWay"));
-                    failedNodeIds.put(w, (List<Long>) newNWCmd.get("failedNodeIds"));
+                    commands.addAll(newNWCmd.addCommands);
+                    oldNewWayPairs.put(w, newNWCmd.newWay);
+                    failedNodeIds.put(w, newNWCmd.failedNodeIds);
                 }
                 else utils.warnInfo("处理路径" + w.getUniqueId() + "时算法没有返回足以构成路径的至少2个节点，该路径未处理。");
             } catch (Exception exAdd) {
@@ -204,10 +218,10 @@ public class RoundCornersAction extends JosmAction {
         // 去重防止提交重复添加
         commands = commands.stream().distinct().toList();
 
-        result.put("commands", commands);
-        result.put("oldNewWayPairs", oldNewWayPairs);
-        result.put("failedNodeIds", failedNodeIds);
-        return result;
+        // result.put("commands", commands);
+        // result.put("oldNewWayPairs", oldNewWayPairs);
+        // result.put("failedNodeIds", failedNodeIds);
+        return new AddCommandsCollected(commands, oldNewWayPairs, failedNodeIds);
     }
 
     // 移除/替换一条旧路径及无用节点的指令
@@ -301,23 +315,26 @@ public class RoundCornersAction extends JosmAction {
 
         // 检查部分
         try {
-            final Map<String, Object> lyDsWs = getLayerDatasetAndWaySlc();
+            final LayerDatasetAndWaySlc lyDsWs = getLayerDatasetAndWaySlc();
             if (lyDsWs == null) return;  // 用户取消操作
-            layer = (OsmDataLayer) lyDsWs.get("layer");
-            dataset = (DataSet) lyDsWs.get("dataset");
-            selectedWays = (List<Way>) lyDsWs.get("selectedWays");
+            // layer = (OsmDataLayer) lyDsWs.get("layer");
+            // dataset = (DataSet) lyDsWs.get("dataset");
+            // selectedWays = (List<Way>) lyDsWs.get("selectedWays");
+            layer = lyDsWs.layer;
+            dataset = lyDsWs.dataset;
+            selectedWays = lyDsWs.selectedWays;
 
             // 倒角参数设置
-            final Map<String, Object> params = getParams();
+            final Params params = getParams();
             if (params == null) return;  // 用户取消操作
-            radius = (double) params.get("radius");
-            pointNum = (int) params.get("maxPointNum");
-            angleStep = (double) params.get("angleStep");
-            deleteOld = (boolean) params.get("deleteOld");
-            selectNew = (boolean) params.get("selectNew");
-            copyTag = (boolean) params.get("copyTag");
-            minAngleDeg = (double) params.get("minAngleDeg");
-            maxAngleDeg = (double) params.get("maxAngleDeg");
+            radius = params.radius;
+            pointNum = params.maxPointNum;
+            angleStep = params.angleStep;
+            deleteOld = params.deleteOld;
+            selectNew = params.selectNew;
+            copyTag = params.copyTag;
+            minAngleDeg = params.minAngleDeg;
+            maxAngleDeg = params.maxAngleDeg;
         } catch (ColumbinaException | IllegalArgumentException exCheck) {
             utils.errorInfo(exCheck.getMessage());
             return;
@@ -325,7 +342,7 @@ public class RoundCornersAction extends JosmAction {
 
 
         // 绘制新路径
-        Map<String, Object> cmdsAddAndWayPairs;
+        AddCommandsCollected cmdsAddAndWayPairs;
         List<Command> cmdsAdd;
         Map<Way, Way> oldNewWayPairs;
         Map<Way, List<Long>> failedNodeIds;
@@ -335,9 +352,9 @@ public class RoundCornersAction extends JosmAction {
                     radius, angleStep, pointNum,
                     minAngleDeg, maxAngleDeg,
                     copyTag);
-            cmdsAdd = (List<Command>) cmdsAddAndWayPairs.get("commands");
-            oldNewWayPairs = (Map<Way, Way>) cmdsAddAndWayPairs.get("oldNewWayPairs");
-            failedNodeIds = (Map<Way, List<Long>>) cmdsAddAndWayPairs.get("failedNodeIds");
+            cmdsAdd = cmdsAddAndWayPairs.commands;
+            oldNewWayPairs = cmdsAddAndWayPairs.oldNewWayPairs;
+            failedNodeIds = cmdsAddAndWayPairs.failedNodeIds;
         } catch (ColumbinaException | IllegalArgumentException exAdd) {
             utils.errorInfo(exAdd.getMessage());
             return;
@@ -386,6 +403,70 @@ public class RoundCornersAction extends JosmAction {
             List<Way> newWays = new ArrayList<>();
             for (Map.Entry<Way, Way> oldNewWayEntry: oldNewWayPairs.entrySet()) newWays.add(oldNewWayEntry.getValue());
             dataset.setSelected(newWays);
+        }
+    }
+
+
+    /// 数据类
+    private static final class LayerDatasetAndWaySlc {
+        public final OsmDataLayer layer;
+        public final DataSet dataset;
+        public final List<Way> selectedWays;
+
+        public LayerDatasetAndWaySlc(OsmDataLayer layer, DataSet dataset, List<Way> selectedWays) {
+            this.layer = layer;
+            this.dataset = dataset;
+            this.selectedWays = selectedWays;
+        }
+    }
+
+    private static final class Params {
+        public final double radius;
+        public final double angleStep;
+        public final int maxPointNum;
+        public final double minAngleDeg;
+        public final double maxAngleDeg;
+        public final boolean deleteOld;
+        public final boolean selectNew;
+        public final boolean copyTag;
+
+        public Params(
+                double radius, double angleStep, int maxPointNum,
+                double minAngleDeg, double maxAngleDeg,
+                boolean deleteOld, boolean selectNew, boolean copyTag
+        ) {
+            this.radius = radius;
+            this.angleStep = angleStep;
+            this.maxPointNum = maxPointNum;
+            this.minAngleDeg = minAngleDeg;
+            this.maxAngleDeg = maxAngleDeg;
+            this.deleteOld = deleteOld;
+            this.selectNew = selectNew;
+            this.copyTag = copyTag;
+        }
+    }
+
+    private static final class NewNodeWayCmd {
+        public final Way newWay;
+        public final List<Command> addCommands;
+        public final List<Long> failedNodeIds;
+
+        public NewNodeWayCmd(Way newWay, List<Command> addCommands, List<Long> failedNodeIds) {
+            this.newWay = newWay;
+            this.addCommands = addCommands;
+            this.failedNodeIds = failedNodeIds;
+        }
+    }
+
+    private static final class AddCommandsCollected {
+        public final List<Command> commands;
+        public final Map<Way, Way> oldNewWayPairs;
+        public final Map<Way, List<Long>> failedNodeIds;
+
+        public AddCommandsCollected(List<Command> commands, Map<Way, Way> oldNewWayPairs, Map<Way, List<Long>> failedNodeIds) {
+            this.commands = commands;
+            this.oldNewWayPairs = oldNewWayPairs;
+            this.failedNodeIds = failedNodeIds;
         }
     }
 }

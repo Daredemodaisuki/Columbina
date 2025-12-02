@@ -99,15 +99,14 @@ public class RoundCornersDialog extends ExtendedDialog {
     }
     public double getMinAngleDeg() {
         try {
-            return Math.max(0.0, NumberFormat.getInstance().parse(minAngleDeg.getText()).doubleValue());
+            return NumberFormat.getInstance().parse(minAngleDeg.getText()).doubleValue();
         } catch (ParseException e) {
             return Preference.DEFAULT_MIN_ANGLE_DEG;
-            // 最小、最大允许张角范围外会强制0°、180°
         }
     }
     public double getMaxAngleDeg() {
         try {
-            return Math.min(180.0, NumberFormat.getInstance().parse(maxAngleDeg.getText()).doubleValue());
+            return NumberFormat.getInstance().parse(maxAngleDeg.getText()).doubleValue();
         } catch (ParseException e) {
             return Preference.DEFAULT_MAX_ANGLE_DEG;
         }
@@ -115,6 +114,9 @@ public class RoundCornersDialog extends ExtendedDialog {
     public boolean getIfCopyTag() {return copyTag.isSelected();}
     public boolean getIfDeleteOld() {return deleteOldWays.isSelected();}
     public boolean getIfSelectNew() {return selectNewWays.isSelected();}
+
+    public void setMinAngleDeg(double angleDeg) {minAngleDeg.setText(String.valueOf(angleDeg));}
+    public void setMaxAngleDeg(double angleDeg) {maxAngleDeg.setText(String.valueOf(angleDeg));}
 }
 
 
