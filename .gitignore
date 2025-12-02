@@ -25,3 +25,5 @@ replay_pid*
 
 # Others
 design/
+i18n/.idea
+i18n/example

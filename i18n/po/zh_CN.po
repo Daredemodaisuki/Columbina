@@ -1,0 +1,224 @@
+# I18n for Columbina plugin
+# Copyright (c) Yakxin 2025
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: Columbina Plugin\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2025-12-02 11:45+0800\n"
+"PO-Revision-Date: 2025-12-02 19:19+0800\n"
+"Last-Translator: \n"
+"Language-Team: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+"X-Generator: Manual\n"
+"Language: en\n"
+
+
+#: ../../src/yakxin/columbina/RoundCornersAction.java:47
+#: ../../src/yakxin/columbina/RoundCornersAction.java:75
+#: ../../src/yakxin/columbina/RoundCornersDialog.java:52
+msgid "Round Corners"
+msgstr "路径倒圆角"
+
+#: ../../src/yakxin/columbina/RoundCornersAction.java:49
+msgid "Round corners of selected ways with specified radius."
+msgstr "对选定路径的每个拐角节点按指定半径倒圆角。"
+
+#: ../../src/yakxin/columbina/RoundCornersAction.java:60
+msgid "Current layer is not available."
+msgstr "当前图层不可用。"
+
+#: ../../src/yakxin/columbina/RoundCornersAction.java:63
+msgid "Current dataset is not available."
+msgstr "当前数据库不可用。"
+
+#: ../../src/yakxin/columbina/RoundCornersAction.java:70
+msgid "No way is selected."
+msgstr "当前未选中路径。"
+
+#: ../../src/yakxin/columbina/RoundCornersAction.java:74
+msgid "Are you sure you want to process {0} ways at once? This may take a long time."
+msgstr "真的需要一次性为{0}条路径进行操作？可能要花老长时间了。"
+
+#: ../../src/yakxin/columbina/RoundCornersAction.java:94
+msgid "Invalid round corner radius, should be greater than 0m."
+msgstr "路径倒圆角半径无效，应高于0m。"
+
+#: ../../src/yakxin/columbina/RoundCornersAction.java:101
+msgid "Minimum angle step for round corner should be at least 0.1°, set to 0.1°."
+msgstr "最小路径倒圆角步进应至少为0.1°，已设置为0.1°。"
+
+#: ../../src/yakxin/columbina/RoundCornersAction.java:103
+msgid "Angle step is too large, the result may not be good."
+msgstr "圆角步进较大，效果可能不理想。"
+
+#: ../../src/yakxin/columbina/RoundCornersAction.java:107
+msgid "Invalid maximum number of points for round corner, should be at least 1."
+msgstr "路径最大倒圆角曲线点数无效，应至少为1。"
+
+#: ../../src/yakxin/columbina/RoundCornersAction.java:108
+msgid "Maximum number of points for round corner is too low, the result may not be ideal."
+msgstr "最大路径倒圆角曲线点数较少，效果可能不理想。"
+
+#: ../../src/yakxin/columbina/RoundCornersAction.java:115
+msgid "Minimum angle should be at least 0°, set to 0°."
+msgstr "最小张角应至少为0°，已设置为0°。"
+
+#: ../../src/yakxin/columbina/RoundCornersAction.java:123
+msgid "Maximum angle should be at most 180°, set to 180°."
+msgstr "最大张角应至多为180°，已设置为180°。"
+
+#: ../../src/yakxin/columbina/RoundCornersAction.java:214
+msgid "Algorithm did not return at least 2 nodes to form a way for way {0}, this way was not processed."
+msgstr "处理路径{0}时算法没有返回足以构成路径的至少2个节点，该路径未处理。"
+
+#: ../../src/yakxin/columbina/RoundCornersAction.java:219
+msgid "Unexpected error occurred while processing way {0}: {1}"
+msgstr "处理路径{0}时产生了意外错误：{1}"
+
+#: ../../src/yakxin/columbina/RoundCornersAction.java:226
+msgid "Failed to generate any new way."
+msgstr "未能成功生成一条新路径。"
+
+#: ../../src/yakxin/columbina/RoundCornersAction.java:246
+#: ../../src/yakxin/columbina/RoundCornersAction.java:318
+msgid "Columbina attempted to use Utilsplugin2''s ''Replace Geometry'' function to replace the old way, but failed.\n\n"
+msgstr "Columbina尝试调用Utilsplugin2插件之「替换几何图形」功能替换旧路径，但失败。\n\n"
+
+#: ../../src/yakxin/columbina/RoundCornersAction.java:247
+msgid "The user canceled the replacement operation in the Utilsplugin2 window.\n\n"
+msgstr "用户在Utilsplugin2的窗口中取消了替换操作。\n\n"
+
+#: ../../src/yakxin/columbina/RoundCornersAction.java:248
+#: ../../src/yakxin/columbina/RoundCornersAction.java:320
+msgid "Old way {0} was not removed."
+msgstr "旧路径{0}未被移除。"
+
+#: ../../src/yakxin/columbina/RoundCornersAction.java:277
+msgid "Old way {0} is still referenced by relations, not removed."
+msgstr "旧路径{0}仍被关系引用，未移除。"
+
+#: ../../src/yakxin/columbina/RoundCornersAction.java:294
+msgid "Internal error occurred while removing an old way:\n\n"
+msgstr "移除某条旧路径时产生了内部错误：\n\n"
+
+#: ../../src/yakxin/columbina/RoundCornersAction.java:295
+msgid "Old way return value is abnormal (null), unable to get the old way.\n\n"
+msgstr "旧路径返回值异常（null），无法获取旧路径。\n\n"
+
+#: ../../src/yakxin/columbina/RoundCornersAction.java:296
+msgid "This way may not have been properly rounded or removed."
+msgstr "该路径可能未被正确倒角或移除。"
+
+#: ../../src/yakxin/columbina/RoundCornersAction.java:303
+msgid "Internal error occurred while removing old way {0}:\n\n"
+msgstr "移除旧路径{0}时产生了内部错误：\n\n"
+
+#: ../../src/yakxin/columbina/RoundCornersAction.java:304
+msgid "New way return value is abnormal (null), unable to get the new way.\n\n"
+msgstr "新路径返回值异常（null），无法获取新路径。\n\n"
+
+#: ../../src/yakxin/columbina/RoundCornersAction.java:305
+msgid "Old way {0} may not have been properly rounded or removed."
+msgstr "旧路径{0}可能未被正确倒角或移除。"
+
+#: ../../src/yakxin/columbina/RoundCornersAction.java:319
+msgid "Message from Utilsplugin2:\n{0}\n\n"
+msgstr "来自Utilsplugin2的消息：\n{0}\n\n"
+
+#: ../../src/yakxin/columbina/RoundCornersAction.java:326
+msgid "Unexpected error occurred while removing way {0}: {1}"
+msgstr "移除路径{0}时产生了意外错误：{1}"
+
+#: ../../src/yakxin/columbina/RoundCornersAction.java:395
+#: ../../src/yakxin/columbina/RoundCornersAction.java:396
+msgid "Round corners of way {0}: {1}m"
+msgstr "对路径{0}倒圆角：{1}m"
+
+#: ../../src/yakxin/columbina/RoundCornersAction.java:397
+msgid "Round corners of {0} ways: {1}m"
+msgstr "对路径{0}倒圆角：{1}m"
+
+#: ../../src/yakxin/columbina/RoundCornersAction.java:406
+msgid "The following corner nodes could not be rounded due to too short distance to adjacent nodes or not meeting the angle restrictions: "
+msgstr "下列拐点节点因与相邻节点距离过短或未满足拐角角度限制未能倒角："
+
+#: ../../src/yakxin/columbina/RoundCornersAction.java:410
+msgid "\nWay"
+msgstr "\n路径"
+
+#: ../../src/yakxin/columbina/RoundCornersAction.java:411
+msgid ": "
+msgstr "："
+
+#: ../../src/yakxin/columbina/RoundCornersAction.java:422
+msgid "Remove original ways"
+msgstr "移除原有路径"
+
+#: ../../src/yakxin/columbina/RoundCornersDialog.java:41
+msgid "Columbina"
+msgstr "Columbina"
+
+#: ../../src/yakxin/columbina/RoundCornersDialog.java:55
+msgid "Curve Information"
+msgstr "曲线信息"
+
+#: ../../src/yakxin/columbina/RoundCornersDialog.java:56
+msgid "Fillet (round corner) radius (m): "
+msgstr "倒角半径（m）："
+
+#: ../../src/yakxin/columbina/RoundCornersDialog.java:57
+msgid "Angle step for new curve (degrees°): "
+msgstr "新曲线圆心角步进（角度°）："
+
+#: ../../src/yakxin/columbina/RoundCornersDialog.java:61
+msgid "※ Specifies the smoothness of the curve. The smaller the step, the denser the points and the smoother the curve."
+msgstr "※　用于指定曲线的平滑度，步进越小，产生的点越密集，曲线越平滑。"
+
+#: ../../src/yakxin/columbina/RoundCornersDialog.java:65
+msgid "Maximum nodes per curve segment (excluding start and end): "
+msgstr "每段曲线最大点数（首尾不计）："
+
+#: ../../src/yakxin/columbina/RoundCornersDialog.java:67
+msgid "Minimum angle allowed for drawing curves (degrees°): "
+msgstr "允许绘制曲线的最小张角（角度°）："
+
+#: ../../src/yakxin/columbina/RoundCornersDialog.java:68
+msgid "Maximum angle allowed for drawing curves (degrees°): "
+msgstr "允许绘制曲线的最大张角（角度°）: "
+
+#: ../../src/yakxin/columbina/RoundCornersDialog.java:72
+msgid "※ When the angle approaches 0°, it forms a hairpin turn; when it approaches 180°, it indicates the lines near the corner are already relatively smooth. "
+msgstr "※　张角接近于0°时将形成发卡角，接近于180°时表明这个拐角附近线条已经较为平滑，"
+
+#: ../../src/yakxin/columbina/RoundCornersDialog.java:73
+msgid "In both cases, rounding is usually unnecessary."
+msgstr "此二种情况多数不需要圆角。"
+
+#: ../../src/yakxin/columbina/RoundCornersDialog.java:78
+msgid "Other Operations"
+msgstr "其他操作"
+
+#: ../../src/yakxin/columbina/RoundCornersDialog.java:79
+msgid "Copy original ways'' tags"
+msgstr "复制原有路径标签"
+
+#: ../../src/yakxin/columbina/RoundCornersDialog.java:80
+msgid "Remove original ways after drawing"
+msgstr "绘制后移除原有路径"
+
+#: ../../src/yakxin/columbina/RoundCornersDialog.java:81
+msgid "Select new ways after drawing"
+msgstr "绘制后切换选择新路径"
+
+#: ../../src/yakxin/columbina/utils.java:26
+msgid "Debug Output"
+msgstr "调试输出"
+
+#: ../../src/yakxin/columbina/utils.java:33
+#: ../../src/yakxin/columbina/utils.java:37
+msgid "Columbina\n\n"
+msgstr "Columbina\n\n"

@@ -18,6 +18,7 @@ import org.openstreetmap.josm.gui.layer.OsmDataLayer;
 import org.openstreetmap.josm.plugins.utilsplugin2.replacegeometry.ReplaceGeometryCommand;
 import org.openstreetmap.josm.plugins.utilsplugin2.replacegeometry.ReplaceGeometryException;
 import org.openstreetmap.josm.plugins.utilsplugin2.replacegeometry.ReplaceGeometryUtils;
+import org.openstreetmap.josm.tools.I18n;
 import org.openstreetmap.josm.tools.Shortcut;
 
 // 哥伦比娅.data
@@ -43,10 +44,10 @@ public class RoundCornersAction extends JosmAction {
     public RoundCornersAction() {
         // 调用父类构造函数设置动作属性
         super(
-                "路径倒圆角",  // 菜单显示文本
+                I18n.tr("Round Corners"),  // 菜单显示文本
                 "RoundCorners",  // 图标
-                "对选定路径的每个拐角节点按指定半径倒圆角。",  // 工具提示
-                shortcutRoundCorners,  // 暂不指定快捷键  // TODO:快捷键
+                I18n.tr("Round corners of selected ways with specified radius."),  // 工具提示
+                shortcutRoundCorners,  // 快捷键
                 true,  // 启用工具栏按钮
                 false
         );
@@ -56,22 +57,22 @@ public class RoundCornersAction extends JosmAction {
         // Map<String, Object> result = new HashMap<>();
 
         OsmDataLayer layer = MainApplication.getLayerManager().getEditLayer();  // 当前的编辑图层
-        if (layer == null) throw new ColumbinaException("当前图层不可用。");
+        if (layer == null) throw new ColumbinaException(I18n.tr("Current layer is not available."));
 
         DataSet dataset = MainApplication.getLayerManager().getEditDataSet();  // 当前的编辑数据库
-        if (dataset == null) throw new ColumbinaException("当前数据库不可用。");
+        if (dataset == null) throw new ColumbinaException(I18n.tr("Current dataset is not available."));
 
         List<Way> waySelection = new ArrayList<>();  // 当前选中路径
         for (OsmPrimitive p : layer.data.getSelected()) {
             if (p instanceof Way) waySelection.add((Way) p);
         }
         // List<Way> waySelection = new ArrayList<>(dataset.getSelectedWays());  // 未测试的方法
-        if (waySelection.isEmpty()) throw new IllegalArgumentException("当前未选中路径。");
+        if (waySelection.isEmpty()) throw new IllegalArgumentException(I18n.tr("No way is selected."));
         if (waySelection.size() > 5) {
             int confirmTooMany = JOptionPane.showConfirmDialog(
                     null,
-                    "真的需要一次性为" + waySelection.size() + "条路径进行操作？可能要花老长时间了。",
-                    "路径倒圆角",
+                    I18n.tr("Are you sure you want to process {0} ways at once? This may take a long time.", waySelection.size()),
+                    I18n.tr("Round Corners"),
                     JOptionPane.YES_NO_OPTION
             );
             if (confirmTooMany == JOptionPane.NO_OPTION) return null;
@@ -90,24 +91,28 @@ public class RoundCornersAction extends JosmAction {
         if (dialog.getValue() != 1) return null;  // 按ESC（0）或点击取消（2），退出；点击确定继续是1
 
         double radius = dialog.getFilletRadius();  // 圆角半径
-        if (radius <= 0.0) throw new IllegalArgumentException("路径倒圆角半径无效，应高于0m。");
+        if (radius <= 0.0) throw new IllegalArgumentException(I18n.tr("Invalid round corner radius, should be greater than 0m."));
         // result.put("radius", radius);
 
         double angleStep = dialog.getFilletAngleStep();  // 圆角步进
-        if (angleStep < 0.1) throw new IllegalArgumentException("路径倒圆角步进无效，应至少为0.1°。");
-        else if (angleStep > 10.0) utils.warnInfo("圆角步进较大，效果可能不理想。");
+        if (angleStep < 0.1) {
+            angleStep = 0.1;
+            dialog.setFilletAngleStep(0.1);
+            utils.warnInfo(I18n.tr("Minimum angle step for round corner should be at least 0.1°, set to 0.1°."));
+        }
+        else if (angleStep > 10.0) utils.warnInfo(I18n.tr("Angle step is too large, the result may not be good."));
         // result.put("angleStep", angleStep);
 
         int maxPointNum = dialog.getFilletMaxPointNum();  // 曲线点数
-        if (maxPointNum < 1) throw new IllegalArgumentException("路径最大倒圆角曲线点数无效，应至少为1。");
-        else if (maxPointNum < 5) utils.warnInfo("最大路径倒圆角曲线点数较少，效果可能不理想。");
+        if (maxPointNum < 1) throw new IllegalArgumentException(I18n.tr("Invalid maximum number of points for round corner, should be at least 1."));
+        else if (maxPointNum < 5) utils.warnInfo(I18n.tr("Maximum number of points for round corner is too low, the result may not be ideal."));
         // result.put("maxPointNum", maxPointNum);
 
         double minAngleDeg = dialog.getMinAngleDeg();  // 最小张角
         if (minAngleDeg < 0.0) {
             minAngleDeg = 0.0;
             dialog.setMinAngleDeg(0.0);
-            utils.warnInfo("最小张角应至少为0°，已设置为0°。");
+            utils.warnInfo(I18n.tr("Minimum angle should be at least 0°, set to 0°."));
         }
         // result.put("minAngleDeg", minAngleDeg);
 
@@ -115,7 +120,7 @@ public class RoundCornersAction extends JosmAction {
         if (maxAngleDeg > 180.0) {
             maxAngleDeg = 180.0;
             dialog.setMaxAngleDeg(180.0);
-            utils.warnInfo("最大张角应至多为180°，已设置为180°。");
+            utils.warnInfo(I18n.tr("Maximum angle should be at most 180°, set to 180°."));
         }
         // result.put("maxAngleDeg", maxAngleDeg);
 
@@ -206,14 +211,19 @@ public class RoundCornersAction extends JosmAction {
                     oldNewWayPairs.put(w, newNWCmd.newWay);
                     failedNodeIds.put(w, newNWCmd.failedNodeIds);
                 }
-                else utils.warnInfo("处理路径" + w.getUniqueId() + "时算法没有返回足以构成路径的至少2个节点，该路径未处理。");
+                else utils.warnInfo(I18n.tr(
+                        "Algorithm did not return at least 2 nodes to form a way for way {0}, this way was not processed.",
+                        w.getUniqueId()
+                ));
             } catch (Exception exAdd) {
-                utils.errorInfo("处理路径" + w.getUniqueId() + "时产生了意外错误：" + exAdd.getMessage());
+                utils.errorInfo(I18n.tr("Unexpected error occurred while processing way {0}: {1}",
+                        w.getUniqueId(), exAdd.getMessage()
+                ));
             }
         }
 
         if (commands.isEmpty()) {  // 未能成功生成一条线
-            throw new ColumbinaException("未能成功生成一条新路径。");
+            throw new ColumbinaException(I18n.tr("Failed to generate any new way."));
         }
         // 去重防止提交重复添加
         commands = commands.stream().distinct().toList();
@@ -232,9 +242,14 @@ public class RoundCornersAction extends JosmAction {
         if (oldWay.getId() != 0) {
             ReplaceGeometryCommand seqCmdRep = ReplaceGeometryUtils.buildReplaceWithNewCommand(oldWay, newWay);
             if (seqCmdRep == null) {
-                utils.warnInfo("Columbina尝试调用Utilsplugin2插件之「替换几何图形」功能替换旧路径，但失败。\n\n"
-                        + "用户在Utilsplugin2的窗口中取消了替换操作。\n"
-                        + "\n\n旧路径" + oldWay.getUniqueId() + "未被移除。");
+                utils.warnInfo(
+                        I18n.tr("Columbina attempted to use Utilsplugin2''s ''Replace Geometry'' function to replace the old way, but failed.\n\n")
+                                + I18n.tr("The user canceled the replacement operation in the Utilsplugin2 window.\n\n")
+                                + I18n.tr("Old way {0} was not removed.", oldWay.getUniqueId())
+                );
+                // "Columbina尝试调用Utilsplugin2插件之「替换几何图形」功能替换旧路径，但失败。\n\n"
+                // "用户在Utilsplugin2的窗口中取消了替换操作。\n"
+                // "\n\n旧路径" + oldWay.getUniqueId() + "未被移除。"
             }
             else {
                 List<Command> cmdRep = utils.tryGetCommandsFromSeqCmd(seqCmdRep);
@@ -259,7 +274,10 @@ public class RoundCornersAction extends JosmAction {
                     if (canBeDeleted) removeCommands.add(new DeleteCommand(ds, n));
                 }
             } else {
-                utils.warnInfo("旧路径" + oldWay.getUniqueId() + "仍被关系引用，未移除。");
+                utils.warnInfo(I18n.tr(
+                        "Old way {0} is still referenced by relations, not removed.",
+                        oldWay.getUniqueId()
+                ));
             }
         }
         return removeCommands;
@@ -273,15 +291,22 @@ public class RoundCornersAction extends JosmAction {
             Way newWay = oldNewWayEntry.getValue();
             if (oldWay == null)
                 throw new ColumbinaException(
-                        "移除某条旧路径时产生了内部错误：\n\n"
-                                + "旧路径返回值异常（null），无法获取旧路径。"
-                                + "该路径可能未被正确倒角或移除。"
+                        I18n.tr("Internal error occurred while removing an old way:\n\n")
+                                + I18n.tr("Old way return value is abnormal (null), unable to get the old way.\n\n")
+                                + I18n.tr("This way may not have been properly rounded or removed.")
+                        // "移除某条旧路径时产生了内部错误：\n\n"
+                        //         + "旧路径返回值异常（null），无法获取旧路径。"
+                        //         + "该路径可能未被正确倒角或移除。"
                 );
             if (newWay == null)
                 throw new ColumbinaException(
-                        "移除旧路径" + oldWay.getUniqueId() + "时产生了内部错误：\n\n"
-                                + "新路径返回值异常（null），无法获取新路径。"
-                                + "\n\n旧路径" + oldWay.getUniqueId() + "可能未被正确倒角或移除。"
+                        I18n.tr("Internal error occurred while removing old way {0}:\n\n", oldWay.getUniqueId())
+                                + I18n.tr("New way return value is abnormal (null), unable to get the new way.\n\n")
+                                + I18n.tr("Old way {0} may not have been properly rounded or removed.", oldWay.getUniqueId()
+                        )
+                        // "移除旧路径" + oldWay.getUniqueId() + "时产生了内部错误：\n\n"
+                        //         + "新路径返回值异常（null），无法获取新路径。"
+                        //         + "\n\n旧路径" + oldWay.getUniqueId() + "可能未被正确倒角或移除。"
                 );
 
             try {
@@ -290,12 +315,19 @@ public class RoundCornersAction extends JosmAction {
                     commands.addAll(cmdRmv);
                 }
             } catch (ReplaceGeometryException | IllegalArgumentException exUtils2) {
-                utils.warnInfo("Columbina尝试调用Utilsplugin2插件之「替换几何图形」功能替换旧路径，但失败。\n\n"
-                        + "来自Utilsplugin2的消息：\n"
-                        + exUtils2.getMessage()
-                        + "\n\n旧路径" + oldWay.getUniqueId() + "未被移除。");
+                utils.warnInfo(I18n.tr("Columbina attempted to use Utilsplugin2''s ''Replace Geometry'' function to replace the old way, but failed.\n\n")
+                        + I18n.tr("Message from Utilsplugin2:\n{0}\n\n", exUtils2.getMessage())
+                        + I18n.tr("Old way {0} was not removed.", oldWay.getUniqueId()));
+                        // "Columbina尝试调用Utilsplugin2插件之「替换几何图形」功能替换旧路径，但失败。\n\n"
+                        // + "来自Utilsplugin2的消息：\n"
+                        // + exUtils2.getMessage()
+                        // + "\n\n旧路径" + oldWay.getUniqueId() + "未被移除。"
             } catch (Exception exRmv) {
-                utils.errorInfo("移除路径" + oldWay.getUniqueId() + "时产生了意外错误：" + exRmv.getMessage());
+                utils.errorInfo(I18n.tr(
+                        "Unexpected error occurred while removing way {0}: {1}",
+                                oldWay.getUniqueId(),
+                                exRmv.getMessage()
+                ));
             }
         }
 
@@ -360,9 +392,9 @@ public class RoundCornersAction extends JosmAction {
             return;
         }
         String undoRedoInfo;
-        if (selectedWays.size() == 1) undoRedoInfo = "对路径" + selectedWays.getFirst().getUniqueId() + "倒圆角：" + radius + "m";
-        else if (selectedWays.size() <= 5) undoRedoInfo = "对路径" + selectedWays.stream().map(Way::getId).toList() + "倒圆角：" + radius + "m";
-        else undoRedoInfo = "对" + selectedWays.size() + "条路径倒圆角：" + radius + "m";
+        if (selectedWays.size() == 1) undoRedoInfo = I18n.tr("Round corners of way {0}: {1}m", selectedWays.getFirst().getUniqueId(), radius);
+        else if (selectedWays.size() <= 5) undoRedoInfo = I18n.tr("Round corners of way {0}: {1}m", selectedWays.stream().map(Way::getId).toList(), radius);
+        else undoRedoInfo = I18n.tr("Round corners of {0} ways: {1}m", selectedWays.size(), radius);
         if (!cmdsAdd.isEmpty()) {
             Command cmdAdd = new SequenceCommand(undoRedoInfo, cmdsAdd);
             UndoRedoHandler.getInstance().add(cmdAdd);  // 正式提交执行到命令序列
@@ -371,12 +403,12 @@ public class RoundCornersAction extends JosmAction {
         // 有角未倒成功时提示
         if (failedNodeIds != null && !failedNodeIds.isEmpty()) {
             boolean hasFailedNodes = false;
-            String failedInfo = "下列拐点节点因与相邻节点距离过短或未满足拐角角度限制未能倒角：";
+            String failedInfo = I18n.tr("The following corner nodes could not be rounded due to too short distance to adjacent nodes or not meeting the angle restrictions: ");
             for (Map.Entry<Way, List<Long>> failedEntry : failedNodeIds.entrySet()) {
                 if (failedEntry.getValue().isEmpty()) continue;
                 failedInfo = failedInfo
-                        + "\n路径" + failedEntry.getKey().getUniqueId()
-                        + "：" + failedEntry.getValue();
+                        + I18n.tr("\nWay") + failedEntry.getKey().getUniqueId()
+                        + I18n.tr(": ") + failedEntry.getValue();
                 hasFailedNodes = true;
             }
             if (hasFailedNodes) utils.warnInfo(failedInfo);
@@ -387,7 +419,7 @@ public class RoundCornersAction extends JosmAction {
             try {
                 List<Command> cmdsRmv = removeCommand(dataset, oldNewWayPairs);
                 if (!cmdsRmv.isEmpty()) {  // 如果全部都没有删除/替换，cmdsRmv为空会错错爆;
-                    Command cmdRmv = new SequenceCommand("移除原有路径", cmdsRmv);
+                    Command cmdRmv = new SequenceCommand(I18n.tr("Remove original ways"), cmdsRmv);
                     UndoRedoHandler.getInstance().add(cmdRmv);
                 }
             } catch (ColumbinaException | IllegalArgumentException | ReplaceGeometryException exRemove) {

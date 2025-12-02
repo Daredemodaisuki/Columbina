@@ -39,12 +39,19 @@
         </javac>
 
         <!-- 复制资源文件（如果有的话） -->
+        <!-- 图像 -->
         <copy todir="${build.dir}/images">
             <fileset dir="images">
                 <include name="**/*.properties"/>
                 <include name="**/*.xml"/>
                 <include name="**/*.png"/>
                 <include name="**/*.svg"/>
+            </fileset>
+        </copy>
+        <!-- 语言 -->
+        <copy todir="${build.dir}/data">
+            <fileset dir="data">
+                <include name="**/*.lang"/>
             </fileset>
         </copy>
     </target>

@@ -7,6 +7,7 @@ import org.openstreetmap.josm.data.osm.Node;
 import org.openstreetmap.josm.data.osm.Way;
 import org.openstreetmap.josm.gui.Notification;
 import org.openstreetmap.josm.tools.GBC;
+import org.openstreetmap.josm.tools.I18n;
 
 import javax.swing.*;
 import java.awt.*;
@@ -22,18 +23,18 @@ public class utils {
         JOptionPane.showMessageDialog(
                 null,
                 info,
-                "调试输出",
+                I18n.tr("Debug Output"),
                 JOptionPane.INFORMATION_MESSAGE);
     }
 
     /// 窗体相关
     // 左下角警告信息
     protected static void warnInfo(String info) {
-        (new Notification("Columbina\n\n" + info)).setIcon(JOptionPane.WARNING_MESSAGE).show();
+        (new Notification(I18n.tr("Columbina\n\n") + info)).setIcon(JOptionPane.WARNING_MESSAGE).show();
     }
     // 左下角错误信息
     protected static void errorInfo(String info) {
-        (new Notification("Columbina\n\n" + info)).setIcon(JOptionPane.ERROR_MESSAGE).show();
+        (new Notification(I18n.tr("Columbina\n\n") + info)).setIcon(JOptionPane.ERROR_MESSAGE).show();
     }
 
     static JFormattedTextField addInput(JPanel panel, String labelText) {

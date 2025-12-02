@@ -10,6 +10,7 @@ import javax.swing.*;
 import org.openstreetmap.josm.gui.ExtendedDialog;
 import org.openstreetmap.josm.gui.MainApplication;
 import org.openstreetmap.josm.tools.GBC;
+import org.openstreetmap.josm.tools.I18n;
 import org.openstreetmap.josm.tools.ImageProvider;
 import yakxin.columbina.data.Preference;
 
@@ -37,7 +38,7 @@ public class RoundCornersDialog extends ExtendedDialog {
     protected RoundCornersDialog() {
         // 标题、按钮
         super(MainApplication.getMainFrame(),
-                "Columbina",
+                I18n.tr("Columbina"),
                 BUTTON_TEXTS,
                 true);
 
@@ -48,23 +49,36 @@ public class RoundCornersDialog extends ExtendedDialog {
         header = new JPanel(new FlowLayout(FlowLayout.LEFT));
         ImageIcon icon = new ImageProvider("RoundCorners").setSize(24,24).get();
         header.add(new JLabel(icon));
-        header.add(new JLabel("<html><h1 style=\"font-size:10px;\">路径倒圆角</h1></html>"));
+        header.add(new JLabel("<html><h1 style=\"font-size:10px;\">" + I18n.tr("Round Corners") + "</h1></html>"));
         panel.add(header, GBC.eol().insets(0, 0, 0, 0).fill(GridBagConstraints.HORIZONTAL));
 
-        sectionCurveInfo = utils.addSection(panel, "曲线信息");
-        filletR = utils.addInput(panel, "倒角半径（m）：", String.valueOf(Preference.getRadius()));
-        filletAngleStep = utils.addInput(panel, "新曲线圆心角步进（角度°）：", String.valueOf(Preference.getAngleStep()));
-        utils.addLabel(panel, "<html><div style=\"width:275\">※　用于指定曲线的平滑度，步进越小，产生的点越密集，曲线越平滑。</div></html>", 15);
-        filletMaxPointNum = utils.addInput(panel, "每段曲线最大点数（首尾不计）：", String.valueOf(Preference.getMaxPointPerArc()));
+        sectionCurveInfo = utils.addSection(panel, I18n.tr("Curve Information"));
+        filletR = utils.addInput(panel, I18n.tr("Fillet (round corner) radius (m): "), String.valueOf(Preference.getRadius()));
+        filletAngleStep = utils.addInput(panel, I18n.tr("Angle step for new curve (degrees°): "), String.valueOf(Preference.getAngleStep()));
+        utils.addLabel(
+                panel,
+                "<html><div style=\"width:275\">"
+                        + I18n.tr("※ Specifies the smoothness of the curve. The smaller the step, the denser the points and the smoother the curve.")
+                        + "</div></html>",
+                15
+        );
+        filletMaxPointNum = utils.addInput(panel, I18n.tr("Maximum nodes per curve segment (excluding start and end): "), String.valueOf(Preference.getMaxPointPerArc()));
         utils.addSpace(panel,4);
-        minAngleDeg = utils.addInput(panel, "允许绘制曲线的最小张角（角度°）：", String.valueOf(Preference.getMinAngleDeg()));
-        maxAngleDeg = utils.addInput(panel, "允许绘制曲线的最大张角（角度°）：", String.valueOf(Preference.getMaxAngleDeg()));
-        utils.addLabel(panel, "<html><div style=\"width:275\">※　张角接近于0°时将形成发卡角，接近于180°时表明这个拐角附近线条已经较为平滑，此二种情况多数不需要圆角。</div></html>", 15);
+        minAngleDeg = utils.addInput(panel, I18n.tr("Minimum angle allowed for drawing curves (degrees°): "), String.valueOf(Preference.getMinAngleDeg()));
+        maxAngleDeg = utils.addInput(panel, I18n.tr("Maximum angle allowed for drawing curves (degrees°): "), String.valueOf(Preference.getMaxAngleDeg()));
+        utils.addLabel(
+                panel,
+                "<html><div style=\"width:275\">"
+                        + I18n.tr("※ When the angle approaches 0°, it forms a hairpin turn; when it approaches 180°, it indicates the lines near the corner are already relatively smooth. ")
+                        + I18n.tr("In both cases, rounding is usually unnecessary.")
+                        + "</div></html>",
+                15
+        );
 
-        sectionOptionInfo = utils.addSection(panel, "其他操作");
-        copyTag = utils.addCheckbox(panel, "复制原有路径标签", Preference.isCopyTag());
-        deleteOldWays = utils.addCheckbox(panel, "绘制后移除原有路径", Preference.isDeleteOldWays());
-        selectNewWays = utils.addCheckbox(panel, "绘制后切换选择新路径", Preference.isSelectNewWays());
+        sectionOptionInfo = utils.addSection(panel, I18n.tr("Other Operations"));
+        copyTag = utils.addCheckbox(panel, I18n.tr("Copy original ways'' tags"), Preference.isCopyTag());
+        deleteOldWays = utils.addCheckbox(panel, I18n.tr("Remove original ways after drawing"), Preference.isDeleteOldWays());
+        selectNewWays = utils.addCheckbox(panel, I18n.tr("Select new ways after drawing"), Preference.isSelectNewWays());
 
         contentInsets = new Insets(5, 15, 5, 15);  // 内容边距
         setContent(panel);
@@ -117,6 +131,7 @@ public class RoundCornersDialog extends ExtendedDialog {
 
     public void setMinAngleDeg(double angleDeg) {minAngleDeg.setText(String.valueOf(angleDeg));}
     public void setMaxAngleDeg(double angleDeg) {maxAngleDeg.setText(String.valueOf(angleDeg));}
+    public void setFilletAngleStep(double angleStep) {filletAngleStep.setText(String.valueOf(angleStep));}
 }
 
 
