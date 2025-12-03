@@ -36,8 +36,13 @@ Note: When "Remove original way after drawing" is enabled: <br> 注意：启用�
 * For newly drawn, unuploaded old ways, the plugin will delete them directly. <br> 对于新绘制、未上传的旧路径，插件将会直接删除。
 
 ## Known Issues · 已知问题
+
 * The plugin packages the replace/delete operations within a single command sequence, and no actual changes occur until the sequence is committed. Consequently, when nodes are shared exclusively between the ways being filleted, the command generation logic assumes these nodes are still referenced by another way since the command sequence has not been commited, and therefore excludes them from removal. <br> 因为希望将替换/删除指令打包在一个命令序列中，而在提交命令序列前不会有任何内容实际删除，故当需要圆角的路径间存在交点且交点只由需要圆角的路径引用，移除旧路径生成命令时始终会认为交点被另一条路径引用，交点不会被移除；
 * Since the plugin draws the fillet first and then connects the lines, when the segment between two vertices is not long enough, the middle section between two curves may be misaligned, resulting in a sharp corner. <br> 由于是先画圆角再连线，路径折点宽度不够长时，曲线之间可能会错开导致连出尖角。
+
+<p align="right">
+Other issues is welcomed at this page ↓ <br> 其他问题欢迎在这个页面提出 ↓<br><a href="https://github.com/Daredemodaisuki/Columbina/issues">Issues</a>
+</p>
 
 ## About · 关于
 Actually, this plugin was developed for OpenGeofiction (OGF), a fictional world mapping project based on the OpenStreetMap (OSM) framework. It addresses the difficulty in JOSM of drawing long-distance transportation features (such as railways and highways) and small-radius fillets (like the rounded corners at airport taxiway intersections). This plugin is a small contribution to the OGF community. <br> 其实这个插件是为了OpenGeofiction（OGF）开发，这是一个基于OpenStreetMap（OSM）框架的架空地图项目，其中的长距离交通设置（如铁路、高速公路）和一些小拐角（如机场滑行道交叉点的圆角）在JOSM中很难实现，故开发了这个插件，算是对OGF社区的一点微小的贡献。
