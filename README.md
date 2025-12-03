@@ -34,7 +34,7 @@ When "Remove original way after drawing" is enabled: <br> 注意：启用「绘�
 * For newly drawn, unuploaded old ways, the plugin will delete them directly. <br> 对于新绘制、未上传的旧路径，插件将会直接删除。
 
 ## Known Issues · 已知问题
-* When there are shared nodes between the ways that need to be filleted and these shared nodes are only referenced by the ways being filleted, they will not be removed when the old ways are deleted; <br> 当需要圆角的路径间存在交点且交点只由需要圆角的路径引用，移除旧路径时交点不会被移除；
+* The plugin packages the replace/delete operations within a single command sequence, and no actual changes occur until the sequence is committed. Consequently, when nodes are shared exclusively between the ways being filleted, the command generation logic assumes these nodes are still referenced by another way since the command sequence has not been commited, and therefore excludes them from removal. <br> 因为希望将替换/删除指令打包在一个命令序列中，而在提交命令序列前不会有任何内容实际删除，故当需要圆角的路径间存在交点且交点只由需要圆角的路径引用，移除旧路径生成命令时始终会认为交点被另一条路径引用，交点不会被移除；
 * Since the plugin draws the fillet first and then connects the lines, when the segment between two vertices is not long enough, the middle section between two curves may be misaligned, resulting in a sharp corner. <br> 由于是先画圆角再连线，路径折点宽度不够长时，曲线之间可能会错开导致连出尖角。
 
 ## About · 关于
