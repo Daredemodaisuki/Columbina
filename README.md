@@ -5,10 +5,14 @@ A Java OpenStreetMap (JOSM) pulgin providing convenient fillet (round corner) dr
 <p align="right">
   <img src="ColumbinaRC.png" alt="Round Corner Menu" width="40%">
 </p>
+<p align="right">
+  <small><sub><s>The name of this plugin has absolutely no relationship with Kuutar or Columbina Hyposelenia, and it's definitely not an attempt to fit the meme. xd <br> 本插件的名称绝对与库塔尔或哥伦比娅·希珀塞莱尼娅无关，绝对不是凑的名字。（逃</s></sub></small>
+</p>
+
 
 ## Quick Start · 快速开始
 
-To get quick start, please download the release and copy it to your JOSM plugin folder<code> %APPDATA%\JOSM\plugins\ </code>(for Windows). <br> 如欲快速开始，劳烦您下载发布版本，并复制到JOSM的插件文件夹<code> %APPDATA%\JOSM\plugins\ </code>（视窗系统）下。
+To get quick start, please download the [release](https://github.com/Daredemodaisuki/Columbina/releases/tag/official) and copy it to your JOSM plugin folder<code> %APPDATA%\JOSM\plugins\ </code>(for Windows, usually looks like<code> …\AppData\Roaming\JOSM\plugins\ </code>). <br> 如欲快速开始，劳烦您下载一个[发布版本](https://github.com/Daredemodaisuki/Columbina/releases/tag/official)，并复制到JOSM的插件文件夹<code> %APPDATA%\JOSM\plugins\ </code>（视窗系统，通常是<code> …\AppData\Roaming\JOSM\plugins\ </code>）下。
 
 Then in JOSM's plugin preference, search and select *Columbina* and restart. Now you could use this plugin. <br> 随后在JOSM首选项之插件设置中，搜寻*Columbina*并勾选启用，重启JOSM后即可使用插件。
 
@@ -39,5 +43,3 @@ Actually, this plugin was developed for OpenGeofiction (OGF), a fictional world 
 I hope it can also be useful for everyone in the OSM community. <br> 希望对OSM社区的大家也有用处。
 
 <s>Oops, it's turning into CAD. <br> 坏了，成CAD了</s>
-
-<sub><s>The name of this plugin has absolutely no connection to Kuutar or Columbina Hyposelenia, and it's definitely not an attempt to fit the meme. xd <br> 本插件的名称绝对与库塔尔或哥伦比娅·希珀塞莱尼娅无关，绝对不是凑的名字。（笑</s></sub>
