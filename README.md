@@ -14,7 +14,7 @@ A Java OpenStreetMap (JOSM) pulgin providing convenient fillet (round corner) dr
 
 ## Quick Start · 快速开始
 
-To get quick start, please download the [release](https://github.com/Daredemodaisuki/Columbina/releases/tag/official) and copy it to your JOSM plugin folder `%APPDATA%\JOSM\plugins\` (for Windows, usually looks like `…\AppData\Roaming\JOSM\plugins\`).
+To get quick start, please download the [release](https://github.com/Daredemodaisuki/Columbina/releases/tag/official) and copy it to your JOSM plugin directory `%APPDATA%\JOSM\plugins\` (for Windows, usually looks like `…\AppData\Roaming\JOSM\plugins\`).
 <br> 如欲快速开始，劳烦您下载一个[发布版本](https://github.com/Daredemodaisuki/Columbina/releases/tag/official)，并复制到JOSM的插件文件夹`%APPDATA%\JOSM\plugins\`（视窗系统，通常是`…\AppData\Roaming\JOSM\plugins\`）下。
 
 Then in JOSM's plugin preference, search and select *Columbina* and restart to activate *her*. Now you could use this plugin.
@@ -50,8 +50,7 @@ Note: When "Remove original way after drawing" is enabled:
 ## Known Issues · 已知问题
 
 * The plugin packages the replace/delete operations within a single command sequence, and no actual changes occur until the sequence is committed. Consequently, when nodes are shared exclusively between the ways being filleted, the command generation logic assumes these nodes are still referenced by another way since the command sequence has not been commited, and therefore excludes them from removal. <br> 因为希望将替换/删除指令打包在一个命令序列中，而在提交命令序列前不会有任何内容实际删除，故当需要圆角的路径间存在交点且交点只由需要圆角的路径引用，移除旧路径生成命令时始终会认为交点被另一条路径引用，交点不会被移除；
-* Since the plugin draws the fillet first and then connects the lines, when the segment between two vertices is not long enough, the middle section between two curves may be misaligned, resulting in a sharp corner; <br> 由于是先画圆角再连线，路径折点宽度不够长时，曲线之间可能会错开导致连出尖角；
-* Possibly due to coordinate transformation, the drawn fillet may be slightly smaller than the specified radius. <br> 可能是出于坐标转换的原因，绘制出的圆角会稍微较指定半径小一点。
+* Since the plugin draws the fillet first and then connects the lines, when the segment between two vertices is not long enough, the middle section between two curves may be misaligned, resulting in a sharp corner. <br> 由于是先画圆角再连线，路径折点宽度不够长时，曲线之间可能会错开导致连出尖角。
 
 <p align="right">
 Other issues are welcomed at this page ↓ <br> 其他问题欢迎在这个页面提出 ↓<br><a href="https://github.com/Daredemodaisuki/Columbina/issues">Issues</a>
@@ -70,7 +69,7 @@ I hope it can also be useful for everyone in the OSM community.
 <s>Oops, it's turning into CAD.
 <br> 坏了，成CAD了</s>
 
-### If you want to contribute · 如果阁下也想开发
+### If You Want to Contribute · 如果阁下也想开发
 
 This plugin is built using Ant. If you wish to continue development or fix issues based on the existing code, you are welcome to create a new branch and make edits.
 Additionally, please note that the plugin is developed using the JOSM software API. You must add JOSM's core JAR file as a library.
