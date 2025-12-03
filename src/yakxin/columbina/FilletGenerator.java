@@ -29,7 +29,7 @@ public class FilletGenerator {
     private static double[] mul(double[] a, double s) { return new double[]{a[0]*s, a[1]*s}; }  // 缩放
 
     /// 圆角算法
-    // 绘制一个圆角
+    // 绘制一个圆角（需要输入重算距离而不是直接的NE坐标距离）
     public static List<EastNorth> filletArcEN(
             EastNorth A, EastNorth B, EastNorth C,
             double R, double angleStep, int maxNumPoints,
@@ -133,9 +133,22 @@ public class FilletGenerator {
             EastNorth B = en.get(i + 1);  // 拐点    ↑
             EastNorth C = en.get(i + 2);  // 终点    A
 
+            // JOSM用Mercator投影的NorthEast坐标等角不等距，需要重算距离，以拐点B取维度计算
+            double latB = nodes.get(i + 1).getCoor().lat();
+            double cosLat = Math.cos(Math.toRadians(latB));
+            // 避免cosLat为0（极点附近）
+            if (Math.abs(cosLat) < 1e-9) {
+                // 如果纬度接近90度，使用一个很小的正数，避免除0，但这样不准确，所以直接失败跳过这个圆弧吧
+                T1s.add(null);
+                arcs.add(null);
+                failedNodes.add(nodes.get(i).getUniqueId());
+                continue;
+            }
+            double radiusCorrect = radiusMeters / cosLat;
+
             List<EastNorth> arc = filletArcEN(  // 为每个拐角生成PNum个点的圆弧
                     A, B, C,
-                    radiusMeters, angleStep, maxPointNum,
+                    radiusCorrect, angleStep, maxPointNum,
                     minAngleDeg, maxAngleDeg
             );
 
@@ -152,21 +165,30 @@ public class FilletGenerator {
             }
         }
         if (way.isClosed()) {  // 闭合曲线首尾相连的首末点曲线
-            List<EastNorth> arcEnd = filletArcEN(
-                    en.get(nPts - 2), en.get(0), en.get(1),  // en.get(0) == en.get(-1)
-                    radiusMeters, angleStep, maxPointNum,
-                    minAngleDeg, maxAngleDeg
-            );
-            if (arcEnd == null) {
+            double latB = nodes.getFirst().getCoor().lat();
+            double cosLat = Math.cos(Math.toRadians(latB));
+            if (Math.abs(cosLat) < 1e-9) {
                 T1s.add(null);
-                // T2s.add(null);
                 arcs.add(null);
                 failedNodes.add(nodes.getFirst().getUniqueId());
-            } else {
-                EastNorth t1End = arcEnd.getFirst(); // EastNorth t2End = arcEnd.getLast();
-                T1s.add(new double[]{t1End.getX(), t1End.getY()});
-                // T2s.add(new double[]{t2End.getX(), t2End.getY()});
-                arcs.add(arcEnd);
+            } else {  // 可以算出重算距离才继续
+                double radiusCorrect = radiusMeters / cosLat;
+                List<EastNorth> arcEnd = filletArcEN(
+                        en.get(nPts - 2), en.get(0), en.get(1),  // en.get(0) = getFirst() == en.get(-1)
+                        radiusCorrect, angleStep, maxPointNum,
+                        minAngleDeg, maxAngleDeg
+                );
+                if (arcEnd == null) {
+                    T1s.add(null);
+                    // T2s.add(null);
+                    arcs.add(null);
+                    failedNodes.add(nodes.getFirst().getUniqueId());
+                } else {
+                    EastNorth t1End = arcEnd.getFirst(); // EastNorth t2End = arcEnd.getLast();
+                    T1s.add(new double[]{t1End.getX(), t1End.getY()});
+                    // T2s.add(new double[]{t2End.getX(), t2End.getY()});
+                    arcs.add(arcEnd);
+                }
             }
         }
 
