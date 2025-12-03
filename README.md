@@ -3,7 +3,7 @@
 A Java OpenStreetMap (JOSM) pulgin providing convenient fillet (round corner) drawing, and … <br> might provide bevel and transition curve Features in the future. <br> 一个提供圆角工具的Java OpenStreetMap（JOSM）插件，未来计划开发切角和缓和曲线功能。
 
 <p align="right">
-  <img src="ColumbinaRC.png" alt="Round Corner Menu" width="40%">
+  <img src="ColumbinaRC.png" alt="Round Corner Menu" width="60%">
 </p>
 <p align="right">
   <small><sub><s>The name of this plugin has absolutely no relationship with Kuutar or Columbina Hyposelenia, and it's definitely not an attempt to fit the meme. xd <br> 本插件的名称绝对与库塔尔或哥伦比娅·希珀塞莱尼娅无关，绝对不是凑的名字。（逃</s></sub></small>
@@ -14,7 +14,7 @@ A Java OpenStreetMap (JOSM) pulgin providing convenient fillet (round corner) dr
 
 To get quick start, please download the [release](https://github.com/Daredemodaisuki/Columbina/releases/tag/official) and copy it to your JOSM plugin folder<code> %APPDATA%\JOSM\plugins\ </code>(for Windows, usually looks like<code> …\AppData\Roaming\JOSM\plugins\ </code>). <br> 如欲快速开始，劳烦您下载一个[发布版本](https://github.com/Daredemodaisuki/Columbina/releases/tag/official)，并复制到JOSM的插件文件夹<code> %APPDATA%\JOSM\plugins\ </code>（视窗系统，通常是<code> …\AppData\Roaming\JOSM\plugins\ </code>）下。
 
-Then in JOSM's plugin preference, search and select *Columbina* and restart. Now you could use this plugin. <br> 随后在JOSM首选项之插件设置中，搜寻*Columbina*并勾选启用，重启JOSM后即可使用插件。
+Then in JOSM's plugin preference, search and select *Columbina* and restart to activate *her*. Now you could use this plugin. <br> 随后在JOSM首选项之插件设置中，搜寻*Columbina*并勾选启用，重启JOSM后即可使用插件。
 
 This plugin depends on another plugin, Utilsplugin2, which is typically included with JOSM by default. If your JOSM does not have Utilsplugin2 installed, JOSM will prompt you to install it. <br> 本插件依赖另一插件Utilsplugin2，其通常由JOSM自带，如果您的JOSM没有安装Utilsplugin2，JOSM会要求你一并安装。
 
@@ -28,7 +28,9 @@ Allows users to fillet each corner node of the selected ways with a specified ra
 
 The plugin supports specifying the arc radius for fillets. Node density can be controlled via central angle increments, and a maximum number of points per curve segment is also provided for control. Additionally, the plugin offers options to copy tags from the original way, remove the original way after drawing, and toggle selection to the new way after drawing. <br> 插件支持指定圆角的圆弧半径，可以通过圆心角步进控制节点密度并提供每段曲线最大点数控制。插件亦提供复制原有路径标签、绘制后移除原有路径、绘制后切换选择新路径的选项。
 
-When "Remove original way after drawing" is enabled: <br> 注意：启用「绘制后移除原有路径」时：
+The plugin automatically and uniformly interpolates nodes along the curve, adding them at even intervals. For longer curves (when the radius remains constant, curves with smaller deflection angles become longer), a greater number of nodes will be generated. <br> 插件会自动在曲线上均匀地插值并添加节点，越长的曲线（当半径不变时，张角越小的拐点曲线越长）点数越多。
+
+Note: When "Remove original way after drawing" is enabled: <br> 注意：启用「绘制后移除原有路径」时：
 
 * For old ways that have already been uploaded, the plugin will invoke the "Replace Geometry" function of the Utilsplugin2 to replace the old way in order to preserve its data history. Therefore, if the old way does not meet the requirements for the Replace Geometry function (e.g., it is not entirely within the downloaded area), the replacement will fail and the old way will be retained; <br> 对于已上传的旧路径，插件将调用Utilsplgin2之「替换几何图形」功能替换旧路径以保留数据历史版本，故当旧路径不满足替换几何图形功能的要求时（如未完全在下载区域中），替换将失败，旧路径将保留；
 * For newly drawn, unuploaded old ways, the plugin will delete them directly. <br> 对于新绘制、未上传的旧路径，插件将会直接删除。
