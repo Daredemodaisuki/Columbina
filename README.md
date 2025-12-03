@@ -1,6 +1,6 @@
 # Cartographic-Oriented Line Utility Modifier with Bevel through Interpolated Node Automation (*Columbina*) <br> 制图向节点插值自动化倒角路径实用修改器
 
-A Java OpenStreetMap (JOSM) pulgin providing convenient fillet (round corner) drawing, and … <br> might provide bevel and transition curve Features in the future. <br> 一个提供圆角工具的Java OpenStreetMap（JOSM）插件，未来计划开发倒角和缓和曲线功能。
+A Java OpenStreetMap (JOSM) pulgin providing convenient fillet (round corner) drawing, and … <br> might provide bevel and transition curve Features in the future. <br> 一个提供圆角工具的Java OpenStreetMap（JOSM）插件，未来计划开发切角和缓和曲线功能。
 
 <p align="right">
   <img src="ColumbinaRC.png" alt="Round Corner Menu" width="40%">
@@ -30,7 +30,7 @@ The plugin supports specifying the arc radius for fillets. Node density can be c
 
 When "Remove original way after drawing" is enabled: <br> 注意：启用「绘制后移除原有路径」时：
 
-* For old ways that have already been uploaded, the plugin will invoke the "Replace Geometry" function of the Utilsplugin2 to replace the old way in order to preserve its data history. Therefore, if the old way does not meet the requirements for the Replace Geometry function (e.g., it is not entirely within the downloaded area), the replacement will fail and the old way will be retained. <br> 对于已上传的旧路径，插件将调用Utilsplgin2之「替换几何图形」功能替换旧路径以保留数据历史版本，故当旧路径不满足替换几何图形功能的要求时（如未完全在下载区域中），替换将失败，旧路径将保留；对于新绘制、未上传的旧路径，插件将会直接删除。
+* For old ways that have already been uploaded, the plugin will invoke the "Replace Geometry" function of the Utilsplugin2 to replace the old way in order to preserve its data history. Therefore, if the old way does not meet the requirements for the Replace Geometry function (e.g., it is not entirely within the downloaded area), the replacement will fail and the old way will be retained; <br> 对于已上传的旧路径，插件将调用Utilsplgin2之「替换几何图形」功能替换旧路径以保留数据历史版本，故当旧路径不满足替换几何图形功能的要求时（如未完全在下载区域中），替换将失败，旧路径将保留；
 * For newly drawn, unuploaded old ways, the plugin will delete them directly. <br> 对于新绘制、未上传的旧路径，插件将会直接删除。
 
 ## Known Issues · 已知问题
