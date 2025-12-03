@@ -11,11 +11,10 @@ import org.openstreetmap.josm.tools.I18n;
 
 import javax.swing.*;
 import java.awt.*;
+import java.text.DecimalFormat;
 import java.text.NumberFormat;
-import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.*;
 import java.util.List;
-import java.util.Map;
 
 public class utils {
     // 测试用调试输出
@@ -41,7 +40,7 @@ public class utils {
         return addInput(panel, labelText, "");
     }
     static JFormattedTextField addInput(JPanel panel, String labelText, String initInput) {
-        JFormattedTextField input = new JFormattedTextField(NumberFormat.getInstance());
+        JFormattedTextField input = new JFormattedTextField(NumberFormat.getInstance(Locale.US));  // 强制美式数码格式，「.」为小数点
         JLabel label = new JLabel(labelText);
         panel.add(label, GBC.std());
         label.setLabelFor(input);

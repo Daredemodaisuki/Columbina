@@ -3,6 +3,7 @@ package yakxin.columbina;
 import java.awt.*;
 import java.text.NumberFormat;
 import java.text.ParseException;
+import java.util.Locale;
 import java.util.Map;
 
 import javax.swing.*;
@@ -91,36 +92,36 @@ public class RoundCornersDialog extends ExtendedDialog {
     // 获取数据
     public double getFilletRadius() {
         try {
-            return NumberFormat.getInstance().parse(filletR.getText()).doubleValue();
+            return NumberFormat.getInstance(Locale.US).parse(filletR.getText()).doubleValue();
         } catch (ParseException e) {
             return Preference.DEFAULT_RADIUS;
-            // 能返回数值就返回，有异常的话返回默认值（但这里半径、角度步进、最大点数不做数值校验，在Action类中检查是否合法）
+            // 能返回数值就返回，有异常的话返回默认值（但这里不做数值校验，在Action类中检查是否合法）
         }
     }
     public double getFilletAngleStep() {
         try {
-            return NumberFormat.getInstance().parse(filletAngleStep.getText()).doubleValue();
+            return NumberFormat.getInstance(Locale.US).parse(filletAngleStep.getText()).doubleValue();
         } catch (ParseException e) {
             return Preference.DEFAULT_ANGLE_STEP;
         }
     }
     public int getFilletMaxPointNum() {
         try {
-            return NumberFormat.getInstance().parse(filletMaxPointNum.getText()).intValue();
+            return NumberFormat.getInstance(Locale.US).parse(filletMaxPointNum.getText()).intValue();
         } catch (ParseException e) {
             return Preference.DEFAULT_MAX_POINT_PER_ARC;
         }
     }
     public double getMinAngleDeg() {
         try {
-            return NumberFormat.getInstance().parse(minAngleDeg.getText()).doubleValue();
+            return NumberFormat.getInstance(Locale.US).parse(minAngleDeg.getText()).doubleValue();
         } catch (ParseException e) {
             return Preference.DEFAULT_MIN_ANGLE_DEG;
         }
     }
     public double getMaxAngleDeg() {
         try {
-            return NumberFormat.getInstance().parse(maxAngleDeg.getText()).doubleValue();
+            return NumberFormat.getInstance(Locale.US).parse(maxAngleDeg.getText()).doubleValue();
         } catch (ParseException e) {
             return Preference.DEFAULT_MAX_ANGLE_DEG;
         }
