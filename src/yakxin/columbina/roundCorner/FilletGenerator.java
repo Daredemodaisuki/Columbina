@@ -1,4 +1,4 @@
-package yakxin.columbina;
+package yakxin.columbina.roundCorner;
 
 import org.openstreetmap.josm.data.coor.EastNorth;
 import org.openstreetmap.josm.data.coor.LatLon;

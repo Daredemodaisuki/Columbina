@@ -1,4 +1,4 @@
-package yakxin.columbina;
+package yakxin.columbina.roundCorner;
 
 import java.awt.*;
 import java.text.NumberFormat;
@@ -14,6 +14,7 @@ import org.openstreetmap.josm.tools.GBC;
 import org.openstreetmap.josm.tools.I18n;
 import org.openstreetmap.josm.tools.ImageProvider;
 import yakxin.columbina.data.Preference;
+import yakxin.columbina.utils;
 
 /// 倒圆角对话框
 public class RoundCornersDialog extends ExtendedDialog {

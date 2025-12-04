@@ -1,7 +1,7 @@
 package yakxin.columbina.data;
 
 import org.openstreetmap.josm.spi.preferences.Config;
-import yakxin.columbina.RoundCornersDialog;
+import yakxin.columbina.roundCorner.RoundCornersDialog;
 
 public final class Preference {
     private Preference() {

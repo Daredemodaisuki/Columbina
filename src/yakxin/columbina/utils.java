@@ -28,18 +28,18 @@ public class utils {
 
     /// 窗体相关
     // 左下角警告信息
-    protected static void warnInfo(String info) {
+    public static void warnInfo(String info) {
         (new Notification(I18n.tr("Columbina\n\n") + info)).setIcon(JOptionPane.WARNING_MESSAGE).show();
     }
     // 左下角错误信息
-    protected static void errorInfo(String info) {
+    public static void errorInfo(String info) {
         (new Notification(I18n.tr("Columbina\n\n") + info)).setIcon(JOptionPane.ERROR_MESSAGE).show();
     }
 
-    static JFormattedTextField addInput(JPanel panel, String labelText) {
+    public static JFormattedTextField addInput(JPanel panel, String labelText) {
         return addInput(panel, labelText, "");
     }
-    static JFormattedTextField addInput(JPanel panel, String labelText, String initInput) {
+    public static JFormattedTextField addInput(JPanel panel, String labelText, String initInput) {
         JFormattedTextField input = new JFormattedTextField(NumberFormat.getInstance(Locale.US));  // 强制美式数码格式，「.」为小数点
         JLabel label = new JLabel(labelText);
         panel.add(label, GBC.std());
@@ -49,17 +49,17 @@ public class utils {
         return input;
     }
 
-    static JCheckBox addCheckbox(JPanel panel, String labelText, boolean initialCheck) {
+    public static JCheckBox addCheckbox(JPanel panel, String labelText, boolean initialCheck) {
         JCheckBox checkbox = new JCheckBox(labelText);
         panel.add(checkbox, GBC.eol().fill(GridBagConstraints.HORIZONTAL));
         checkbox.setSelected(initialCheck);
         return checkbox;
     }
 
-    static JLabel addLabel(JPanel panel, String text) {
+    public static JLabel addLabel(JPanel panel, String text) {
         return addLabel(panel, text, 0);
     }
-    static JLabel addLabel(JPanel panel, String text, int leftIndents) {
+    public static JLabel addLabel(JPanel panel, String text, int leftIndents) {
         utils.addSpace(panel,2);
 
         JLabel label = new JLabel(text);
@@ -70,17 +70,17 @@ public class utils {
         return label;
     }
 
-    static JSeparator addSeparator(JPanel panel) {  // 横向分割线
+    public static JSeparator addSeparator(JPanel panel) {  // 横向分割线
         JSeparator sep = new JSeparator(SwingConstants.HORIZONTAL);
         panel.add(sep, GBC.eol().fill(GridBagConstraints.HORIZONTAL));
         return sep;
     }
 
-    static void addSpace(JPanel panel, int height) {
+    public static void addSpace(JPanel panel, int height) {
         panel.add(Box.createVerticalStrut(height), GBC.eol());
     }
 
-    static Map<String, Object> addSection(JPanel panel, String title) {
+    public static Map<String, Object> addSection(JPanel panel, String title) {
         Map<String, Object> result = new HashMap<>();
 
         addSpace(panel, 8);
@@ -94,12 +94,12 @@ public class utils {
     }
 
     /// 数据相关
-    static void wayReplaceNode(Way way, int index, Node newNode) {
+    public static void wayReplaceNode(Way way, int index, Node newNode) {
         way.removeNode(way.getNode(index));
         way.addNode(index, newNode);
     }
 
-    static List<Command> tryGetCommandsFromSeqCmd (SequenceCommand seqCmd) {
+    public static List<Command> tryGetCommandsFromSeqCmd (SequenceCommand seqCmd) {
         List<Command> commands = new ArrayList<>();
         for (PseudoCommand pc : seqCmd.getChildren()) {
             if (pc instanceof Command) {
