@@ -1,8 +1,6 @@
 package yakxin.columbina.fillet;
 
 // JOSM GUI和数据处理类
-import org.openstreetmap.josm.command.DeleteCommand;
-import org.openstreetmap.josm.data.osm.OsmPrimitive;
 import org.openstreetmap.josm.actions.JosmAction;
 import org.openstreetmap.josm.command.AddCommand;
 import org.openstreetmap.josm.command.Command;
@@ -11,23 +9,23 @@ import org.openstreetmap.josm.data.UndoRedoHandler;
 import org.openstreetmap.josm.data.osm.DataSet;
 import org.openstreetmap.josm.data.osm.Node;
 import org.openstreetmap.josm.data.osm.Way;
-import org.openstreetmap.josm.gui.MainApplication;
 import org.openstreetmap.josm.gui.layer.OsmDataLayer;
 
 // Utilsplugin2插件
-import org.openstreetmap.josm.plugins.utilsplugin2.replacegeometry.ReplaceGeometryCommand;
 import org.openstreetmap.josm.plugins.utilsplugin2.replacegeometry.ReplaceGeometryException;
-import org.openstreetmap.josm.plugins.utilsplugin2.replacegeometry.ReplaceGeometryUtils;
 import org.openstreetmap.josm.tools.I18n;
 import org.openstreetmap.josm.tools.Shortcut;
 
 // 哥伦比娅.data
 import yakxin.columbina.data.ColumbinaException;
-import yakxin.columbina.data.dto.FilletResult;
+import yakxin.columbina.data.dto.AddCommandsCollected;
+import yakxin.columbina.data.dto.DrawingNewNodeResult;
+import yakxin.columbina.data.dto.LayerDatasetAndWaySelected;
+import yakxin.columbina.data.dto.NewNodeWayCommands;
 import yakxin.columbina.data.preference.FilletPreference;
-import yakxin.columbina.utils;
+import yakxin.columbina.utils.UtilsData;
+import yakxin.columbina.utils.UtilsUI;
 
-import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 import java.util.*;
@@ -56,82 +54,38 @@ public class FilletAction extends JosmAction {
         );
     }
 
-    private LayerDatasetAndWaySlc getLayerDatasetAndWaySlc() {
-        // Map<String, Object> result = new HashMap<>();
-
-        OsmDataLayer layer = MainApplication.getLayerManager().getEditLayer();  // 当前的编辑图层
-        if (layer == null) throw new ColumbinaException(I18n.tr("Current layer is not available."));
-
-        DataSet dataset = MainApplication.getLayerManager().getEditDataSet();  // 当前的编辑数据库
-        if (dataset == null) throw new ColumbinaException(I18n.tr("Current dataset is not available."));
-
-        List<Way> waySelection = new ArrayList<>();  // 当前选中路径
-        for (OsmPrimitive p : layer.data.getSelected()) {
-            if (p instanceof Way) waySelection.add((Way) p);
-        }
-        // List<Way> waySelection = new ArrayList<>(dataset.getSelectedWays());  // 未测试的方法
-        if (waySelection.isEmpty()) throw new IllegalArgumentException(I18n.tr("No way is selected."));
-        if (waySelection.size() > 5) {
-            int confirmTooMany = JOptionPane.showConfirmDialog(
-                    null,
-                    I18n.tr("Are you sure you want to process {0} ways at once? This may take a long time.", waySelection.size()),
-                    I18n.tr("Round Corners"),
-                    JOptionPane.YES_NO_OPTION
-            );
-            if (confirmTooMany == JOptionPane.NO_OPTION) return null;
-        }
-
-        // result.put("layer", layer);
-        // result.put("dataset", dataset);
-        // result.put("selectedWays", waySelection);
-        return new LayerDatasetAndWaySlc(layer, dataset, waySelection);
-    }
-
     private FilletParams getParams() {
-        // Map<String, Object> result = new HashMap<>();
         FilletDialog filletDialog = new FilletDialog();  // 创建设置对话框
 
         if (filletDialog.getValue() != 1) return null;  // 按ESC（0）或点击取消（2），退出；点击确定继续是1
 
         double radius = filletDialog.getFilletRadius();  // 圆角半径
         if (radius <= 0.0) throw new IllegalArgumentException(I18n.tr("Invalid round corner radius, should be greater than 0m."));
-        // result.put("radius", radius);
 
         double angleStep = filletDialog.getFilletAngleStep();  // 圆角步进
         if (angleStep < 0.1) {
             angleStep = 0.1;
             filletDialog.setFilletAngleStep(0.1);
-            utils.warnInfo(I18n.tr("Minimum angle step for round corner should be at least 0.1°, set to 0.1°."));
+            UtilsUI.warnInfo(I18n.tr("Minimum angle step for round corner should be at least 0.1°, set to 0.1°."));
         }
-        else if (angleStep > 10.0) utils.warnInfo(I18n.tr("Angle step is too large, the result may not be good."));
-        // result.put("angleStep", angleStep);
-
+        else if (angleStep > 10.0) UtilsUI.warnInfo(I18n.tr("Angle step is too large, the result may not be good."));
         int maxPointNum = filletDialog.getFilletMaxPointNum();  // 曲线点数
         if (maxPointNum < 1) throw new IllegalArgumentException(I18n.tr("Invalid maximum number of points for round corner, should be at least 1."));
-        else if (maxPointNum < 5) utils.warnInfo(I18n.tr("Maximum number of points for round corner is too low, the result may not be ideal."));
-        // result.put("maxPointNum", maxPointNum);
+        else if (maxPointNum < 5) UtilsUI.warnInfo(I18n.tr("Maximum number of points for round corner is too low, the result may not be ideal."));
 
         double minAngleDeg = filletDialog.getMinAngleDeg();  // 最小张角
         if (minAngleDeg < 0.0) {
             minAngleDeg = 0.0;
             filletDialog.setMinAngleDeg(0.0);
-            utils.warnInfo(I18n.tr("Minimum angle should be at least 0°, set to 0°."));
+            UtilsUI.warnInfo(I18n.tr("Minimum angle should be at least 0°, set to 0°."));
         }
-        // result.put("minAngleDeg", minAngleDeg);
 
         double maxAngleDeg = filletDialog.getMaxAngleDeg();  // 最大张角
         if (maxAngleDeg > 180.0) {
             maxAngleDeg = 180.0;
             filletDialog.setMaxAngleDeg(180.0);
-            utils.warnInfo(I18n.tr("Maximum angle should be at most 180°, set to 180°."));
+            UtilsUI.warnInfo(I18n.tr("Maximum angle should be at most 180°, set to 180°."));
         }
-        // result.put("maxAngleDeg", maxAngleDeg);
-
-
-        // 是否删除旧路径、选择新路径、复制旧路径标签
-        // result.put("deleteOld", roundCornersDialog.getIfDeleteOld());
-        // result.put("selectNew", roundCornersDialog.getIfSelectNew());
-        // result.put("copyTag", roundCornersDialog.getIfCopyTag());
 
         // 保存设置
         FilletPreference.setPreferenceFromDialog(filletDialog);
@@ -139,22 +93,21 @@ public class FilletAction extends JosmAction {
         return new FilletParams(
                 radius, angleStep, maxPointNum,
                 minAngleDeg, maxAngleDeg,
+                // 是否删除旧路径、选择新路径、复制旧路径标签
                 filletDialog.getIfDeleteOld(), filletDialog.getIfSelectNew(), filletDialog.getIfCopyTag()
         );
     }
 
     // 画一条线及其新节点的指令
-    private NewNodeWayCmd getNewNodeWayCmd(
-            DataSet ds, Way w,
+    private NewNodeWayCommands getNewNodeWayCmd(
+            DataSet ds, Way way,
             double radius, double angleStep, int pointNum,
             double minAngleDeg, double maxAngleDeg,
             boolean copyTag
     ) {
-        // Map<String, Object> results = new HashMap<>();
-
         // 计算平滑路径，获取待画的新节点（按新路径节点顺序排列）
-        FilletResult filletResult = FilletGenerator.buildSmoothPolyline(
-                w,
+        DrawingNewNodeResult filletResult = FilletGenerator.buildSmoothPolyline(
+                way,
                 radius, angleStep, pointNum,
                 minAngleDeg, maxAngleDeg);
         if (filletResult == null || filletResult.newNodes == null || filletResult.newNodes.size() < 2) {
@@ -169,7 +122,7 @@ public class FilletAction extends JosmAction {
 
         // 复制原Way标签
         if (copyTag) {
-            Map<String, String> wayTags = w.getInterestingTags();  // 读取原Way的tag
+            Map<String, String> wayTags = way.getInterestingTags();  // 读取原Way的tag
             newWay.setKeys(wayTags);
         }
 
@@ -181,20 +134,16 @@ public class FilletAction extends JosmAction {
         }
         addCommands.add(new AddCommand(ds, newWay));  // 添加线到命令序列
 
-        // results.put("newWay", newWay);
-        // results.put("addCommands", addCommands);
-        // results.put("failedNodeIds", failedNodeIds);
-        return new NewNodeWayCmd(newWay, addCommands, failedNodeIds);
+        return new NewNodeWayCommands(newWay, addCommands, failedNodeIds);
     }
 
     // 汇总全部添加指令
-    public AddCommandsCollected addCommand(
+    public AddCommandsCollected concludeAddCommands(
             DataSet ds, List<Way> selectedWays,
             double radius, double angleStep, int maxPointNum,
             double minAngleDeg, double maxAngleDeg,
             boolean copyTag
     ) {
-        // Map<String, Object> result = new HashMap<>();
         List<Command> commands = new ArrayList<>();
         Map<Way, Way> oldNewWayPairs = new HashMap<>();
         Map<Way, List<Long>> failedNodeIds = new HashMap<>();
@@ -203,23 +152,24 @@ public class FilletAction extends JosmAction {
         // List<Way> newWays = new ArrayList<>();
         for (Way w : selectedWays) {  // 分别处理每条路径
             try {  // 一条路径出错尽可能不影响其他的
-                NewNodeWayCmd newNWCmd = getNewNodeWayCmd(
+                NewNodeWayCommands newNWCmd = getNewNodeWayCmd(
                         ds, w,
                         radius, angleStep, maxPointNum,
                         minAngleDeg, maxAngleDeg,
-                        copyTag);
+                        copyTag
+                );
 
                 if (newNWCmd != null) {  // TODO：检查会否和已提交但未执行（进入ds）的重复提交？
                     commands.addAll(newNWCmd.addCommands);
                     oldNewWayPairs.put(w, newNWCmd.newWay);
                     failedNodeIds.put(w, newNWCmd.failedNodeIds);
                 }
-                else utils.warnInfo(I18n.tr(
+                else UtilsUI.warnInfo(I18n.tr(
                         "Algorithm did not return at least 2 nodes to form a way for way {0}, this way was not processed.",
                         w.getUniqueId()
                 ));
             } catch (Exception exAdd) {
-                utils.errorInfo(I18n.tr("Unexpected error occurred while processing way {0}: {1}",
+                UtilsUI.errorInfo(I18n.tr("Unexpected error occurred while processing way {0}: {1}",
                         w.getUniqueId(), exAdd.getMessage()
                 ));
             }
@@ -231,63 +181,11 @@ public class FilletAction extends JosmAction {
         // 去重防止提交重复添加
         commands = commands.stream().distinct().toList();
 
-        // result.put("commands", commands);
-        // result.put("oldNewWayPairs", oldNewWayPairs);
-        // result.put("failedNodeIds", failedNodeIds);
         return new AddCommandsCollected(commands, oldNewWayPairs, failedNodeIds);
     }
 
-    // 移除/替换一条旧路径及无用节点的指令
-    public List<Command> getRemoveCmd(DataSet ds, Way oldWay, Way newWay) {
-        List<Command> removeCommands = new ArrayList<>();
-
-        // 既有路径替换
-        if (oldWay.getId() != 0) {
-            ReplaceGeometryCommand seqCmdRep = ReplaceGeometryUtils.buildReplaceWithNewCommand(oldWay, newWay);
-            if (seqCmdRep == null) {
-                utils.warnInfo(
-                        I18n.tr("Columbina attempted to use Utilsplugin2''s ''Replace Geometry'' function to replace the old way, but failed.\n\n")
-                                + I18n.tr("The user canceled the replacement operation in the Utilsplugin2 window.\n\n")
-                                + I18n.tr("Old way {0} was not removed.", oldWay.getUniqueId())
-                );
-                // "Columbina尝试调用Utilsplugin2插件之「替换几何图形」功能替换旧路径，但失败。\n\n"
-                // "用户在Utilsplugin2的窗口中取消了替换操作。\n"
-                // "\n\n旧路径" + oldWay.getUniqueId() + "未被移除。"
-            }
-            else {
-                List<Command> cmdRep = utils.tryGetCommandsFromSeqCmd(seqCmdRep);
-                removeCommands.addAll(cmdRep);
-            }
-        }
-        // 新路径删除
-        else {
-            // List<Command> delCommands = new LinkedList<>();
-            if (oldWay.getReferrers().isEmpty()) {  // 旧路径有关系，连同节点都不删
-                removeCommands.add(new DeleteCommand(ds, oldWay));  // 去除路径
-                // 去除节点（闭合曲线会删闭合点2次，自交路径也会导致重复删除，需要去重）
-                // 不能用ds.ContainsNode(n)判断删没删，因为cmdDel还没提交，delCommands内部重复删除会炸
-                for (Node n : oldWay.getNodes().stream().distinct().toList()) {
-                    boolean canBeDeleted = !n.isTagged();  // 有tag不删
-                    for (OsmPrimitive ref : n.getReferrers()) {
-                        if (!(ref instanceof Way && ref.equals(oldWay))) {
-                            canBeDeleted = false;  // 被其他路径或关系使用，不删
-                            break;
-                        }
-                    }
-                    if (canBeDeleted) removeCommands.add(new DeleteCommand(ds, n));
-                }
-            } else {
-                utils.warnInfo(I18n.tr(
-                        "Old way {0} is still referenced by relations, not removed.",
-                        oldWay.getUniqueId()
-                ));
-            }
-        }
-        return removeCommands;
-    }
-
     // 汇总全部移除指令
-    public List<Command> removeCommand(DataSet ds, Map<Way, Way> oldNewWayPairs) {
+    public List<Command> concludeRemoveCommands(DataSet ds, Map<Way, Way> oldNewWayPairs) {
         List<Command> commands = new ArrayList<>();
         for (Map.Entry<Way, Way> oldNewWayEntry: oldNewWayPairs.entrySet()) {
             Way oldWay = oldNewWayEntry.getKey();
@@ -313,12 +211,12 @@ public class FilletAction extends JosmAction {
                 );
 
             try {
-                List<Command> cmdRmv = getRemoveCmd(ds, oldWay, newWay);
-                if (cmdRmv != null && !cmdRmv.isEmpty()) {
+                List<Command> cmdRmv = UtilsData.getRemoveCmd(ds, oldWay, newWay);
+                if (!cmdRmv.isEmpty()) {  // cmdRmv != null &&
                     commands.addAll(cmdRmv);
                 }
             } catch (ReplaceGeometryException | IllegalArgumentException exUtils2) {
-                utils.warnInfo(I18n.tr("Columbina attempted to use Utilsplugin2''s ''Replace Geometry'' function to replace the old way, but failed.\n\n")
+                UtilsUI.warnInfo(I18n.tr("Columbina attempted to use Utilsplugin2''s ''Replace Geometry'' function to replace the old way, but failed.\n\n")
                         + I18n.tr("Message from Utilsplugin2:\n{0}\n\n", exUtils2.getMessage())
                         + I18n.tr("Old way {0} was not removed.", oldWay.getUniqueId()));
                         // "Columbina尝试调用Utilsplugin2插件之「替换几何图形」功能替换旧路径，但失败。\n\n"
@@ -326,7 +224,7 @@ public class FilletAction extends JosmAction {
                         // + exUtils2.getMessage()
                         // + "\n\n旧路径" + oldWay.getUniqueId() + "未被移除。"
             } catch (Exception exRmv) {
-                utils.errorInfo(I18n.tr(
+                UtilsUI.errorInfo(I18n.tr(
                         "Unexpected error occurred while removing way {0}: {1}",
                                 oldWay.getUniqueId(),
                                 exRmv.getMessage()
@@ -352,11 +250,8 @@ public class FilletAction extends JosmAction {
 
         // 检查部分
         try {
-            final LayerDatasetAndWaySlc lyDsWs = getLayerDatasetAndWaySlc();
+            final LayerDatasetAndWaySelected lyDsWs = UtilsData.getLayerDatasetAndWaySelected();
             if (lyDsWs == null) return;  // 用户取消操作
-            // layer = (OsmDataLayer) lyDsWs.get("layer");
-            // dataset = (DataSet) lyDsWs.get("dataset");
-            // selectedWays = (List<Way>) lyDsWs.get("selectedWays");
             layer = lyDsWs.layer;
             dataset = lyDsWs.dataset;
             selectedWays = lyDsWs.selectedWays;
@@ -373,7 +268,7 @@ public class FilletAction extends JosmAction {
             minAngleDeg = filletParams.minAngleDeg;
             maxAngleDeg = filletParams.maxAngleDeg;
         } catch (ColumbinaException | IllegalArgumentException exCheck) {
-            utils.errorInfo(exCheck.getMessage());
+            UtilsUI.errorInfo(exCheck.getMessage());
             return;
         }
 
@@ -384,7 +279,7 @@ public class FilletAction extends JosmAction {
         Map<Way, Way> oldNewWayPairs;
         Map<Way, List<Long>> failedNodeIds;
         try{
-            cmdsAddAndWayPairs = addCommand(
+            cmdsAddAndWayPairs = concludeAddCommands(
                     dataset, selectedWays,
                     radius, angleStep, pointNum,
                     minAngleDeg, maxAngleDeg,
@@ -393,7 +288,7 @@ public class FilletAction extends JosmAction {
             oldNewWayPairs = cmdsAddAndWayPairs.oldNewWayPairs;
             failedNodeIds = cmdsAddAndWayPairs.failedNodeIds;
         } catch (ColumbinaException | IllegalArgumentException exAdd) {
-            utils.errorInfo(exAdd.getMessage());
+            UtilsUI.errorInfo(exAdd.getMessage());
             return;
         }
         String undoRedoInfo;
@@ -416,19 +311,19 @@ public class FilletAction extends JosmAction {
                         + I18n.tr(": ") + failedEntry.getValue();
                 hasFailedNodes = true;
             }
-            if (hasFailedNodes) utils.warnInfo(failedInfo);
+            if (hasFailedNodes) UtilsUI.warnInfo(failedInfo);
         }
 
         // 移除旧路径
         if (deleteOld) {
             try {
-                List<Command> cmdsRmv = removeCommand(dataset, oldNewWayPairs);
+                List<Command> cmdsRmv = concludeRemoveCommands(dataset, oldNewWayPairs);
                 if (!cmdsRmv.isEmpty()) {  // 如果全部都没有删除/替换，cmdsRmv为空会错错爆;
                     Command cmdRmv = new SequenceCommand(I18n.tr("Remove original ways"), cmdsRmv);
                     UndoRedoHandler.getInstance().add(cmdRmv);
                 }
             } catch (ColumbinaException | IllegalArgumentException | ReplaceGeometryException exRemove) {
-                utils.warnInfo(exRemove.getMessage());
+                UtilsUI.warnInfo(exRemove.getMessage());
                 // return;
             }
             // TODO:选中的旧路径之间有交点且不与其他路径连接时，因为现在删/换数条线是打包到一次undoRedo中同时操作，
@@ -443,19 +338,6 @@ public class FilletAction extends JosmAction {
         }
     }
 
-
-    /// 数据类
-    private static final class LayerDatasetAndWaySlc {
-        public final OsmDataLayer layer;
-        public final DataSet dataset;
-        public final List<Way> selectedWays;
-
-        LayerDatasetAndWaySlc(OsmDataLayer layer, DataSet dataset, List<Way> selectedWays) {
-            this.layer = layer;
-            this.dataset = dataset;
-            this.selectedWays = selectedWays;
-        }
-    }
 
     private static final class FilletParams {
         public final double radius;
@@ -483,29 +365,6 @@ public class FilletAction extends JosmAction {
         }
     }
 
-    private static final class NewNodeWayCmd {
-        public final Way newWay;
-        public final List<Command> addCommands;
-        public final List<Long> failedNodeIds;
-
-        NewNodeWayCmd(Way newWay, List<Command> addCommands, List<Long> failedNodeIds) {
-            this.newWay = newWay;
-            this.addCommands = addCommands;
-            this.failedNodeIds = failedNodeIds;
-        }
-    }
-
-    private static final class AddCommandsCollected {
-        public final List<Command> commands;
-        public final Map<Way, Way> oldNewWayPairs;
-        public final Map<Way, List<Long>> failedNodeIds;
-
-        AddCommandsCollected(List<Command> commands, Map<Way, Way> oldNewWayPairs, Map<Way, List<Long>> failedNodeIds) {
-            this.commands = commands;
-            this.oldNewWayPairs = oldNewWayPairs;
-            this.failedNodeIds = failedNodeIds;
-        }
-    }
 }
 
 

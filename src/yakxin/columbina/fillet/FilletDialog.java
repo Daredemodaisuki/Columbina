@@ -12,7 +12,7 @@ import org.openstreetmap.josm.gui.MainApplication;
 import org.openstreetmap.josm.tools.I18n;
 import yakxin.columbina.data.preference.FilletPreference;
 import yakxin.columbina.data.dto.PanelSectionResult;
-import yakxin.columbina.utils;
+import yakxin.columbina.utils.UtilsUI;
 
 /// 倒圆角对话框
 public class FilletDialog extends ExtendedDialog {
@@ -46,23 +46,23 @@ public class FilletDialog extends ExtendedDialog {
         setDefaultButton(1);  // ESC取消
 
         // 窗体
-        header = utils.addHeader(panel, I18n.tr("Round Corners"), "RoundCorners");
+        header = UtilsUI.addHeader(panel, I18n.tr("Round Corners"), "RoundCorners");
 
-        sectionCurveInfo = utils.addSection(panel, I18n.tr("Curve Information"));
-        filletR = utils.addInput(panel, I18n.tr("Fillet (round corner) radius (m): "), String.valueOf(FilletPreference.getFilletRadius()));
-        filletAngleStep = utils.addInput(panel, I18n.tr("Angle step for new curve (degrees°): "), String.valueOf(FilletPreference.getFilletAngleStep()));
-        utils.addLabel(
+        sectionCurveInfo = UtilsUI.addSection(panel, I18n.tr("Curve Information"));
+        filletR = UtilsUI.addInput(panel, I18n.tr("Fillet (round corner) radius (m): "), String.valueOf(FilletPreference.getFilletRadius()));
+        filletAngleStep = UtilsUI.addInput(panel, I18n.tr("Angle step for new curve (degrees°): "), String.valueOf(FilletPreference.getFilletAngleStep()));
+        UtilsUI.addLabel(
                 panel,
                 "<html><div style=\"width:275\">"
                         + I18n.tr("※ Specifies the smoothness of the curve. The smaller the step, the denser the points and the smoother the curve.")
                         + "</div></html>",
                 15
         );
-        filletMaxPointNum = utils.addInput(panel, I18n.tr("Maximum nodes per curve segment (excluding start and end): "), String.valueOf(FilletPreference.getFilletMaxPointPerArc()));
-        utils.addSpace(panel,4);
-        minAngleDeg = utils.addInput(panel, I18n.tr("Minimum angle allowed for drawing curves (degrees°): "), String.valueOf(FilletPreference.getFilletMinAngleDeg()));
-        maxAngleDeg = utils.addInput(panel, I18n.tr("Maximum angle allowed for drawing curves (degrees°): "), String.valueOf(FilletPreference.getFilletMaxAngleDeg()));
-        utils.addLabel(
+        filletMaxPointNum = UtilsUI.addInput(panel, I18n.tr("Maximum nodes per curve segment (excluding start and end): "), String.valueOf(FilletPreference.getFilletMaxPointPerArc()));
+        UtilsUI.addSpace(panel,4);
+        minAngleDeg = UtilsUI.addInput(panel, I18n.tr("Minimum angle allowed for drawing curves (degrees°): "), String.valueOf(FilletPreference.getFilletMinAngleDeg()));
+        maxAngleDeg = UtilsUI.addInput(panel, I18n.tr("Maximum angle allowed for drawing curves (degrees°): "), String.valueOf(FilletPreference.getFilletMaxAngleDeg()));
+        UtilsUI.addLabel(
                 panel,
                 "<html><div style=\"width:275\">"
                         + I18n.tr("※ When the angle approaches 0°, it forms a hairpin turn; when it approaches 180°, it indicates the lines near the corner are already relatively smooth. ")
@@ -71,10 +71,10 @@ public class FilletDialog extends ExtendedDialog {
                 15
         );
 
-        sectionOptionInfo = utils.addSection(panel, I18n.tr("Other Operations"));
-        copyTag = utils.addCheckbox(panel, I18n.tr("Copy original ways'' tags"), FilletPreference.isFilletCopyTag());
-        deleteOldWays = utils.addCheckbox(panel, I18n.tr("Remove original ways after drawing"), FilletPreference.isFilletDeleteOldWays());
-        selectNewWays = utils.addCheckbox(panel, I18n.tr("Select new ways after drawing"), FilletPreference.isFilletSelectNewWays());
+        sectionOptionInfo = UtilsUI.addSection(panel, I18n.tr("Other Operations"));
+        copyTag = UtilsUI.addCheckbox(panel, I18n.tr("Copy original ways'' tags"), FilletPreference.isFilletCopyTag());
+        deleteOldWays = UtilsUI.addCheckbox(panel, I18n.tr("Remove original ways after drawing"), FilletPreference.isFilletDeleteOldWays());
+        selectNewWays = UtilsUI.addCheckbox(panel, I18n.tr("Select new ways after drawing"), FilletPreference.isFilletSelectNewWays());
 
         contentInsets = new Insets(5, 15, 5, 15);  // 内容边距
         setContent(panel);

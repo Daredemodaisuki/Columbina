@@ -6,7 +6,7 @@ import org.openstreetmap.josm.tools.I18n;
 import yakxin.columbina.data.preference.ChamferPreference;
 import yakxin.columbina.data.preference.FilletPreference;
 import yakxin.columbina.data.dto.PanelSectionResult;
-import yakxin.columbina.utils;
+import yakxin.columbina.utils.UtilsUI;
 
 import javax.swing.*;
 import java.awt.*;
@@ -26,7 +26,7 @@ public class ChamferDialog extends ExtendedDialog {
     private final JPanel header;
     private final PanelSectionResult sectionChamferInfo;
     private final JFormattedTextField chamferDistanceA;
-    private final JFormattedTextField chamferDistanceB;
+    private final JFormattedTextField chamferDistanceC;
     private final JFormattedTextField chamferAngleADeg;
 
     private final PanelSectionResult sectionOptionInfo;
@@ -45,17 +45,17 @@ public class ChamferDialog extends ExtendedDialog {
         setDefaultButton(1);  // ESC取消
 
         // 窗体
-        header = utils.addHeader(panel, I18n.tr("Chamfer Corners"), null);  // 暂不设置图标
+        header = UtilsUI.addHeader(panel, I18n.tr("Chamfer Corners"), null);  // 暂不设置图标
 
-        sectionChamferInfo = utils.addSection(panel, I18n.tr("Chamfer Information"));
-        chamferDistanceA = utils.addInput(panel, I18n.tr("Chamfer distance A (m):"), String.valueOf(ChamferPreference.getChamferDistanceA()));
-        chamferDistanceB = utils.addInput(panel, I18n.tr("Chamfer distance B (m):"), String.valueOf(ChamferPreference.getChamferDistanceB()));
-        chamferAngleADeg = utils.addInput(panel, I18n.tr("Chamfer angle to A (m):"), String.valueOf(ChamferPreference.getChamferAngleADeg()));
+        sectionChamferInfo = UtilsUI.addSection(panel, I18n.tr("Chamfer Information"));
+        chamferDistanceA = UtilsUI.addInput(panel, I18n.tr("Chamfer distance A (m):"), String.valueOf(ChamferPreference.getChamferDistanceA()));
+        chamferDistanceC = UtilsUI.addInput(panel, I18n.tr("Chamfer distance C (m):"), String.valueOf(ChamferPreference.getChamferDistanceC()));
+        chamferAngleADeg = UtilsUI.addInput(panel, I18n.tr("Chamfer angle to A (m):"), String.valueOf(ChamferPreference.getChamferAngleADeg()));
 
-        sectionOptionInfo = utils.addSection(panel, I18n.tr("Other Operations"));
-        copyTag = utils.addCheckbox(panel, I18n.tr("Copy original ways'' tags"), ChamferPreference.isChamferCopyTag());
-        deleteOldWays = utils.addCheckbox(panel, I18n.tr("Remove original ways after drawing"), ChamferPreference.isChamferDeleteOldWays());
-        selectNewWays = utils.addCheckbox(panel, I18n.tr("Select new ways after drawing"), ChamferPreference.isChamferSelectNewWays());
+        sectionOptionInfo = UtilsUI.addSection(panel, I18n.tr("Other Operations"));
+        copyTag = UtilsUI.addCheckbox(panel, I18n.tr("Copy original ways'' tags"), ChamferPreference.isChamferCopyTag());
+        deleteOldWays = UtilsUI.addCheckbox(panel, I18n.tr("Remove original ways after drawing"), ChamferPreference.isChamferDeleteOldWays());
+        selectNewWays = UtilsUI.addCheckbox(panel, I18n.tr("Select new ways after drawing"), ChamferPreference.isChamferSelectNewWays());
 
         contentInsets = new Insets(5, 15, 5, 15);  // 内容边距
         setContent(panel);
@@ -74,9 +74,9 @@ public class ChamferDialog extends ExtendedDialog {
             // 能返回数值就返回，有异常的话返回默认值（但这里不做数值校验，在Action类中检查是否合法）
         }
     }
-    public double getChamferDistanceB() {
+    public double getChamferDistanceC() {
         try {
-            return NumberFormat.getInstance(Locale.US).parse(chamferDistanceB.getText()).doubleValue();
+            return NumberFormat.getInstance(Locale.US).parse(chamferDistanceC.getText()).doubleValue();
         } catch (ParseException e) {
             return FilletPreference.DEFAULT_FILLET_RADIUS;
         }

@@ -1,10 +1,5 @@
-package yakxin.columbina;
+package yakxin.columbina.utils;
 
-import org.openstreetmap.josm.command.Command;
-import org.openstreetmap.josm.command.PseudoCommand;
-import org.openstreetmap.josm.command.SequenceCommand;
-import org.openstreetmap.josm.data.osm.Node;
-import org.openstreetmap.josm.data.osm.Way;
 import org.openstreetmap.josm.gui.Notification;
 import org.openstreetmap.josm.tools.GBC;
 import org.openstreetmap.josm.tools.I18n;
@@ -13,12 +8,10 @@ import yakxin.columbina.data.dto.PanelSectionResult;
 
 import javax.swing.*;
 import java.awt.*;
-import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import java.util.*;
-import java.util.List;
 
-public class utils {
+public class UtilsUI {
     // 测试用调试输出
     public static void testMsgWindow(String info) {
         JOptionPane.showMessageDialog(
@@ -75,12 +68,12 @@ public class utils {
         return addLabel(panel, text, 0);
     }
     public static JLabel addLabel(JPanel panel, String text, int leftIndents) {
-        utils.addSpace(panel,2);
+        UtilsUI.addSpace(panel,2);
 
         JLabel label = new JLabel(text);
         panel.add(label, GBC.eol().insets(leftIndents, 0, 0, 0).fill(GridBagConstraints.HORIZONTAL));
 
-        utils.addSpace(panel,2);
+        UtilsUI.addSpace(panel,2);
 
         return label;
     }
@@ -106,22 +99,6 @@ public class utils {
         // result.put("titleLabel", label);
         // result.put("separator", sep);
         return new PanelSectionResult(label, sep);
-    }
-
-    /// 数据相关
-    public static void wayReplaceNode(Way way, int index, Node newNode) {
-        way.removeNode(way.getNode(index));
-        way.addNode(index, newNode);
-    }
-
-    public static List<Command> tryGetCommandsFromSeqCmd (SequenceCommand seqCmd) {
-        List<Command> commands = new ArrayList<>();
-        for (PseudoCommand pc : seqCmd.getChildren()) {
-            if (pc instanceof Command) {
-                commands.add((Command) pc);
-            }
-        }
-        return commands;
     }
 }
 
