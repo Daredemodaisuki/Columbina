@@ -188,7 +188,7 @@ msgstr "允许绘制曲线的最小张角（角度°）："
 
 #: ../../src/yakxin/columbina/RoundCornersDialog.java:68
 msgid "Maximum angle allowed for drawing curves (degrees°): "
-msgstr "允许绘制曲线的最大张角（角度°）: "
+msgstr "允许绘制曲线的最大张角（角度°）："
 
 #: ../../src/yakxin/columbina/RoundCornersDialog.java:72
 msgid "※ When the angle approaches 0°, it forms a hairpin turn; when it approaches 180°, it indicates the lines near the corner are already relatively smooth. "

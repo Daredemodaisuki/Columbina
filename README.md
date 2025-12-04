@@ -1,7 +1,7 @@
 # Corner-Optimal Line Utility Modifier for Better Inflection and Node Adjustment (*Columbina*) <br> 用于更优弯折与节点调整的转角优化线型工具修改器
 
 A Java OpenStreetMap (JOSM) pulgin providing convenient Fillet (round corner) drawing, and … <br> might provide Chamfer and Transition Curve features in the future.
-<br> 一个提供圆角工具的Java OpenStreetMap（JOSM）插件，未来计划开发切角和缓和曲线功能。
+<br> 一个提供圆角工具的Java OpenStreetMap（JOSM）插件，未来计划开发斜角和缓和曲线功能。
 
 <p align="right">
   <img src="ColumbinaRC.png" alt="Round Corner Menu" width="60%">

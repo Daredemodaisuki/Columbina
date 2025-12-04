@@ -8,6 +8,8 @@ import org.openstreetmap.josm.data.osm.Way;
 import org.openstreetmap.josm.gui.Notification;
 import org.openstreetmap.josm.tools.GBC;
 import org.openstreetmap.josm.tools.I18n;
+import org.openstreetmap.josm.tools.ImageProvider;
+import yakxin.columbina.data.dto.PanelSectionResult;
 
 import javax.swing.*;
 import java.awt.*;
@@ -18,7 +20,7 @@ import java.util.List;
 
 public class utils {
     // 测试用调试输出
-    protected static void testMsgWindow(String info) {
+    public static void testMsgWindow(String info) {
         JOptionPane.showMessageDialog(
                 null,
                 info,
@@ -34,6 +36,19 @@ public class utils {
     // 左下角错误信息
     public static void errorInfo(String info) {
         (new Notification(I18n.tr("Columbina\n\n") + info)).setIcon(JOptionPane.ERROR_MESSAGE).show();
+    }
+
+    // 标题栏
+    public static JPanel addHeader(JPanel panel, String headTitle, String iconName) {
+        JPanel header = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        if (iconName != null && iconName != "") {
+            ImageIcon icon = new ImageProvider(iconName).setSize(24,24).get();
+            header.add(new JLabel(icon));
+        }
+        header.add(new JLabel("<html><h1 style=\"font-size:10px;\">" + headTitle + "</h1></html>"));
+        panel.add(header, GBC.eol().insets(0, 0, 0, 0).fill(GridBagConstraints.HORIZONTAL));
+
+        return header;
     }
 
     public static JFormattedTextField addInput(JPanel panel, String labelText) {
@@ -80,17 +95,17 @@ public class utils {
         panel.add(Box.createVerticalStrut(height), GBC.eol());
     }
 
-    public static Map<String, Object> addSection(JPanel panel, String title) {
-        Map<String, Object> result = new HashMap<>();
+    public static PanelSectionResult addSection(JPanel panel, String title) {
+        // Map<String, Object> result = new HashMap<>();
 
         addSpace(panel, 8);
         JLabel label = addLabel(panel, "<html><b>" + title + "</b></html>");
         JSeparator sep = addSeparator(panel);
         addSpace(panel, 4);
 
-        result.put("titleLabel", label);
-        result.put("separator", sep);
-        return result;
+        // result.put("titleLabel", label);
+        // result.put("separator", sep);
+        return new PanelSectionResult(label, sep);
     }
 
     /// 数据相关

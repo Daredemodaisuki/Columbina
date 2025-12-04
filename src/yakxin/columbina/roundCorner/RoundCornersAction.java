@@ -23,8 +23,8 @@ import org.openstreetmap.josm.tools.Shortcut;
 
 // 哥伦比娅.data
 import yakxin.columbina.data.ColumbinaException;
-import yakxin.columbina.data.FilletResult;
-import yakxin.columbina.data.Preference;
+import yakxin.columbina.data.dto.FilletResult;
+import yakxin.columbina.data.preference.FilletPreference;
 import yakxin.columbina.utils;
 
 import javax.swing.*;
@@ -32,7 +32,9 @@ import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 import java.util.*;
 
-/// 导圆角
+/**
+ * 导圆角交互类
+  */
 public class RoundCornersAction extends JosmAction {
     private static final Shortcut shortcutRoundCorners = Shortcut.registerShortcut(
             "tools:roundCorners",
@@ -41,7 +43,7 @@ public class RoundCornersAction extends JosmAction {
             Shortcut.ALT_CTRL_SHIFT
     );
 
-    /// 添加菜单（构造函数）
+    /// 构建菜单实例（构造函数）
     public RoundCornersAction() {
         // 调用父类构造函数设置动作属性
         super(
@@ -85,59 +87,59 @@ public class RoundCornersAction extends JosmAction {
         return new LayerDatasetAndWaySlc(layer, dataset, waySelection);
     }
 
-    private Params getParams() {
+    private FilletParams getParams() {
         // Map<String, Object> result = new HashMap<>();
-        RoundCornersDialog dialog = new RoundCornersDialog();  // 创建设置对话框
+        FilletDialog filletDialog = new FilletDialog();  // 创建设置对话框
 
-        if (dialog.getValue() != 1) return null;  // 按ESC（0）或点击取消（2），退出；点击确定继续是1
+        if (filletDialog.getValue() != 1) return null;  // 按ESC（0）或点击取消（2），退出；点击确定继续是1
 
-        double radius = dialog.getFilletRadius();  // 圆角半径
+        double radius = filletDialog.getFilletRadius();  // 圆角半径
         if (radius <= 0.0) throw new IllegalArgumentException(I18n.tr("Invalid round corner radius, should be greater than 0m."));
         // result.put("radius", radius);
 
-        double angleStep = dialog.getFilletAngleStep();  // 圆角步进
+        double angleStep = filletDialog.getFilletAngleStep();  // 圆角步进
         if (angleStep < 0.1) {
             angleStep = 0.1;
-            dialog.setFilletAngleStep(0.1);
+            filletDialog.setFilletAngleStep(0.1);
             utils.warnInfo(I18n.tr("Minimum angle step for round corner should be at least 0.1°, set to 0.1°."));
         }
         else if (angleStep > 10.0) utils.warnInfo(I18n.tr("Angle step is too large, the result may not be good."));
         // result.put("angleStep", angleStep);
 
-        int maxPointNum = dialog.getFilletMaxPointNum();  // 曲线点数
+        int maxPointNum = filletDialog.getFilletMaxPointNum();  // 曲线点数
         if (maxPointNum < 1) throw new IllegalArgumentException(I18n.tr("Invalid maximum number of points for round corner, should be at least 1."));
         else if (maxPointNum < 5) utils.warnInfo(I18n.tr("Maximum number of points for round corner is too low, the result may not be ideal."));
         // result.put("maxPointNum", maxPointNum);
 
-        double minAngleDeg = dialog.getMinAngleDeg();  // 最小张角
+        double minAngleDeg = filletDialog.getMinAngleDeg();  // 最小张角
         if (minAngleDeg < 0.0) {
             minAngleDeg = 0.0;
-            dialog.setMinAngleDeg(0.0);
+            filletDialog.setMinAngleDeg(0.0);
             utils.warnInfo(I18n.tr("Minimum angle should be at least 0°, set to 0°."));
         }
         // result.put("minAngleDeg", minAngleDeg);
 
-        double maxAngleDeg = dialog.getMaxAngleDeg();  // 最大张角
+        double maxAngleDeg = filletDialog.getMaxAngleDeg();  // 最大张角
         if (maxAngleDeg > 180.0) {
             maxAngleDeg = 180.0;
-            dialog.setMaxAngleDeg(180.0);
+            filletDialog.setMaxAngleDeg(180.0);
             utils.warnInfo(I18n.tr("Maximum angle should be at most 180°, set to 180°."));
         }
         // result.put("maxAngleDeg", maxAngleDeg);
 
 
         // 是否删除旧路径、选择新路径、复制旧路径标签
-        // result.put("deleteOld", dialog.getIfDeleteOld());
-        // result.put("selectNew", dialog.getIfSelectNew());
-        // result.put("copyTag", dialog.getIfCopyTag());
+        // result.put("deleteOld", roundCornersDialog.getIfDeleteOld());
+        // result.put("selectNew", roundCornersDialog.getIfSelectNew());
+        // result.put("copyTag", roundCornersDialog.getIfCopyTag());
 
         // 保存设置
-        Preference.setPreferenceFromDialog(dialog);
-        Preference.savePreference();
-        return new Params(
+        FilletPreference.setPreferenceFromDialog(filletDialog);
+        FilletPreference.savePreference();
+        return new FilletParams(
                 radius, angleStep, maxPointNum,
                 minAngleDeg, maxAngleDeg,
-                dialog.getIfDeleteOld(), dialog.getIfSelectNew(), dialog.getIfCopyTag()
+                filletDialog.getIfDeleteOld(), filletDialog.getIfSelectNew(), filletDialog.getIfCopyTag()
         );
     }
 
@@ -338,7 +340,9 @@ public class RoundCornersAction extends JosmAction {
     }
 
 
-    /// 点击事件
+    /**
+     * 点击事件
+     */
     @Override
     public void actionPerformed(ActionEvent e) {
         OsmDataLayer layer; DataSet dataset; List<Way> selectedWays;
@@ -358,16 +362,16 @@ public class RoundCornersAction extends JosmAction {
             selectedWays = lyDsWs.selectedWays;
 
             // 倒角参数设置
-            final Params params = getParams();
-            if (params == null) return;  // 用户取消操作
-            radius = params.radius;
-            pointNum = params.maxPointNum;
-            angleStep = params.angleStep;
-            deleteOld = params.deleteOld;
-            selectNew = params.selectNew;
-            copyTag = params.copyTag;
-            minAngleDeg = params.minAngleDeg;
-            maxAngleDeg = params.maxAngleDeg;
+            final FilletParams filletParams = getParams();
+            if (filletParams == null) return;  // 用户取消操作
+            radius = filletParams.radius;
+            pointNum = filletParams.maxPointNum;
+            angleStep = filletParams.angleStep;
+            deleteOld = filletParams.deleteOld;
+            selectNew = filletParams.selectNew;
+            copyTag = filletParams.copyTag;
+            minAngleDeg = filletParams.minAngleDeg;
+            maxAngleDeg = filletParams.maxAngleDeg;
         } catch (ColumbinaException | IllegalArgumentException exCheck) {
             utils.errorInfo(exCheck.getMessage());
             return;
@@ -446,14 +450,14 @@ public class RoundCornersAction extends JosmAction {
         public final DataSet dataset;
         public final List<Way> selectedWays;
 
-        public LayerDatasetAndWaySlc(OsmDataLayer layer, DataSet dataset, List<Way> selectedWays) {
+        LayerDatasetAndWaySlc(OsmDataLayer layer, DataSet dataset, List<Way> selectedWays) {
             this.layer = layer;
             this.dataset = dataset;
             this.selectedWays = selectedWays;
         }
     }
 
-    private static final class Params {
+    private static final class FilletParams {
         public final double radius;
         public final double angleStep;
         public final int maxPointNum;
@@ -463,7 +467,7 @@ public class RoundCornersAction extends JosmAction {
         public final boolean selectNew;
         public final boolean copyTag;
 
-        public Params(
+        FilletParams(
                 double radius, double angleStep, int maxPointNum,
                 double minAngleDeg, double maxAngleDeg,
                 boolean deleteOld, boolean selectNew, boolean copyTag
@@ -484,7 +488,7 @@ public class RoundCornersAction extends JosmAction {
         public final List<Command> addCommands;
         public final List<Long> failedNodeIds;
 
-        public NewNodeWayCmd(Way newWay, List<Command> addCommands, List<Long> failedNodeIds) {
+        NewNodeWayCmd(Way newWay, List<Command> addCommands, List<Long> failedNodeIds) {
             this.newWay = newWay;
             this.addCommands = addCommands;
             this.failedNodeIds = failedNodeIds;
@@ -496,7 +500,7 @@ public class RoundCornersAction extends JosmAction {
         public final Map<Way, Way> oldNewWayPairs;
         public final Map<Way, List<Long>> failedNodeIds;
 
-        public AddCommandsCollected(List<Command> commands, Map<Way, Way> oldNewWayPairs, Map<Way, List<Long>> failedNodeIds) {
+        AddCommandsCollected(List<Command> commands, Map<Way, Way> oldNewWayPairs, Map<Way, List<Long>> failedNodeIds) {
             this.commands = commands;
             this.oldNewWayPairs = oldNewWayPairs;
             this.failedNodeIds = failedNodeIds;

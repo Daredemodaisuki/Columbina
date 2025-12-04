@@ -4,40 +4,38 @@ import java.awt.*;
 import java.text.NumberFormat;
 import java.text.ParseException;
 import java.util.Locale;
-import java.util.Map;
 
 import javax.swing.*;
 
 import org.openstreetmap.josm.gui.ExtendedDialog;
 import org.openstreetmap.josm.gui.MainApplication;
-import org.openstreetmap.josm.tools.GBC;
 import org.openstreetmap.josm.tools.I18n;
-import org.openstreetmap.josm.tools.ImageProvider;
-import yakxin.columbina.data.Preference;
+import yakxin.columbina.data.preference.FilletPreference;
+import yakxin.columbina.data.dto.PanelSectionResult;
 import yakxin.columbina.utils;
 
 /// 倒圆角对话框
-public class RoundCornersDialog extends ExtendedDialog {
-    private static final String[] BUTTON_TEXTS = new String[] {"确定", "取消"};
+public class FilletDialog extends ExtendedDialog {
+    private static final String[] BUTTON_TEXTS = new String[] {I18n.tr("Confirm"), I18n.tr("Cancel")};
     private static final String[] BUTTON_ICONS = new String[] {"ok", "cancel"};
 
     // 窗体组件
     protected final JPanel panel = new JPanel(new GridBagLayout());
     private final JPanel header;
-    private final Map<String, Object> sectionCurveInfo;
+    private final PanelSectionResult sectionCurveInfo;
     private final JFormattedTextField filletR;
     private final JFormattedTextField filletAngleStep;
     private final JFormattedTextField filletMaxPointNum;
     private final JFormattedTextField minAngleDeg;
     private final JFormattedTextField maxAngleDeg;
 
-    private final Map<String, Object> sectionOptionInfo;
+    private final PanelSectionResult sectionOptionInfo;
     private final JCheckBox deleteOldWays;
     private final JCheckBox selectNewWays;
     private final JCheckBox copyTag;
 
     // 构建窗口
-    protected RoundCornersDialog() {
+    protected FilletDialog() {
         // 标题、按钮
         super(MainApplication.getMainFrame(),
                 I18n.tr("Columbina"),
@@ -48,15 +46,11 @@ public class RoundCornersDialog extends ExtendedDialog {
         setDefaultButton(1);  // ESC取消
 
         // 窗体
-        header = new JPanel(new FlowLayout(FlowLayout.LEFT));
-        ImageIcon icon = new ImageProvider("RoundCorners").setSize(24,24).get();
-        header.add(new JLabel(icon));
-        header.add(new JLabel("<html><h1 style=\"font-size:10px;\">" + I18n.tr("Round Corners") + "</h1></html>"));
-        panel.add(header, GBC.eol().insets(0, 0, 0, 0).fill(GridBagConstraints.HORIZONTAL));
+        header = utils.addHeader(panel, I18n.tr("Round Corners"), "RoundCorners");
 
         sectionCurveInfo = utils.addSection(panel, I18n.tr("Curve Information"));
-        filletR = utils.addInput(panel, I18n.tr("Fillet (round corner) radius (m): "), String.valueOf(Preference.getRadius()));
-        filletAngleStep = utils.addInput(panel, I18n.tr("Angle step for new curve (degrees°): "), String.valueOf(Preference.getAngleStep()));
+        filletR = utils.addInput(panel, I18n.tr("Fillet (round corner) radius (m): "), String.valueOf(FilletPreference.getFilletRadius()));
+        filletAngleStep = utils.addInput(panel, I18n.tr("Angle step for new curve (degrees°): "), String.valueOf(FilletPreference.getFilletAngleStep()));
         utils.addLabel(
                 panel,
                 "<html><div style=\"width:275\">"
@@ -64,10 +58,10 @@ public class RoundCornersDialog extends ExtendedDialog {
                         + "</div></html>",
                 15
         );
-        filletMaxPointNum = utils.addInput(panel, I18n.tr("Maximum nodes per curve segment (excluding start and end): "), String.valueOf(Preference.getMaxPointPerArc()));
+        filletMaxPointNum = utils.addInput(panel, I18n.tr("Maximum nodes per curve segment (excluding start and end): "), String.valueOf(FilletPreference.getFilletMaxPointPerArc()));
         utils.addSpace(panel,4);
-        minAngleDeg = utils.addInput(panel, I18n.tr("Minimum angle allowed for drawing curves (degrees°): "), String.valueOf(Preference.getMinAngleDeg()));
-        maxAngleDeg = utils.addInput(panel, I18n.tr("Maximum angle allowed for drawing curves (degrees°): "), String.valueOf(Preference.getMaxAngleDeg()));
+        minAngleDeg = utils.addInput(panel, I18n.tr("Minimum angle allowed for drawing curves (degrees°): "), String.valueOf(FilletPreference.getFilletMinAngleDeg()));
+        maxAngleDeg = utils.addInput(panel, I18n.tr("Maximum angle allowed for drawing curves (degrees°): "), String.valueOf(FilletPreference.getFilletMaxAngleDeg()));
         utils.addLabel(
                 panel,
                 "<html><div style=\"width:275\">"
@@ -78,9 +72,9 @@ public class RoundCornersDialog extends ExtendedDialog {
         );
 
         sectionOptionInfo = utils.addSection(panel, I18n.tr("Other Operations"));
-        copyTag = utils.addCheckbox(panel, I18n.tr("Copy original ways'' tags"), Preference.isCopyTag());
-        deleteOldWays = utils.addCheckbox(panel, I18n.tr("Remove original ways after drawing"), Preference.isDeleteOldWays());
-        selectNewWays = utils.addCheckbox(panel, I18n.tr("Select new ways after drawing"), Preference.isSelectNewWays());
+        copyTag = utils.addCheckbox(panel, I18n.tr("Copy original ways'' tags"), FilletPreference.isFilletCopyTag());
+        deleteOldWays = utils.addCheckbox(panel, I18n.tr("Remove original ways after drawing"), FilletPreference.isFilletDeleteOldWays());
+        selectNewWays = utils.addCheckbox(panel, I18n.tr("Select new ways after drawing"), FilletPreference.isFilletSelectNewWays());
 
         contentInsets = new Insets(5, 15, 5, 15);  // 内容边距
         setContent(panel);
@@ -95,7 +89,7 @@ public class RoundCornersDialog extends ExtendedDialog {
         try {
             return NumberFormat.getInstance(Locale.US).parse(filletR.getText()).doubleValue();
         } catch (ParseException e) {
-            return Preference.DEFAULT_RADIUS;
+            return FilletPreference.DEFAULT_FILLET_RADIUS;
             // 能返回数值就返回，有异常的话返回默认值（但这里不做数值校验，在Action类中检查是否合法）
         }
     }
@@ -103,28 +97,28 @@ public class RoundCornersDialog extends ExtendedDialog {
         try {
             return NumberFormat.getInstance(Locale.US).parse(filletAngleStep.getText()).doubleValue();
         } catch (ParseException e) {
-            return Preference.DEFAULT_ANGLE_STEP;
+            return FilletPreference.DEFAULT_FILLET_ANGLE_STEP;
         }
     }
     public int getFilletMaxPointNum() {
         try {
             return NumberFormat.getInstance(Locale.US).parse(filletMaxPointNum.getText()).intValue();
         } catch (ParseException e) {
-            return Preference.DEFAULT_MAX_POINT_PER_ARC;
+            return FilletPreference.DEFAULT_FILLET_MAX_POINT_PER_ARC;
         }
     }
     public double getMinAngleDeg() {
         try {
             return NumberFormat.getInstance(Locale.US).parse(minAngleDeg.getText()).doubleValue();
         } catch (ParseException e) {
-            return Preference.DEFAULT_MIN_ANGLE_DEG;
+            return FilletPreference.DEFAULT_FILLET_MIN_ANGLE_DEG;
         }
     }
     public double getMaxAngleDeg() {
         try {
             return NumberFormat.getInstance(Locale.US).parse(maxAngleDeg.getText()).doubleValue();
         } catch (ParseException e) {
-            return Preference.DEFAULT_MAX_ANGLE_DEG;
+            return FilletPreference.DEFAULT_FILLET_MAX_ANGLE_DEG;
         }
     }
     public boolean getIfCopyTag() {return copyTag.isSelected();}
