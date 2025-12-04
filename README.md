@@ -1,6 +1,6 @@
-# Cartographic-Oriented Line Utility Modifier with Bevel through Interpolated Node Automation (*Columbina*) <br> 制图向节点插值自动化倒角路径实用修改器
+# Corner-Optimal Line Utility Modifier for Better Inflection and Node Adjustment (*Columbina*) <br> 用于更优弯折与节点调整的转角优化线型工具修改器
 
-A Java OpenStreetMap (JOSM) pulgin providing convenient fillet (round corner) drawing, and … <br> might provide bevel and transition curve Features in the future.
+A Java OpenStreetMap (JOSM) pulgin providing convenient Fillet (round corner) drawing, and … <br> might provide Chamfer and Transition Curve features in the future.
 <br> 一个提供圆角工具的Java OpenStreetMap（JOSM）插件，未来计划开发切角和缓和曲线功能。
 
 <p align="right">
