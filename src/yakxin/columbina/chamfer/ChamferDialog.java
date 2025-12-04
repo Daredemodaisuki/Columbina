@@ -92,3 +92,5 @@ public class ChamferDialog extends ExtendedDialog {
     public boolean getIfDeleteOld() {return deleteOldWays.isSelected();}
     public boolean getIfSelectNew() {return selectNewWays.isSelected();}
 }
+
+

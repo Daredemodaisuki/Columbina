@@ -5,17 +5,16 @@ import org.openstreetmap.josm.tools.I18n;
 import org.openstreetmap.josm.tools.Shortcut;
 import yakxin.columbina.data.ColumbinaException;
 import yakxin.columbina.data.preference.ChamferPreference;
-import yakxin.columbina.data.preference.FilletPreference;
 import yakxin.columbina.utils;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 
 public class ChamferAction extends JosmAction {
-    private static final Shortcut shortcutRoundCorners = Shortcut.registerShortcut(
+    private static final Shortcut shortcutChamferCorner = Shortcut.registerShortcut(
             "tools:chamferCorners",
             "More tools: Columbina/Chamfer corners",
-            KeyEvent.VK_C,
+            KeyEvent.VK_X,
             Shortcut.ALT_CTRL_SHIFT
     );
 
@@ -28,7 +27,7 @@ public class ChamferAction extends JosmAction {
                 I18n.tr("Chamfer Corners"),  // 菜单显示文本
                 "ChamferCorners",  // 图标
                 I18n.tr("Chamfer corners of selected ways with specified distances or angle."),  // 工具提示
-                shortcutRoundCorners,  // 快捷键
+                shortcutChamferCorner,  // 快捷键
                 true,  // 启用工具栏按钮
                 false
         );
@@ -94,3 +93,5 @@ public class ChamferAction extends JosmAction {
         }
     }
 }
+
+

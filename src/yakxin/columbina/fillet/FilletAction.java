@@ -1,4 +1,4 @@
-package yakxin.columbina.roundCorner;
+package yakxin.columbina.fillet;
 
 // JOSM GUI和数据处理类
 import org.openstreetmap.josm.command.DeleteCommand;
@@ -35,22 +35,22 @@ import java.util.*;
 /**
  * 导圆角交互类
   */
-public class RoundCornersAction extends JosmAction {
-    private static final Shortcut shortcutRoundCorners = Shortcut.registerShortcut(
-            "tools:roundCorners",
+public class FilletAction extends JosmAction {
+    private static final Shortcut shortcutFillet = Shortcut.registerShortcut(
+            "tools:filletCorners",
             "More tools: Columbina/Round corners",
             KeyEvent.VK_C,
             Shortcut.ALT_CTRL_SHIFT
     );
 
     /// 构建菜单实例（构造函数）
-    public RoundCornersAction() {
+    public FilletAction() {
         // 调用父类构造函数设置动作属性
         super(
                 I18n.tr("Round Corners"),  // 菜单显示文本
                 "RoundCorners",  // 图标
                 I18n.tr("Round corners of selected ways with specified radius."),  // 工具提示
-                shortcutRoundCorners,  // 快捷键
+                shortcutFillet,  // 快捷键
                 true,  // 启用工具栏按钮
                 false
         );

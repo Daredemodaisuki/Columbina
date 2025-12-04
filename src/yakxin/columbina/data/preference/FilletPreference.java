@@ -1,7 +1,7 @@
 package yakxin.columbina.data.preference;
 
 import org.openstreetmap.josm.spi.preferences.Config;
-import yakxin.columbina.roundCorner.FilletDialog;
+import yakxin.columbina.fillet.FilletDialog;
 
 public final class FilletPreference {
     private FilletPreference() {
