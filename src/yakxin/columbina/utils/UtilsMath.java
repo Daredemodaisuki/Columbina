@@ -25,6 +25,11 @@ public class UtilsMath {
         return surfaceDistance / cosLat;
     }
 
+    public static double eastNorthDistanceToSurface(double enDistance, double lat) {
+        double cosLat = Math.cos(Math.toRadians(lat));
+        return enDistance * cosLat;
+    }
+
     /// 向量数学
     public static double norm(double[] v) { return Math.hypot(v[0], v[1]); }  // 模长
 

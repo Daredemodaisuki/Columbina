@@ -75,8 +75,8 @@ public class ChamferGenerator {
         if (thetaA + thetaB >= Math.PI - 1e-9) return null;  // 夹角B+切角A>180°，无法构成三角形
 
         double[] c1 = UtilsMath.add(b, UtilsMath.mul(u1, enDistanceA));  // BA侧切点
-        // 计算enDistanceC：Bc1/sinC = Bc2/sinA → enDistanceC = Bc2=Bc1*sinA/sinC
-        double enDistanceC = enDistanceA * thetaA / (Math.PI - thetaB - thetaA);  // BC侧切点
+        // 计算enDistanceC：Bc1/sinC = Bc2/sinA → enDistanceC = Bc2=Bc1*sinA/sinC （直接en距离算吧）
+        double enDistanceC = enDistanceA * Math.sin(thetaA) / Math.sin(Math.PI - thetaB - thetaA);
         double[] c2 = UtilsMath.add(b, UtilsMath.mul(u2, enDistanceC));
 
         // 检查切点长度是否足够
@@ -112,10 +112,12 @@ public class ChamferGenerator {
             EastNorth C = en.get(i + 2);  // 终点    A
 
             // JOSM用Mercator投影的NorthEast坐标等角不等距，需要重算距离，以拐点B取维度计算
+            double latA = nodes.get(i).getCoor().lat();
             double latB = nodes.get(i + 1).getCoor().lat();
-            double enDistanceA, enDistanceC;
+            double enDistanceA1, enDistanceA2, enDistanceC;
             try {
-                enDistanceA = UtilsMath.surfaceDistanceToEastNorth(surfaceDistanceA, latB);
+                enDistanceA1 = UtilsMath.surfaceDistanceToEastNorth(surfaceDistanceA, latB);
+                enDistanceA2 = UtilsMath.surfaceDistanceToEastNorth(surfaceDistanceA, latA);
                 enDistanceC = UtilsMath.surfaceDistanceToEastNorth(surfaceDistanceC, latB);
             } catch (ColumbinaException exSurToEn) {
                 // 如果纬度接近90度，使用一个很小的正数，避免除0，但这样不准确，所以直接失败跳过这个斜角吧
@@ -126,8 +128,8 @@ public class ChamferGenerator {
 
             // 有EN长度之后继续算切角
             List<EastNorth> chamfer;
-            if (mode == USING_DISTANCE) chamfer = getChamferCutNodesUsingDistance(A, B, C, enDistanceA, enDistanceC);
-            else if (mode == USING_ANGLE_A) chamfer = getChamferCutNodesUsingAngleA(A, B, C, enDistanceA, angleADeg);
+            if (mode == USING_DISTANCE) chamfer = getChamferCutNodesUsingDistance(A, B, C, enDistanceA1, enDistanceC);
+            else if (mode == USING_ANGLE_A) chamfer = getChamferCutNodesUsingAngleA(A, B, C, enDistanceA2, angleADeg);
             else chamfer = null;
 
             if(chamfer == null) {  // 该拐角没有生成圆角（半径过大或角度问题）
