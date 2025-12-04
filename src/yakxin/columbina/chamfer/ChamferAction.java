@@ -56,20 +56,27 @@ public class ChamferAction extends JosmAction {
         ChamferDialog chamferDialog = new ChamferDialog();
         if (chamferDialog.getValue() != 1) return null;  // 按ESC（0）或点击取消（2），退出；点击确定继续是1
 
+        int mode = chamferDialog.getChamferMode();
+
         double distanceA = chamferDialog.getChamferDistanceA();
         if (distanceA <= 0) throw new IllegalArgumentException(I18n.tr("Invalid round chamfer distance BA, should be greater than 0m."));
 
         double distanceC = chamferDialog.getChamferDistanceC();
-        if (distanceC <= 0) throw new IllegalArgumentException(I18n.tr("Invalid round chamfer distance BC, should be greater than 0m."));
+        if (mode == ChamferGenerator.USING_DISTANCE) {
+            if (distanceC <= 0) throw new IllegalArgumentException(I18n.tr("Invalid round chamfer distance BC, should be greater than 0m."));
+        }
 
         double angleADeg = chamferDialog.getChamferAngleADeg();
-        if (angleADeg <= 0) throw new IllegalArgumentException(I18n.tr("Invalid round chamfer angle A, should be greater than 0m."));
+        if (mode == ChamferGenerator.USING_ANGLE_A) {
+            if (angleADeg <= 0) throw new IllegalArgumentException(I18n.tr("Invalid round chamfer angle A, should be greater than 0m."));
+        }
 
         // 保存设置
         ChamferPreference.setPreferenceFromDialog(chamferDialog);
         ChamferPreference.savePreference();
 
         return new ChamferParams(
+                mode,  // 模式
                 distanceA, distanceC, angleADeg,
                 // 是否删除旧路径、选择新路径、复制旧路径标签
                 chamferDialog.getIfDeleteOld(), chamferDialog.getIfSelectNew(), chamferDialog.getIfCopyTag()
@@ -250,7 +257,7 @@ public class ChamferAction extends JosmAction {
             deleteOld = chamferParams.deleteOld;
             selectNew = chamferParams.selectNew;
             copyTag = chamferParams.copyTag;
-            mode = ChamferGenerator.USING_DISTANCE;  // TODO:暂时只接入按长度的方法
+            mode = chamferParams.mode;
 
         } catch (ColumbinaException | IllegalArgumentException exCheck) {
             UtilsUI.errorInfo(exCheck.getMessage());
@@ -330,6 +337,7 @@ public class ChamferAction extends JosmAction {
     }
 
     private static final class ChamferParams {
+        public final int mode;
         public final double distanceA;
         public final double distanceC;
         public final double angleADeg;
@@ -338,10 +346,12 @@ public class ChamferAction extends JosmAction {
         public final boolean copyTag;
 
         ChamferParams(
+                int mode,
                 double distanceA, double distanceC,
                 double angleADeg,
                 boolean deleteOld, boolean selectNew, boolean copyTag
         ) {
+            this.mode = mode;
             this.distanceA = distanceA;
             this.distanceC = distanceC;
             this.angleADeg = angleADeg;

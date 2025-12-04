@@ -10,6 +10,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.text.NumberFormat;
 import java.util.*;
+import java.util.List;
 
 public class UtilsUI {
     // 测试用调试输出
@@ -44,6 +45,7 @@ public class UtilsUI {
         return header;
     }
 
+    // 输入框
     public static JFormattedTextField addInput(JPanel panel, String labelText) {
         return addInput(panel, labelText, "");
     }
@@ -57,6 +59,7 @@ public class UtilsUI {
         return input;
     }
 
+    // 复选框
     public static JCheckBox addCheckbox(JPanel panel, String labelText, boolean initialCheck) {
         JCheckBox checkbox = new JCheckBox(labelText);
         panel.add(checkbox, GBC.eol().fill(GridBagConstraints.HORIZONTAL));
@@ -64,6 +67,7 @@ public class UtilsUI {
         return checkbox;
     }
 
+    // 标签
     public static JLabel addLabel(JPanel panel, String text) {
         return addLabel(panel, text, 0);
     }
@@ -78,16 +82,19 @@ public class UtilsUI {
         return label;
     }
 
+    // 分隔线
     public static JSeparator addSeparator(JPanel panel) {  // 横向分割线
         JSeparator sep = new JSeparator(SwingConstants.HORIZONTAL);
         panel.add(sep, GBC.eol().fill(GridBagConstraints.HORIZONTAL));
         return sep;
     }
 
+    // 空格
     public static void addSpace(JPanel panel, int height) {
         panel.add(Box.createVerticalStrut(height), GBC.eol());
     }
 
+    // 分组栏
     public static PanelSectionResult addSection(JPanel panel, String title) {
         // Map<String, Object> result = new HashMap<>();
 
@@ -100,6 +107,46 @@ public class UtilsUI {
         // result.put("separator", sep);
         return new PanelSectionResult(label, sep);
     }
+
+    /**
+     * 单选框组类
+     * 需要先创建类的实例，用addRadioButton把button放在窗口正确位置上
+     */
+    public static class RadioButtonGroup {
+        public final List<JRadioButton> buttons;
+        public final ButtonGroup group;
+
+        public RadioButtonGroup(List<String> labels, int initChoice) {
+            buttons = new ArrayList<>();
+            group = new ButtonGroup();
+            for (String label : labels) {
+                JRadioButton b = new JRadioButton(label);
+                buttons.add(b);
+                group.add(b);
+            }
+            buttons.get(initChoice).setSelected(true);  // 默认选中
+        }
+
+        public int getButtonSelected() {
+            int index = 0;
+            for (JRadioButton button : buttons) {
+                if (button.isSelected()) return index;
+                index += 1;
+            }
+            return -1;
+        }
+
+        // 正式添加单选框至窗体
+        public void addRadioButton(JPanel panel, int index) {
+            panel.add(
+                    buttons.get(index),
+                    GBC.eol().insets(0, 0, 0, 0).fill(GridBagConstraints.HORIZONTAL)
+            );
+
+        }
+    }
+
+    // TODO:将标签和输入框单独写个类
 }
 
 

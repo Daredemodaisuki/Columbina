@@ -2,6 +2,7 @@ package yakxin.columbina.data.preference;
 
 import org.openstreetmap.josm.spi.preferences.Config;
 import yakxin.columbina.chamfer.ChamferDialog;
+import yakxin.columbina.chamfer.ChamferGenerator;
 
 public class ChamferPreference {
     private ChamferPreference() {}
@@ -15,9 +16,12 @@ public class ChamferPreference {
     private static boolean chamferDeleteOldWays;
     private static boolean chamferSelectNewWays;
 
+    private static int chamferMode;
+
     public static final double DEFAULT_CHAMFER_DISTANCE_A = 100;
     public static final double DEFAULT_CHAMFER_DISTANCE_C = 100;
     public static final double DEFAULT_CHAMFER_ANGLE_A_DEG = 51.4;
+    public static final int DEFAULT_CHAMFER_MODE = ChamferGenerator.USING_DISTANCE;
 
     // 读取和储存
     public static void readPreference() {
@@ -27,6 +31,7 @@ public class ChamferPreference {
         chamferCopyTag = Config.getPref().getBoolean("columbina.chamfer.need-copy-tags", true);
         chamferDeleteOldWays = Config.getPref().getBoolean("columbina.chamfer.need-del-old-ways", false);
         chamferSelectNewWays = Config.getPref().getBoolean("columbina.chamfer.need-slc-new-ways", true);
+        chamferMode = Config.getPref().getInt("columbina.chamfer.mode", DEFAULT_CHAMFER_MODE);
     }
 
     public static void setPreferenceFromDialog(ChamferDialog dlg) {
@@ -36,6 +41,7 @@ public class ChamferPreference {
         chamferCopyTag = dlg.getIfCopyTag();
         chamferDeleteOldWays = dlg.getIfDeleteOld();
         chamferSelectNewWays = dlg.getIfSelectNew();
+        chamferMode = dlg.getChamferMode();
     }
 
     public static void savePreference() {
@@ -45,6 +51,7 @@ public class ChamferPreference {
         Config.getPref().putBoolean("columbina.chamfer.need-copy-tags", chamferCopyTag);
         Config.getPref().putBoolean("columbina.chamfer.need-del-old-ways", chamferDeleteOldWays);
         Config.getPref().putBoolean("columbina.chamfer.need-slc-new-ways", chamferSelectNewWays);
+        Config.getPref().putInt("columbina.chamfer.mode", chamferMode);
     }
 
     // getter和setter
@@ -94,6 +101,14 @@ public class ChamferPreference {
 
     public static void setChamferSelectNewWays(boolean chamferSelectNewWays) {
         ChamferPreference.chamferSelectNewWays = chamferSelectNewWays;
+    }
+
+    public static int getChamferMode() {
+        return chamferMode;
+    }
+
+    public static void setChamferMode(int chamferMode) {
+        ChamferPreference.chamferMode = chamferMode;
     }
 }
 
