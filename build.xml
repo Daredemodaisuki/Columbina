@@ -63,11 +63,12 @@
             <manifest>
                 <!-- 必需的清单属性 -->
                 <attribute name="Plugin-Mainversion" value="18600"/>
-                <attribute name="Plugin-Version" value="1.0.0"/>
+                <attribute name="Plugin-Version" value="1.0.1"/>
                 <attribute name="Plugin-Class"
                            value="yakxin.columbina.Columbina"/>
                 <attribute name="Plugin-Description"
-                           value="Cartographic-Oriented Line Utility Modifier with Bevel through Interpolated Node Automation。"/>
+                           value="The plugin for Fillet the corner on ways.
+                            'Columbina' stands for Corner-Optimal Line Utility Modifier for Better Inflection and Node Adjustment."/>
                 <attribute name="Author" value="Yakxin"/>
                 <attribute name="Plugin-Icon" value="images/Columbina.png"/>
                 <attribute name="Plugin-Requires" value="${plugin.requires}" />
