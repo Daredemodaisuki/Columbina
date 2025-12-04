@@ -1,7 +1,7 @@
 # Corner-Optimal Line Utility Modifier for Better Inflection and Node Adjustment (*Columbina*) <br> 用于更优弯折与节点调整的转角优化线型工具修改器
 
-A Java OpenStreetMap (JOSM) pulgin providing convenient Fillet (round corner) drawing, and … <br> might provide Chamfer and Transition Curve features in the future.
-<br> 一个提供圆角工具的Java OpenStreetMap（JOSM）插件，未来计划开发斜角和缓和曲线功能。
+A Java OpenStreetMap (JOSM) pulgin providing convenient Fillet (round corner) and Chamfer drawing, and … <br> might provide Transition Curve features in the future.
+<br> 一个提供倒圆角和倒斜角工具的Java OpenStreetMap（JOSM）插件，未来计划开发缓和曲线功能。
 
 <p align="right">
   <img src="ColumbinaRC.png" alt="Round Corner Menu" width="60%">
@@ -14,8 +14,8 @@ A Java OpenStreetMap (JOSM) pulgin providing convenient Fillet (round corner) dr
 
 ## Quick Start · 快速开始
 
-To get quick start, please download the [release](https://github.com/Daredemodaisuki/Columbina/releases/tag/official) and copy it to your JOSM plugin directory `%APPDATA%\JOSM\plugins\` (for Windows, usually looks like `…\AppData\Roaming\JOSM\plugins\`).
-<br> 如欲快速开始，劳烦您下载一个[发布版本](https://github.com/Daredemodaisuki/Columbina/releases/tag/official)，并复制到JOSM的插件文件夹`%APPDATA%\JOSM\plugins\`（视窗系统，通常是`…\AppData\Roaming\JOSM\plugins\`）下。
+To get quick start, please download the [release](https://github.com/Daredemodaisuki/Columbina/releases) and copy it to your JOSM plugin directory `%APPDATA%\JOSM\plugins\` (for Windows, usually looks like `…\AppData\Roaming\JOSM\plugins\`).
+<br> 如欲快速开始，劳烦您下载一个[发布版本](https://github.com/Daredemodaisuki/Columbina/releases)，并复制到JOSM的插件文件夹`%APPDATA%\JOSM\plugins\`（视窗系统，通常是`…\AppData\Roaming\JOSM\plugins\`）下。
 
 Then in JOSM's plugin preference, search and select *Columbina* and restart to activate *her*. Now you could use this plugin.
 <br> 随后在JOSM首选项之插件设置中，搜寻*Columbina*并勾选启用，重启JOSM后即可使用插件。
@@ -41,11 +41,22 @@ The plugin automatically and uniformly interpolates nodes along the curve, addin
 For longer curves (when the radius remains constant, curves with smaller deflection angles become longer), a greater number of nodes will be generated.
 <br> 插件会自动在曲线上均匀地插值并添加节点，越长的曲线（当半径不变时，张角越小的拐点曲线越长）点数越多。
 
-Note: When "Remove original way after drawing" is enabled:
-<br> 注意：启用「绘制后移除原有路径」时：
+### Chamfer Corner · 斜角 〔Alt+Ctrl+Shift+X〕
+
+Allows the user to chamfer each corner node of the selected way by a specified chamfer distance or chamfer angle.
+<br> 允许用户对选定路径的每个拐角节点按指定切距或者切角倒斜角。
+
+Assuming a corner is formed by points A → B → C, where B is the vertex, the plugin supports two modes: first, specifying the chamfer distance on both sides (A and C) of the vertex; second, specifying the chamfer distance on side A and the chamfer angle on side A. The plugin also provides options to copy tags from the original way, remove the original way after drawing, and toggle selection to the new way after drawing.
+<br> 假定一个拐角是A→B→C，其中B是拐点，插件支持2种模式：一是指定拐点A和C两侧的切距；二是指定A侧的切距和A侧的切角。插件亦提供复制原有路径标签、绘制后移除原有路径、绘制后切换选择新路径的选项。
+
+### Note · 注意
+
+When "Remove original way after drawing" is enabled:
+<br> 启用「绘制后移除原有路径」时：
 
 * For old ways that have already been uploaded, the plugin will invoke the "Replace Geometry" function of the Utilsplugin2 to replace the old way in order to preserve its data history. Therefore, if the old way does not meet the requirements for the Replace Geometry function (e.g., it is not entirely within the downloaded area), the replacement will fail and the old way will be retained; <br> 对于已上传的旧路径，插件将调用Utilsplgin2之「替换几何图形」功能替换旧路径以保留数据历史版本，故当旧路径不满足替换几何图形功能的要求时（如未完全在下载区域中），替换将失败，旧路径将保留；
 * For newly drawn, unuploaded old ways, the plugin will delete them directly. <br> 对于新绘制、未上传的旧路径，插件将会直接删除。
+
 
 ## Known Issues · 已知问题
 
