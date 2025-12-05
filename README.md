@@ -1,4 +1,4 @@
-# Corner-Optimal Line Utility Modifier for Better Inflection and Node Adjustment (*Columbina*) <br> 用于改进弯折与节点调整的转角优化线型之实用修改器
+# <img src="/images/Columbina.png" alt="Chamfer Corner Menu" width="40px"> Corner-Optimal Line Utility Modifier for Better Inflection and Node Adjustment (*Columbina*) <br> 用于改进弯折与节点调整的转角优化线型之实用修改器
 
 A Java OpenStreetMap (JOSM) pulgin providing convenient Fillet (round corner) and Chamfer drawing, and … <br> might provide Transition Curve features in the future.
 <br> 一个提供倒圆角和倒斜角工具的Java OpenStreetMap（JOSM）插件，未来计划开发缓和曲线功能。
@@ -28,7 +28,10 @@ This plugin depends on another plugin, Utilsplugin2, which is typically included
 All features are located under the More Tools (M) menu.
 <br> 所有功能均在更多工具〔M〕菜单下。
 
-### Round Corner · 圆角 〔Alt+Ctrl+Shift+C〕
+### <img src="/images/RoundCorners.png" alt="Round Corner Menu" width="25px"> Round Corner · 圆角 〔Alt+Ctrl+Shift+C〕
+
+Also known as Fillet.
+<br> 英语又称「Fillet」。
 
 Allows users to fillet each corner node of the selected ways with a specified radius.
 <br> 允许用户对选定路径的每个拐角节点按指定半径倒圆角。
@@ -41,7 +44,7 @@ The plugin automatically and uniformly interpolates nodes along the curve, addin
 For longer curves (when the radius remains constant, curves with smaller deflection angles become longer), a greater number of nodes will be generated.
 <br> 插件会自动在曲线上均匀地插值并添加节点，越长的曲线（当半径不变时，张角越小的拐点曲线越长）点数越多。
 
-### Chamfer Corner · 斜角 〔Alt+Ctrl+Shift+X〕
+### <img src="/images/ChamferCorners.png" alt="Chamfer Corner Menu" width="25px"> Chamfer Corner · 斜角 〔Alt+Ctrl+Shift+X〕
 
 Allows the user to chamfer each corner node of the selected way by a specified chamfer distance or chamfer angle.
 <br> 允许用户对选定路径的每个拐角节点按指定切距或者切角倒斜角。
