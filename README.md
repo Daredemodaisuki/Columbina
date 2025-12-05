@@ -1,4 +1,4 @@
-# Corner-Optimal Line Utility Modifier for Better Inflection and Node Adjustment (*Columbina*) <br> 用于更优弯折与节点调整的转角优化线型工具修改器
+# Corner-Optimal Line Utility Modifier for Better Inflection and Node Adjustment (*Columbina*) <br> 用于改进弯折与节点调整的转角优化线型之实用修改器
 
 A Java OpenStreetMap (JOSM) pulgin providing convenient Fillet (round corner) and Chamfer drawing, and … <br> might provide Transition Curve features in the future.
 <br> 一个提供倒圆角和倒斜角工具的Java OpenStreetMap（JOSM）插件，未来计划开发缓和曲线功能。
@@ -55,7 +55,8 @@ When "Remove original way after drawing" is enabled:
 <br> 启用「绘制后移除原有路径」时：
 
 * For old ways that have already been uploaded, the plugin will invoke the "Replace Geometry" function of the Utilsplugin2 to replace the old way in order to preserve its data history. Therefore, if the old way does not meet the requirements for the Replace Geometry function (e.g., it is not entirely within the downloaded area), the replacement will fail and the old way will be retained; <br> 对于已上传的旧路径，插件将调用Utilsplgin2之「替换几何图形」功能替换旧路径以保留数据历史版本，故当旧路径不满足替换几何图形功能的要求时（如未完全在下载区域中），替换将失败，旧路径将保留；
-* For newly drawn, unuploaded old ways, the plugin will delete them directly. <br> 对于新绘制、未上传的旧路径，插件将会直接删除。
+* For newly drawn, unuploaded old ways, the plugin will delete them directly; <br> 对于新绘制、未上传的旧路径，插件将会直接删除；
+* Considering that users might accidentally select the option to remove the original way, the operations of drawing the new way and removing the old way are separated within the Command stack. This allows you to undo both actions simultaneously, preserving both ways for further adjustments. Consequently, you would need to perform two undo operations to completely remove the newly drawn way. <br> 虑到有人可能会错误选择移除旧路径的选项，绘制新路径和移除旧路径在命令栈中是分开的，使得你可以通过一次撤销同时保留它们并做出进一步的调整；相应地，你需要两次撤销才能完全移除新绘制的路径。
 
 
 ## Known Issues · 已知问题

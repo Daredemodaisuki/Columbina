@@ -158,14 +158,6 @@ msgstr "Cancel"
 msgid "Columbina"
 msgstr "Columbina"
 
-#: ../src\yakxin\columbina\chamfer\ChamferDialog.java:53
-msgid "Distance Mode"
-msgstr "Distance Mode"
-
-#: ../src\yakxin\columbina\chamfer\ChamferDialog.java:54
-msgid "Angle A Mode"
-msgstr "Angle A Mode"
-
 #: ../src\yakxin\columbina\chamfer\ChamferDialog.java:60
 msgid "Chamfer Information"
 msgstr "Chamfer Information"

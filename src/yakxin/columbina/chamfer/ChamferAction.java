@@ -286,11 +286,11 @@ public class ChamferAction extends JosmAction {
         if (mode == ChamferGenerator.USING_DISTANCE) {
             if (selectedWays.size() == 1) undoRedoInfo = I18n.tr("Chamfer of way {0}: {1}m, {2}m", selectedWays.getFirst().getUniqueId(), distanceA, distanceC);
             else if (selectedWays.size() <= 5) undoRedoInfo = I18n.tr("Chamfer of way {0}: {1}m, {2}m", selectedWays.stream().map(Way::getId).toList(), distanceA, distanceC);
-            else undoRedoInfo = I18n.tr("Round corners of {0} ways: {1}m, {2}m", selectedWays.size(), distanceA, distanceC);
+            else undoRedoInfo = I18n.tr("Chamfer of {0} ways: {1}m, {2}m", selectedWays.size(), distanceA, distanceC);
         } else {
             if (selectedWays.size() == 1) undoRedoInfo = I18n.tr("Chamfer of way {0}: {1}m, {2}°", selectedWays.getFirst().getUniqueId(), distanceA, angleADeg);
             else if (selectedWays.size() <= 5) undoRedoInfo = I18n.tr("Chamfer of way {0}: {1}m, {2}°", selectedWays.stream().map(Way::getId).toList(), distanceA, angleADeg);
-            else undoRedoInfo = I18n.tr("Round corners of {0} ways: {1}m, {2}°", selectedWays.size(), distanceA, angleADeg);
+            else undoRedoInfo = I18n.tr("Chamfer of {0} ways: {1}m, {2}°", selectedWays.size(), distanceA, angleADeg);
         }
 
         if (!cmdsAdd.isEmpty()) {

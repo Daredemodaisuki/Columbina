@@ -50,8 +50,8 @@ public class ChamferDialog extends ExtendedDialog {
 
         // 单选框组
         List<String> modeNames = new ArrayList<>();
-        modeNames.add("Distance Mode");  // 0 ChamferGenerator.USING_DISTANCE
-        modeNames.add("Angle A Mode");  // 1 ChamferGenerator.USING_ANGLE_A
+        modeNames.add(I18n.tr("Distance Mode"));  // 0 ChamferGenerator.USING_DISTANCE
+        modeNames.add(I18n.tr("Angle A Mode"));  // 1 ChamferGenerator.USING_ANGLE_A
         modeGroup = new UtilsUI.RadioButtonGroup(modeNames, ChamferPreference.getChamferMode());
 
         // 窗体
@@ -62,7 +62,7 @@ public class ChamferDialog extends ExtendedDialog {
         modeGroup.addRadioButton(panel, ChamferGenerator.USING_ANGLE_A);
         chamferDistanceA = UtilsUI.addInput(panel, I18n.tr("Chamfer distance A (m):"), String.valueOf(ChamferPreference.getChamferDistanceA()));
         chamferDistanceC = UtilsUI.addInput(panel, I18n.tr("Chamfer distance C (m):"), String.valueOf(ChamferPreference.getChamferDistanceC()));
-        chamferAngleADeg = UtilsUI.addInput(panel, I18n.tr("Chamfer angle to A (m):"), String.valueOf(ChamferPreference.getChamferAngleADeg()));
+        chamferAngleADeg = UtilsUI.addInput(panel, I18n.tr("Chamfer angle to A (degrees°):"), String.valueOf(ChamferPreference.getChamferAngleADeg()));
 
         sectionOptionInfo = UtilsUI.addSection(panel, I18n.tr("Other Operations"));
         copyTag = UtilsUI.addCheckbox(panel, I18n.tr("Copy original ways'' tags"), ChamferPreference.isChamferCopyTag());

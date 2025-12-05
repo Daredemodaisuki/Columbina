@@ -16,3 +16,5 @@ public final class NewNodeWayCommands {
         this.failedNodeIds = failedNodeIds;
     }
 }
+
+
