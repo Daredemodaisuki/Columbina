@@ -18,3 +18,5 @@ public final class LayerDatasetAndWaySelected {
         this.selectedWays = selectedWays;
     }
 }
+
+

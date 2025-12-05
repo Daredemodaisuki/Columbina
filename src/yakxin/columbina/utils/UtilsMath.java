@@ -41,3 +41,5 @@ public class UtilsMath {
 
     public static double[] mul(double[] a, double s) { return new double[]{a[0]*s, a[1]*s}; }  // 缩放
 }
+
+

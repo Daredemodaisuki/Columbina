@@ -1,25 +1,19 @@
 import re
 from collections import defaultdict
 from pathlib import Path
+from scanFiles import find_java_files_relative
 
 # 在GitBash中
 # cd到 /g/JvProject/Columbina/i18n
 # 执行 perl ./i18n.pl ./po/zh_CN.po
 
-# ======== 配置区 ========
-INPUT_FILES = [
-    "../../src/yakxin/columbina/Columbina.java",
-    "../../src/yakxin/columbina/FilletGenerator.java",
-    "../../src/yakxin/columbina/RoundCornersAction.java",
-    "../../src/yakxin/columbina/RoundCornersDialog.java",
-    "../../src/yakxin/columbina/utils.java",
-    "../../src/yakxin/columbina/data/ColumbinaException.java",
-    "../../src/yakxin/columbina/data/FilletResult.java",
-    "../../src/yakxin/columbina/data/Preference.java",
-]
+# 配置
+input_files = [f"../{file}" for file in find_java_files_relative("../")]
+
+VERSION = "v1.0.1"
+OUTPUT_FILE = f"template_{VERSION}.po"
 
 # This file is distributed under the same license as the josm package.
-OUTPUT_FILE = "template.po"
 HEAD = '''# I18n for Columbina plugin
 # Copyright (c) Yakxin 2025
 #
@@ -40,7 +34,6 @@ msgstr ""
 
 
 '''
-# ========================
 
 
 # 跨行匹配 I18n.tr(...)
@@ -100,7 +93,7 @@ def process_file(path: Path):
 # { msgid: [ "文件:行号", ... ] }
 msg_map = defaultdict(list)
 
-for file_path in INPUT_FILES:
+for file_path in input_files:
     path = Path(file_path)
     if not path.exists():
         print(f"[WARN] 文件不存在：{file_path}")
