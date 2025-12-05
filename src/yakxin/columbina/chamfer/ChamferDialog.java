@@ -55,7 +55,7 @@ public class ChamferDialog extends ExtendedDialog {
         modeGroup = new UtilsUI.RadioButtonGroup(modeNames, ChamferPreference.getChamferMode());
 
         // 窗体
-        header = UtilsUI.addHeader(panel, I18n.tr("Chamfer Corners"), null);  // 暂不设置图标
+        header = UtilsUI.addHeader(panel, I18n.tr("Chamfer Corners"), "ChamferCorners");  // 暂不设置图标
 
         sectionChamferInfo = UtilsUI.addSection(panel, I18n.tr("Chamfer Information"));
         modeGroup.addRadioButton(panel, ChamferGenerator.USING_DISTANCE);
