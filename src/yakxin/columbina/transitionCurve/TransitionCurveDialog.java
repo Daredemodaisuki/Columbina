@@ -47,7 +47,7 @@ public class TransitionCurveDialog extends ExtendedDialog {
         setDefaultButton(1);  // ESC取消
 
         // 窗体
-        header = UtilsUI.addHeader(panel, I18n.tr("Transition Curve"), null);  // 暂不设置图标
+        header = UtilsUI.addHeader(panel, I18n.tr("Transition Curve"), "TransitionCurve");
 
         sectionCurveInfo = UtilsUI.addSection(panel, I18n.tr("Curve Parameters"));
         transitionRadius = UtilsUI.addInput(
