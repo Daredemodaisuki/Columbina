@@ -2,7 +2,6 @@ package yakxin.columbina.transitionCurve;
 
 import org.openstreetmap.josm.data.coor.EastNorth;
 import org.openstreetmap.josm.tools.I18n;
-import yakxin.columbina.data.dto.DrawingNewNodeResult;
 import yakxin.columbina.utils.UtilsMath;
 
 import java.util.ArrayList;
@@ -21,6 +20,7 @@ import java.util.List;
 public class TransitionCurveGenerator {
     public static final int LEFT = 1;
     public static final int RIGHT = -LEFT;  // -1
+    public static final int TERM_MAX = 10;  // 前11项（n从0到10）
 
     /// 求和级数的单项：使用匿名函数具体定义TermFunction的抽象compute方法
     // 缓和曲线内移距离p，第一参数曲线长度ls
@@ -29,6 +29,7 @@ public class TransitionCurveGenerator {
 
         double numerator = Math.pow(-1, n) * Math.pow(ls, 2 * n + 2);
         double denominator = 2 * (4 * n + 3) * UtilsMath.factorial(2 * n + 2) * Math.pow(2 * r, 2 * n + 1);
+        // TODO:factorial和pow可能需要注意溢出（尤其是缓和曲线长度较大的情况下），可能可以考虑修改公式
 
         return numerator / denominator;
     };
@@ -64,10 +65,9 @@ public class TransitionCurveGenerator {
     };
 
     // 确定两段双螺旋曲线的起点
-    private static TransArcStartResult getStartsOfTransArcs(
+    private static TransArcStartResult getStartsOfEulerArcs(
             EastNorth A, EastNorth B, EastNorth C,
             double enCurveRadius, double enTransArcLength  // 圆曲线半径（内圆R）、缓和段长度（ls）
-            // int chainageLength  // 每个桩（节点）之间的距离
     ) {
         /// 先计算deflectionAngleRad路径偏转角（α），也就是总圆心角，拐点夹角+α=180°
         // 获取node坐标
@@ -82,7 +82,7 @@ public class TransitionCurveGenerator {
         if (n1 < 1e-9 || n2 < 1e-9) return null;  // 检查向量有效性（不能太短近乎于点挤在一起）
         double[] u1 = UtilsMath.mul(v1, 1.0 / n1);  // BA单位向量
         double[] u2 = UtilsMath.mul(v2, 1.0 / n2);  // BC单位向量
-        // 拐点夹角（方向向量点积取acos）和偏转角
+        // 拐点夹角（方向向量点积取acos）和偏转角α
         double dp = Math.max(-1.0, Math.min(1.0, UtilsMath.dot(u1, u2)));  // 点积（限制在[-1,1]范围内）
         double theta = Math.acos(dp);  // 夹角（弧度[0,π]）
         double deflectionAngleRad = Math.PI - theta;  // 路线偏转角（α）
@@ -95,13 +95,13 @@ public class TransitionCurveGenerator {
         // 计算两侧切线长
         double enShiftDistance = UtilsMath.sumSeriesAtVarValue(  // 内移距离（p）：外圆内圆间距
                 termShiftDistance,
-                5,  // 前6项
+                TERM_MAX,
                 enTransArcLength,
                 enCurveRadius
         );
         double enTangleOffset = UtilsMath.sumSeriesAtVarValue(  // 切线增长（q，或m表示）
                 termTangleOffset,
-                5,
+                TERM_MAX,
                 enTransArcLength,
                 enCurveRadius
         );
@@ -122,14 +122,16 @@ public class TransitionCurveGenerator {
         );
     }
 
-    // 绘制一段未旋转、移动的双螺旋曲线（完整的过渡曲线包含2段）
-    private static SingleTransArcResult getUnrotatedTransArc(
+    // 绘制一段未旋转、移动的螺旋曲线（完整的过渡曲线包含2段）
+    private static SingleEulerArcResult getUnrotatedEulerArc(
             double enCurveRadius, double enTransArcLength,  // 圆曲线半径（内圆R）、缓和段长度（ls）
             double enChainageLength,  // 每个桩（节点）之间的距离
             int leftRight  // 往左走往右走
     ) {
         if (leftRight != LEFT && leftRight != RIGHT)  // 哇，还有凉面派
             throw new IllegalArgumentException(I18n.tr("getUnrotatedTransitionArc: Unexpected leftRight arg."));
+        if (enChainageLength > enTransArcLength)  // 桩距不能比总长度还大
+            throw new IllegalArgumentException(I18n.tr("getUnrotatedTransitionArc: enChainageLength > enTransArcLength."));
 
         // double deflectionAngleRad = Math.toRadians(deflectionAngleDeg);
         List<EastNorth> result = new ArrayList<>();
@@ -144,13 +146,13 @@ public class TransitionCurveGenerator {
             // 按照公式求和级数
             double x = UtilsMath.sumSeriesAtVarValue(
                     termTransArcX,
-                    5,  // 前6项
+                    TERM_MAX,
                     walkingLength,  // 自变量当前走行长度l
                     curvatureChangeRate
             );
             double y = UtilsMath.sumSeriesAtVarValue(
                     termTransArcY,
-                    5,
+                    TERM_MAX,
                     walkingLength,
                     curvatureChangeRate
             );
@@ -160,13 +162,13 @@ public class TransitionCurveGenerator {
         // 计算终点处的切角
         double endTangentAngleRad = curvatureChangeRate * enTransArcLength * enTransArcLength / 2.0;
 
-        return new SingleTransArcResult(result, 0.0, endTangentAngleRad);
+        return new SingleEulerArcResult(result, 0.0, endTangentAngleRad);
     }
 
-    // 将未旋转、移动的双螺旋曲线（起点在原点）绕原点旋转，然后移动曲线开始处
-    private static SingleTransArcResult rotateAndMoveTransArc(
+    // 将未旋转、移动的螺旋曲线（起点在原点）绕原点旋转，然后移动到曲线的开始处
+    private static SingleEulerArcResult rotateAndMoveEulerArc(
             EastNorth start, double startAngleRad,  // 起点坐标和入曲线角度，坐标角度：以东为0，北正南负
-            SingleTransArcResult transArc  // 没有移动旋转的单段双螺旋曲线
+            SingleEulerArcResult transArc  // 没有移动旋转的单段双螺旋曲线
     ) {
         List<EastNorth> unrotatedArc = transArc.arcNodes;
         List<EastNorth> result = new ArrayList<>(unrotatedArc.size());
@@ -186,7 +188,7 @@ public class TransitionCurveGenerator {
         // 计算终点处的切角（原角+旋转度数）
         double endTangentAngleRad = transArc.endTangentAngleRad + startAngleRad;
 
-        return new SingleTransArcResult(result, startAngleRad, endTangentAngleRad);
+        return new SingleEulerArcResult(result, startAngleRad, endTangentAngleRad);
     }
 
     // 画圆曲线段
@@ -204,9 +206,9 @@ public class TransitionCurveGenerator {
                 start.getX() + enRadius * Math.cos(normalAngleStartRed),
                 start.getY() + enRadius * Math.sin(normalAngleStartRed)
         };
-        // 相对于圆心的起止角度（坐标角度）和圆心角
-        double ang1 = -(startAngleRad + leftRight * Math.PI / 2);
-        double ang2 = -(endAngleRad + leftRight * Math.PI / 2);
+        // 起止点相对于圆心的角度（通过起点法向角度取反获得，是坐标角度）和圆心角
+        double ang1 = startAngleRad + leftRight * Math.PI / 2 + Math.PI;
+        double ang2 = endAngleRad + leftRight * Math.PI / 2 + Math.PI;
         double centralAngleRad = ang2 - ang1;
 
         // 计算点数
@@ -224,38 +226,39 @@ public class TransitionCurveGenerator {
         return result;
     }
 
-    // 绘制一条缓和曲线（汇总3段子曲线）
+    // 绘制一条完整的缓和曲线（汇总3段子曲线）
     public static ArrayList<EastNorth> getTransCurve(
             EastNorth A, EastNorth B, EastNorth C,
             double enCurveRadius, double enTransArcLength,  // 圆曲线半径（内圆R）、缓和段长度（ls）
             double enChainageLength  // 每个桩（节点）之间的距离
-    ) {
+    ) throws IllegalArgumentException
+    {
         // 确定两段双螺旋曲线的起点
-        TransArcStartResult transArcStarts = getStartsOfTransArcs(A, B, C, enCurveRadius, enTransArcLength);
+        TransArcStartResult transArcStarts = getStartsOfEulerArcs(A, B, C, enCurveRadius, enTransArcLength);
         if (transArcStarts == null) return null;
 
         /// A侧螺旋线（从A侧直缓切点顺着画）
         // 绘制
-        SingleTransArcResult unrotatedTransArcA = getUnrotatedTransArc(
+        SingleEulerArcResult unrotatedTransArcA = getUnrotatedEulerArc(
                 enCurveRadius, enTransArcLength,
                 enChainageLength,
                 transArcStarts.leftRight
         );
         // 旋转、移动
-        SingleTransArcResult rotatedTransArcA = rotateAndMoveTransArc(
+        SingleEulerArcResult rotatedTransArcA = rotateAndMoveEulerArc(
                 transArcStarts.startA,
                 transArcStarts.startAngleARad,
                 unrotatedTransArcA
         );
         /// C侧螺旋线（从C侧直缓切点开始倒着画）
         // 绘制
-        SingleTransArcResult unrotatedTransArcC = getUnrotatedTransArc(
+        SingleEulerArcResult unrotatedTransArcC = getUnrotatedEulerArc(
                 enCurveRadius, enTransArcLength,
                 enChainageLength,
                 -transArcStarts.leftRight  // C侧是倒回来画的，与A到C方向的左右相反
         );
         // 旋转、移动
-        SingleTransArcResult rotatedTransArcC = rotateAndMoveTransArc(
+        SingleEulerArcResult rotatedTransArcC = rotateAndMoveEulerArc(
                 transArcStarts.startC,
                 transArcStarts.startAngleCRad,
                 unrotatedTransArcC
@@ -276,14 +279,6 @@ public class TransitionCurveGenerator {
         Collections.reverse(transArcC);  // 倒着画的原地逆序正回来
         transArcC.removeFirst();  // 正序之后不要第一个点（=圆曲线最后一个点）
 
-        /*TODO:边缘情况检查
-          <p>在特定条件下可能会：
-          <p>当 ls < chainageLength（即缓和段很短）
-          <p>getUnrotatedTransArc() 只生成一个点
-          <p>可能 removeFirst() 会把唯一的点删掉
-          <p>→ 缓和段直接消失
-          <p>→ 拼接会出错
-         */
         ArrayList<EastNorth> finalNodes = new ArrayList<>();
         finalNodes.addAll(transArcA);
         finalNodes.addAll(circularArc);
@@ -311,18 +306,24 @@ public class TransitionCurveGenerator {
             this.leftRight = leftRight;
         }
     }
-    // 打包双螺旋曲线的节点、起始和终点偏角
-    private static final class SingleTransArcResult {
+    // 打包单段螺旋曲线的节点、起始和终点偏角
+    private static final class SingleEulerArcResult {
         public final List<EastNorth> arcNodes;
         public final double startTangentAngleRad;  // 入曲线方向，坐标角度：以东为0，北正南负
         public final double endTangentAngleRad;  // 出曲线方向，坐标角度：以东为0，北正南负
 
-        SingleTransArcResult(List<EastNorth> arcNodes, double startTangentAngleRad, double endTangentAngleRad) {
+        SingleEulerArcResult(List<EastNorth> arcNodes, double startTangentAngleRad, double endTangentAngleRad) {
             this.arcNodes = arcNodes;
             this.startTangentAngleRad = startTangentAngleRad;
             this.endTangentAngleRad = endTangentAngleRad;
         }
     }
+
+    /*TODO：边缘情况检查
+    注意极端几何：LS太长、R太小、α太小
+    getUnrotatedEulerArc、getCircularArc会不会只返回1个点
+    处理各种null的情况
+     */
 }
 
 

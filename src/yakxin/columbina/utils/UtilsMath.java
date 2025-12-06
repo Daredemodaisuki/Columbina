@@ -60,7 +60,7 @@ public class UtilsMath {
         return result;
     }
 
-    // 阶乘
+    // 阶乘（注意k到20左右就可能溢出）
     public static long factorial(int k) {
         long result = 1;
         for (int i = 2; i <= k; i++) result *= i;
