@@ -16,7 +16,7 @@ public class FilletGenerator {
 
     /// 圆角算法
     // 绘制一个圆角（需要输入重算距离而不是直接的地表距离）
-    private static List<EastNorth> getFilletArc(
+    private static ArrayList<EastNorth> getFilletArc(
             EastNorth A, EastNorth B, EastNorth C,
             double enRadius, double angleStep, int maxNumPoints,
             double minAngleDeg, double maxAngleDeg
@@ -77,7 +77,7 @@ public class FilletGenerator {
                 1  // 注意θ是张角，张角越小圆心角越大、弧长越长，点数越多
         );  // 至少1段0点（相当于切角），至多maxNumPoints+1段maxNumPoints点
         // TODO：切角可以快速实现了
-        List<EastNorth> arc = new ArrayList<>();
+        ArrayList<EastNorth> arc = new ArrayList<>();
         for (int i = 0; i <= numAngleSteps; i ++){
             double tt = (double) i / numAngleSteps;    // 插值参数 [0,1]
             double ang = ang1 + (ang2 - ang1) * tt;    // 当前角度

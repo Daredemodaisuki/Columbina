@@ -6,6 +6,7 @@ import yakxin.columbina.data.dto.DrawingNewNodeResult;
 import yakxin.columbina.utils.UtilsMath;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**缓和曲线计算类
@@ -21,8 +22,7 @@ public class TransitionCurveGenerator {
     public static final int LEFT = 1;
     public static final int RIGHT = -LEFT;  // -1
 
-    /// 使用匿名函数具体定义TermFunction的抽象compute方法
-    /// 求和级数的单项
+    /// 求和级数的单项：使用匿名函数具体定义TermFunction的抽象compute方法
     // 缓和曲线内移距离p，第一参数曲线长度ls
     private static final UtilsMath.TermFunction termShiftDistance = (n, ls, params) -> {
         double r = params[0];  // 圆曲线半径
@@ -165,7 +165,7 @@ public class TransitionCurveGenerator {
 
     // 将未旋转、移动的双螺旋曲线（起点在原点）绕原点旋转，然后移动曲线开始处
     private static SingleTransArcResult rotateAndMoveTransArc(
-            EastNorth start, double startAngleRad,  // 起点坐标和初始角度，坐标角度：以东为0，北正南负
+            EastNorth start, double startAngleRad,  // 起点坐标和入曲线角度，坐标角度：以东为0，北正南负
             SingleTransArcResult transArc  // 没有移动旋转的单段双螺旋曲线
     ) {
         List<EastNorth> unrotatedArc = transArc.arcNodes;
@@ -189,10 +189,43 @@ public class TransitionCurveGenerator {
         return new SingleTransArcResult(result, startAngleRad, endTangentAngleRad);
     }
 
-    // TODO:画圆曲线段
+    // 画圆曲线段
+    private static List<EastNorth> getCircularArc(
+            EastNorth start,  // 起点坐标
+            double startAngleRad, double endAngleRad,  // 入、出曲线角度，坐标角度：以东为0，北正南负
+            double enRadius, int leftRight,
+            double enChainageLength
+    ) {
+        List<EastNorth> result = new ArrayList<>();
 
-    // TODO:汇总3段曲线（先画俩过渡段？）
-    public static DrawingNewNodeResult getTransCurve(
+        // 圆心（从起点沿法线方向移动半径距离得到圆心）
+        double normalAngleStartRed = startAngleRad + leftRight * Math.PI / 2;  // 起点法线方向，左转+90°右转-90°（坐标角度）
+        double[] center = {
+                start.getX() + enRadius * Math.cos(normalAngleStartRed),
+                start.getY() + enRadius * Math.sin(normalAngleStartRed)
+        };
+        // 相对于圆心的起止角度（坐标角度）和圆心角
+        double ang1 = -(startAngleRad + leftRight * Math.PI / 2);
+        double ang2 = -(endAngleRad + leftRight * Math.PI / 2);
+        double centralAngleRad = ang2 - ang1;
+
+        // 计算点数
+        int numAngleSteps = (int) (enRadius * centralAngleRad / enChainageLength);
+
+        // 画圆弧
+        for (int i = 0; i <= numAngleSteps; i ++){
+            double tt = (double) i / numAngleSteps;    // 插值参数 [0,1]
+            double ang = ang1 + centralAngleRad * tt;    // 当前角度
+            double x = center[0] + enRadius * Math.cos(ang);  // 圆弧点X坐标
+            double y = center[1] + enRadius * Math.sin(ang);  // 圆弧点Y坐标
+            result.add(new EastNorth(x, y));
+        }
+
+        return result;
+    }
+
+    // 绘制一条缓和曲线（汇总3段子曲线）
+    public static ArrayList<EastNorth> getTransCurve(
             EastNorth A, EastNorth B, EastNorth C,
             double enCurveRadius, double enTransArcLength,  // 圆曲线半径（内圆R）、缓和段长度（ls）
             double enChainageLength  // 每个桩（节点）之间的距离
@@ -201,7 +234,7 @@ public class TransitionCurveGenerator {
         TransArcStartResult transArcStarts = getStartsOfTransArcs(A, B, C, enCurveRadius, enTransArcLength);
         if (transArcStarts == null) return null;
 
-        /// A侧螺旋线
+        /// A侧螺旋线（从A侧直缓切点顺着画）
         // 绘制
         SingleTransArcResult unrotatedTransArcA = getUnrotatedTransArc(
                 enCurveRadius, enTransArcLength,
@@ -214,7 +247,7 @@ public class TransitionCurveGenerator {
                 transArcStarts.startAngleARad,
                 unrotatedTransArcA
         );
-        /// C侧螺旋线
+        /// C侧螺旋线（从C侧直缓切点开始倒着画）
         // 绘制
         SingleTransArcResult unrotatedTransArcC = getUnrotatedTransArc(
                 enCurveRadius, enTransArcLength,
@@ -227,9 +260,36 @@ public class TransitionCurveGenerator {
                 transArcStarts.startAngleCRad,
                 unrotatedTransArcC
         );
+        /// 圆曲线
+        List<EastNorth> circularArc = getCircularArc(
+                rotatedTransArcA.arcNodes.getLast(),
+                rotatedTransArcA.endTangentAngleRad,  // A侧出曲线的方向
+                rotatedTransArcC.endTangentAngleRad + Math.PI,  // C侧双螺旋是倒过来画的，所以它绘制意义上的（终点）出曲线方向取反向才是行进方向A→B→C的角度
+                enCurveRadius, transArcStarts.leftRight,
+                enChainageLength
+        );
+        /// 拼接
+        // 整理用于拼接的点
+        List<EastNorth> transArcA = new ArrayList<>(rotatedTransArcA.arcNodes);
+        transArcA.removeFirst();  // 不要ArcA的最后一个点（=圆曲线第一个点）
+        List<EastNorth> transArcC = new ArrayList<>(rotatedTransArcC.arcNodes);
+        Collections.reverse(transArcC);  // 倒着画的原地逆序正回来
+        transArcC.removeFirst();  // 正序之后不要第一个点（=圆曲线最后一个点）
 
-        // TODO:计算、连上圆曲线
-        return null;
+        /*TODO:边缘情况检查
+          <p>在特定条件下可能会：
+          <p>当 ls < chainageLength（即缓和段很短）
+          <p>getUnrotatedTransArc() 只生成一个点
+          <p>可能 removeFirst() 会把唯一的点删掉
+          <p>→ 缓和段直接消失
+          <p>→ 拼接会出错
+         */
+        ArrayList<EastNorth> finalNodes = new ArrayList<>();
+        finalNodes.addAll(transArcA);
+        finalNodes.addAll(circularArc);
+        finalNodes.addAll(transArcC);
+
+        return finalNodes;
     }
 
     // 打包双螺旋曲线的起始点、起始偏角
@@ -254,12 +314,12 @@ public class TransitionCurveGenerator {
     // 打包双螺旋曲线的节点、起始和终点偏角
     private static final class SingleTransArcResult {
         public final List<EastNorth> arcNodes;
-        public final double startTangentAngleRed;  // 入曲线方向，坐标角度：以东为0，北正南负
+        public final double startTangentAngleRad;  // 入曲线方向，坐标角度：以东为0，北正南负
         public final double endTangentAngleRad;  // 出曲线方向，坐标角度：以东为0，北正南负
 
-        SingleTransArcResult(List<EastNorth> arcNodes, double startTangentAngleRed, double endTangentAngleRad) {
+        SingleTransArcResult(List<EastNorth> arcNodes, double startTangentAngleRad, double endTangentAngleRad) {
             this.arcNodes = arcNodes;
-            this.startTangentAngleRed = startTangentAngleRed;
+            this.startTangentAngleRad = startTangentAngleRad;
             this.endTangentAngleRad = endTangentAngleRad;
         }
     }
