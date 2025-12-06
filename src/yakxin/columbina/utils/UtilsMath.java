@@ -50,7 +50,7 @@ public class UtilsMath {
     public static double sumSeriesAtVarValue(
             TermFunction termFunc,
             int termMax,  // 求和项数
-            double independentVar,  // 输入自变量
+            double independentVar,  // 输入的自变量或第一参数（确定值）
             double... params  // 其他参数
     ) {
         double result = 0.0;
