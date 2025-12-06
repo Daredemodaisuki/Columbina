@@ -1,8 +1,14 @@
 package yakxin.columbina.transitionCurve;
 
 import org.openstreetmap.josm.data.coor.EastNorth;
+import org.openstreetmap.josm.data.coor.LatLon;
+import org.openstreetmap.josm.data.osm.Node;
+import org.openstreetmap.josm.data.osm.Way;
 import org.openstreetmap.josm.tools.I18n;
+import yakxin.columbina.data.ColumbinaException;
+import yakxin.columbina.data.dto.DrawingNewNodeResult;
 import yakxin.columbina.utils.UtilsMath;
+import yakxin.columbina.utils.UtilsUI;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -135,7 +141,7 @@ public class TransitionCurveGenerator {
 
         // double deflectionAngleRad = Math.toRadians(deflectionAngleDeg);
         List<EastNorth> result = new ArrayList<>();
-        int totalChainage = (int) (enTransArcLength / enChainageLength);  // 总桩数
+        int totalChainage = (int) Math.ceil(enTransArcLength / enChainageLength);  // 总桩数（向上取整）
         double curvatureChangeRate = 1 / (enCurveRadius * enTransArcLength);  // 曲率变化率
         // 曲线坐标（回旋线）
         for (int chainage = 0; chainage <= totalChainage; chainage ++) {
@@ -160,9 +166,9 @@ public class TransitionCurveGenerator {
         }
 
         // 计算终点处的切角
-        double endTangentAngleRad = curvatureChangeRate * enTransArcLength * enTransArcLength / 2.0;
+        double endTangentAngleRad = leftRight * (curvatureChangeRate * enTransArcLength * enTransArcLength / 2.0);
 
-        return new SingleEulerArcResult(result, 0.0, endTangentAngleRad);
+        return new SingleEulerArcResult(result, 0.0, UtilsMath.normAngle(endTangentAngleRad));
     }
 
     // 将未旋转、移动的螺旋曲线（起点在原点）绕原点旋转，然后移动到曲线的开始处
@@ -186,7 +192,7 @@ public class TransitionCurveGenerator {
         }
 
         // 计算终点处的切角（原角+旋转度数）
-        double endTangentAngleRad = transArc.endTangentAngleRad + startAngleRad;
+        double endTangentAngleRad = UtilsMath.normAngle(transArc.endTangentAngleRad + startAngleRad);
 
         return new SingleEulerArcResult(result, startAngleRad, endTangentAngleRad);
     }
@@ -201,18 +207,22 @@ public class TransitionCurveGenerator {
         List<EastNorth> result = new ArrayList<>();
 
         // 圆心（从起点沿法线方向移动半径距离得到圆心）
-        double normalAngleStartRed = startAngleRad + leftRight * Math.PI / 2;  // 起点法线方向，左转+90°右转-90°（坐标角度）
+        double normalAngleStartRed = UtilsMath.normAngle(startAngleRad + leftRight * Math.PI / 2);  // 起点法线方向，左转+90°右转-90°（坐标角度）
         double[] center = {
                 start.getX() + enRadius * Math.cos(normalAngleStartRed),
                 start.getY() + enRadius * Math.sin(normalAngleStartRed)
         };
         // 起止点相对于圆心的角度（通过起点法向角度取反获得，是坐标角度）和圆心角
-        double ang1 = startAngleRad + leftRight * Math.PI / 2 + Math.PI;
-        double ang2 = endAngleRad + leftRight * Math.PI / 2 + Math.PI;
-        double centralAngleRad = ang2 - ang1;
+        double ang1 = UtilsMath.normAngle(startAngleRad + leftRight * Math.PI / 2 + Math.PI);
+        double ang2 = UtilsMath.normAngle(endAngleRad + leftRight * Math.PI / 2 + Math.PI);
+        double centralAngleRad = UtilsMath.normAngle(ang2 - ang1);  // 防止AB、BC跨±180°线时画优弧（「<」这种情况）
+        // UtilsUI.testMsgWindow("函数原始输入：" + Math.toDegrees(startAngleRad) + " " + Math.toDegrees(endAngleRad) + "\n"
+        //         + "起止点相对于圆心的角度" + Math.toDegrees(ang1) + " " + Math.toDegrees(ang2) + "\n"
+        //         + "没归一化的角度差" + Math.toDegrees(ang2 - ang1) + " 归一化的角度差" + Math.toDegrees(UtilsMath.normAngle(ang2 - ang1))
+        // );
 
         // 计算点数
-        int numAngleSteps = (int) (enRadius * centralAngleRad / enChainageLength);
+        int numAngleSteps = Math.abs((int) (enRadius * centralAngleRad / enChainageLength));
 
         // 画圆弧
         for (int i = 0; i <= numAngleSteps; i ++){
@@ -267,7 +277,7 @@ public class TransitionCurveGenerator {
         List<EastNorth> circularArc = getCircularArc(
                 rotatedTransArcA.arcNodes.getLast(),
                 rotatedTransArcA.endTangentAngleRad,  // A侧出曲线的方向
-                rotatedTransArcC.endTangentAngleRad + Math.PI,  // C侧双螺旋是倒过来画的，所以它绘制意义上的（终点）出曲线方向取反向才是行进方向A→B→C的角度
+                UtilsMath.normAngle(rotatedTransArcC.endTangentAngleRad + Math.PI),  // C侧双螺旋是倒过来画的，所以它绘制意义上的（终点）出曲线方向取反向才是行进方向A→B→C的角度
                 enCurveRadius, transArcStarts.leftRight,
                 enChainageLength
         );
@@ -285,6 +295,178 @@ public class TransitionCurveGenerator {
         finalNodes.addAll(transArcC);
 
         return finalNodes;
+    }
+
+    /**
+     * 为整条路径生成过渡曲线（缓和曲线）
+     * 类似于FilletGenerator.buildSmoothPolyline和ChamferGenerator.buildChamferPolyline
+     *
+     * @param way 输入的路径
+     * @param surfaceRadius 圆曲线地表半径（米）
+     * @param surfaceLength 缓和曲线地表长度（米）
+     * @param surfaceChainage 桩距（节点间距，米）
+     * @return 包含新节点列表和失败节点ID的DrawingNewNodeResult
+     */
+    public static DrawingNewNodeResult buildTransitionCurvePolyline(
+            Way way,
+            double surfaceRadius, double surfaceLength, double surfaceChainage) {
+
+        List<Long> failedNodes = new ArrayList<>();
+        List<Node> nodes = way.getNodes();
+        int nodeCount = nodes.size();
+
+        if (nodeCount < 3) {
+            // 至少需要3个点才能形成拐角
+            return new DrawingNewNodeResult(
+                    new ArrayList<>(nodes),  // 返回原始节点
+                    failedNodes
+            );
+        }
+
+        // 存储每个拐角的过渡曲线结果
+        List<List<EastNorth>> transCurves = new ArrayList<>();
+
+        // 为非闭合路径计算所有拐角
+        for (int i = 0; i < nodeCount - 2; i++) {
+            Node A = nodes.get(i);
+            Node B = nodes.get(i + 1);
+            Node C = nodes.get(i + 2);
+
+            try {
+                // 将地表距离转换为EastNorth距离
+                double latB = B.getCoor().lat();
+                double enRadius = UtilsMath.surfaceDistanceToEastNorth(surfaceRadius, latB);
+                double enLength = UtilsMath.surfaceDistanceToEastNorth(surfaceLength, latB);
+                double enChainage = UtilsMath.surfaceDistanceToEastNorth(surfaceChainage, latB);
+
+                // 计算缓和曲线
+                ArrayList<EastNorth> transCurve = getTransCurve(
+                        UtilsMath.toEastNorth(A.getCoor()),
+                        UtilsMath.toEastNorth(B.getCoor()),
+                        UtilsMath.toEastNorth(C.getCoor()),
+                        enRadius, enLength, enChainage
+                );
+
+                if (transCurve == null || transCurve.isEmpty()) {
+                    transCurves.add(null);
+                    failedNodes.add(B.getUniqueId());
+                } else {
+                    transCurves.add(transCurve);
+                }
+            } catch (ColumbinaException | IllegalArgumentException e) {
+                transCurves.add(null);
+                failedNodes.add(B.getUniqueId());
+            }
+        }
+
+        // 处理闭合路径的最后一个拐角
+        if (way.isClosed() && nodeCount >= 3) {
+            Node A = nodes.get(nodeCount - 2);
+            Node B = nodes.get(nodeCount - 1); // 也是第一个节点
+            Node C = nodes.get(1);
+
+            try {
+                double latB = B.getCoor().lat();
+                double enRadius = UtilsMath.surfaceDistanceToEastNorth(surfaceRadius, latB);
+                double enLength = UtilsMath.surfaceDistanceToEastNorth(surfaceLength, latB);
+                double enChainage = UtilsMath.surfaceDistanceToEastNorth(surfaceChainage, latB);
+
+                ArrayList<EastNorth> transCurve = getTransCurve(
+                        UtilsMath.toEastNorth(A.getCoor()),
+                        UtilsMath.toEastNorth(B.getCoor()),
+                        UtilsMath.toEastNorth(C.getCoor()),
+                        enRadius, enLength, enChainage
+                );
+
+                if (transCurve == null || transCurve.isEmpty()) {
+                    transCurves.add(null);
+                    failedNodes.add(B.getUniqueId());
+                } else {
+                    transCurves.add(transCurve);
+                }
+            } catch (ColumbinaException | IllegalArgumentException e) {
+                transCurves.add(null);
+                failedNodes.add(B.getUniqueId());
+            }
+        }
+
+        // 构建最终的节点列表
+        List<Node> finalNodes = new ArrayList<>();
+
+        // 对于非闭合路径，从第一个节点开始
+        if (!way.isClosed()) {
+            finalNodes.add(nodes.get(0));
+
+            // 遍历所有拐角
+            for (int i = 0; i < nodeCount - 2; i++) {
+                if (transCurves.get(i) != null) {
+                    // 有过渡曲线
+                    List<EastNorth> curve = transCurves.get(i);
+
+                    // 添加曲线上的所有点（跳过第一个点，因为它应该与上一个点相同或接近）
+                    for (int j = 1; j < curve.size(); j++) {
+                        EastNorth en = curve.get(j);
+                        LatLon ll = UtilsMath.toLatLon(en);
+                        finalNodes.add(new Node(ll));
+                    }
+                } else {
+                    // 没有过渡曲线，添加原始拐点
+                    finalNodes.add(nodes.get(i + 1));
+                }
+            }
+
+            // 添加最后一个节点
+            finalNodes.add(nodes.get(nodeCount - 1));
+
+        } else {
+            // 闭合路径处理
+            if (transCurves.isEmpty()) {
+                // 没有曲线，返回原始路径
+                return new DrawingNewNodeResult(new ArrayList<>(nodes), failedNodes);
+            }
+
+            // 检查最后一个拐角是否有曲线
+            int lastIndex = transCurves.size() - 1;
+            List<EastNorth> lastCurve = transCurves.get(lastIndex);
+
+            if (lastCurve != null && !lastCurve.isEmpty()) {
+                // 使用最后一个曲线的最后一个点作为起点
+                EastNorth startEN = lastCurve.get(lastCurve.size() - 1);
+                LatLon startLL = UtilsMath.toLatLon(startEN);
+                finalNodes.add(new Node(startLL));
+            } else {
+                // 否则使用原始起点
+                finalNodes.add(nodes.get(0));
+            }
+
+            // 遍历所有拐角（包括闭合的那个）
+            int totalCorners = way.isClosed() ? nodeCount : nodeCount - 1;
+            for (int i = 0; i < totalCorners; i++) {
+                int curveIndex = i;
+
+                if (curveIndex < transCurves.size() && transCurves.get(curveIndex) != null) {
+                    // 有过渡曲线
+                    List<EastNorth> curve = transCurves.get(curveIndex);
+
+                    // 添加曲线上的点（跳过第一个点）
+                    for (int j = 1; j < curve.size(); j++) {
+                        EastNorth en = curve.get(j);
+                        LatLon ll = UtilsMath.toLatLon(en);
+                        finalNodes.add(new Node(ll));
+                    }
+                } else if (i < nodeCount - 1) {
+                    // 没有过渡曲线，添加原始拐点（如果有）
+                    finalNodes.add(nodes.get((i + 1) % nodeCount));
+                }
+            }
+
+            // 闭合路径：确保最后一个点与第一个点相同
+            if (!finalNodes.isEmpty() && !finalNodes.getFirst().equals(finalNodes.getLast())) {
+                finalNodes.add(finalNodes.getFirst());
+            }
+        }
+
+        return new DrawingNewNodeResult(finalNodes, failedNodes);
     }
 
     // 打包双螺旋曲线的起始点、起始偏角
@@ -320,7 +502,7 @@ public class TransitionCurveGenerator {
     }
 
     /*TODO：边缘情况检查
-    注意极端几何：LS太长、R太小、α太小
+    注意极端几何：LS太长（导致圆曲线没了）、R太小、α太小
     getUnrotatedEulerArc、getCircularArc会不会只返回1个点
     处理各种null的情况
      */

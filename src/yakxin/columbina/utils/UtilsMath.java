@@ -41,6 +41,12 @@ public class UtilsMath {
 
     public static double[] mul(double[] a, double s) { return new double[]{a[0]*s, a[1]*s}; }  // 缩放
 
+    public static double normAngle(double angle) {
+        while (angle > Math.PI) angle -= 2 * Math.PI;
+        while (angle < -Math.PI) angle += 2 * Math.PI;
+        return angle;
+    }
+
     /// 复杂符号
     // 在指定位置的级数求和
     @FunctionalInterface  // 级数中单项函数的抽象接口
