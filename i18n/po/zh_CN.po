@@ -204,16 +204,16 @@ msgid "Chamfer Information"
 msgstr "斜角信息"
 
 #: ../src\yakxin\columbina\chamfer\ChamferDialog.java:63
-msgid "Chamfer distance A (m):"
+msgid "Chamfer distance A (m): "
 msgstr "A侧切距（m)："
 
 #: ../src\yakxin\columbina\chamfer\ChamferDialog.java:64
-msgid "Chamfer distance C (m):"
+msgid "Chamfer distance C (m): "
 msgstr "C侧切距（m)："
 
 #: ../src\yakxin\columbina\chamfer\ChamferDialog.java:65
-msgid "Chamfer angle to A (degrees°):"
-msgstr "A侧切角（角度°）"
+msgid "Chamfer angle to A (degrees°): "
+msgstr "A侧切角（角度°）："
 
 #: ../src\yakxin\columbina\chamfer\ChamferDialog.java:67
 #: ../src\yakxin\columbina\fillet\FilletDialog.java:74

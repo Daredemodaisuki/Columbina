@@ -16,7 +16,7 @@ public class FilletGenerator {
 
     /// 圆角算法
     // 绘制一个圆角（需要输入重算距离而不是直接的地表距离）
-    public static List<EastNorth> getFilletArc(
+    private static List<EastNorth> getFilletArc(
             EastNorth A, EastNorth B, EastNorth C,
             double enRadius, double angleStep, int maxNumPoints,
             double minAngleDeg, double maxAngleDeg
@@ -61,10 +61,10 @@ public class FilletGenerator {
         double ang1 = Math.atan2(T1[1] - center[1], T1[0] - center[0]);  // 圆心到T1的角度
         double ang2 = Math.atan2(T2[1] - center[1], T2[0] - center[0]);  // 圆心到T2的角度
 
-        // 圆弧方向（顺时针或逆时针）
+        // 圆弧方向
         double crossz = u1[0] * u2[1] - u1[1] * u2[0];  // 向量叉积的Z分量
         if (crossz < 0) {
-            // 逆时针方向，确保ang2 > ang1
+            // 逆时针方向（BA到BC需要逆时针旋转），确保ang2 > ang1
             if (ang2 < ang1) ang2 += 2*Math.PI;
         } else {
             // 顺时针方向，确保ang2 < ang1

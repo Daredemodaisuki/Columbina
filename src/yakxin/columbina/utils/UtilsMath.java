@@ -40,6 +40,32 @@ public class UtilsMath {
     public static double[] add(double[] a, double[] b) { return new double[]{a[0]+b[0], a[1]+b[1]}; }  // 加法
 
     public static double[] mul(double[] a, double s) { return new double[]{a[0]*s, a[1]*s}; }  // 缩放
+
+    /// 复杂符号
+    // 在指定位置的级数求和
+    @FunctionalInterface  // 级数中单项函数的抽象接口
+    public interface TermFunction {
+        abstract double compute(int termN, double independentVar, double... params);
+    }
+    public static double sumSeriesAtVarValue(
+            TermFunction termFunc,
+            int termMax,  // 求和项数
+            double independentVar,  // 输入自变量
+            double... params  // 其他参数
+    ) {
+        double result = 0.0;
+        for (int n = 0; n <= termMax; n ++) {
+            result += termFunc.compute(n, independentVar, params);
+        }
+        return result;
+    }
+
+    // 阶乘
+    public static long factorial(int k) {
+        long result = 1;
+        for (int i = 2; i <= k; i++) result *= i;
+        return result;
+    }
 }
 
 

@@ -171,16 +171,16 @@ msgid "Chamfer Information"
 msgstr "Chamfer Information"
 
 #: ../src\yakxin\columbina\chamfer\ChamferDialog.java:63
-msgid "Chamfer distance A (m):"
-msgstr "Chamfer distance A (m):"
+msgid "Chamfer distance A (m): "
+msgstr "Chamfer distance A (m): "
 
 #: ../src\yakxin\columbina\chamfer\ChamferDialog.java:64
-msgid "Chamfer distance C (m):"
-msgstr "Chamfer distance C (m):"
+msgid "Chamfer distance C (m): "
+msgstr "Chamfer distance C (m): "
 
 #: ../src\yakxin\columbina\chamfer\ChamferDialog.java:65
-msgid "Chamfer angle to A (degrees°):"
-msgstr "Chamfer angle to A (degrees°):"
+msgid "Chamfer angle to A (degrees°): "
+msgstr "Chamfer angle to A (degrees°): "
 
 #: ../src\yakxin\columbina\chamfer\ChamferDialog.java:67
 #: ../src\yakxin\columbina\fillet\FilletDialog.java:74
