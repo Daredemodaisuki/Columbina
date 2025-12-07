@@ -15,12 +15,12 @@ public class Columbina extends Plugin {
         super(info);
         // Corner-Optimal Line Utility Modifier for Better Inflection and Node Adjustment
         // 原Cartographic-Oriented Line Utility Modifier with Bevel through Interpolated Node Automation
+        // TODO：检查结果中曲线错开导致的尖角
 
         // 注册菜单
+        MainApplication.getMenu().moreToolsMenu.addSeparator();  // 分隔线
         MainMenu.add(MainApplication.getMenu().moreToolsMenu, new FilletAction());  // 倒圆角
-        // TODO：检查结果中曲线错开导致的尖角
         MainMenu.add(MainApplication.getMenu().moreToolsMenu, new ChamferAction());  // 倒斜角
-        // 在Columbina类的构造函数中添加：
         MainMenu.add(MainApplication.getMenu().moreToolsMenu, new TransitionCurveAction());  // 过渡曲线
     }
 }

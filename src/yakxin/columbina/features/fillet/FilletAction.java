@@ -96,46 +96,6 @@ public class FilletAction extends JosmAction {
         );
     }
 
-    // 画一条线及其新节点的指令
-    // private NewNodeWayCommands getNewNodeWayCmd(
-    //         DataSet ds, Way way,
-    //         double radius, double angleStep, int pointNum,
-    //         double minAngleDeg, double maxAngleDeg,
-    //         boolean copyTag
-    // ) {
-//
-    //     // 计算平滑路径，获取待画的新节点（按新路径节点顺序排列）
-    //     DrawingNewNodeResult filletResult = FilletGenerator.buildSmoothPolyline(
-    //             way,
-    //             radius, angleStep, pointNum,
-    //             minAngleDeg, maxAngleDeg);
-    //     if (filletResult == null || filletResult.newNodes == null || filletResult.newNodes.size() < 2) {
-    //         return null;
-    //     }
-    //     List<Node> newNodes = filletResult.newNodes;
-    //     List<Long> failedNodeIds = filletResult.failedNodes;
-//
-    //     // 画新线
-    //     Way newWay = new Way();
-    //     for (Node n : newNodes) newWay.addNode(n);  // 向新路径添加所有新节点
-//
-    //     // 复制原Way标签
-    //     if (copyTag) {
-    //         Map<String, String> wayTags = way.getInterestingTags();  // 读取原Way的tag
-    //         newWay.setKeys(wayTags);
-    //     }
-//
-    //     // 正式构建绘制命令
-    //     List<Command> addCommands = new LinkedList<>();
-    //     for (Node n : newNodes.stream().distinct().toList()) {  // 路径内部可能有节点复用（如闭合线），去重
-    //         if (!ds.containsNode(n))  // 新路径的节点在ds中未绘制（不是复用的）才准备绘制
-    //             addCommands.add(new AddCommand(ds, n));  // 添加节点到命令序列
-    //     }
-    //     addCommands.add(new AddCommand(ds, newWay));  // 添加线到命令序列
-//
-    //     return new NewNodeWayCommands(newWay, addCommands, failedNodeIds);
-    // }
-
     // 汇总全部添加指令
     public AddCommandsCollected concludeAddCommands(
             DataSet ds, List<Way> selectedWays,

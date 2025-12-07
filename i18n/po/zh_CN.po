@@ -37,29 +37,29 @@ msgstr "BC侧切距无效，应至少为0m。"
 msgid "Invalid round chamfer angle A, should be greater than 0m."
 msgstr "切角A无效，应大于0度。"
 
-#: ../src\yakxin\columbina\features\chamfer\ChamferAction.java:169
-#: ../src\yakxin\columbina\features\fillet\FilletAction.java:164
-#: ../src\yakxin\columbina\features\transitionCurve\TransitionCurveAction.java:144
+#: ../src\yakxin\columbina\features\chamfer\ChamferAction.java:119
+#: ../src\yakxin\columbina\features\fillet\FilletAction.java:124
+#: ../src\yakxin\columbina\features\transitionCurve\TransitionCurveAction.java:104
 msgid ""
 "Algorithm did not return at least 2 nodes to form a way for way {0}, this "
 "way was not processed."
 msgstr "处理路径{0}时算法没有返回足以构成路径的至少2个节点，该路径未处理。"
 
-#: ../src\yakxin\columbina\features\chamfer\ChamferAction.java:174
-#: ../src\yakxin\columbina\features\fillet\FilletAction.java:169
-#: ../src\yakxin\columbina\features\transitionCurve\TransitionCurveAction.java:150
+#: ../src\yakxin\columbina\features\chamfer\ChamferAction.java:124
+#: ../src\yakxin\columbina\features\fillet\FilletAction.java:129
+#: ../src\yakxin\columbina\features\transitionCurve\TransitionCurveAction.java:110
 msgid "Unexpected error occurred while processing way {0}: {1}"
 msgstr "处理路径{0}时产生了意外错误：{1}"
 
-#: ../src\yakxin\columbina\features\chamfer\ChamferAction.java:180
-#: ../src\yakxin\columbina\features\fillet\FilletAction.java:176
-#: ../src\yakxin\columbina\features\transitionCurve\TransitionCurveAction.java:157
+#: ../src\yakxin\columbina\features\chamfer\ChamferAction.java:130
+#: ../src\yakxin\columbina\features\fillet\FilletAction.java:136
+#: ../src\yakxin\columbina\features\transitionCurve\TransitionCurveAction.java:117
 msgid "Failed to generate any new way."
 msgstr "未能成功生成一条新路径。"
 
-#: ../src\yakxin\columbina\features\chamfer\ChamferAction.java:196
-#: ../src\yakxin\columbina\features\fillet\FilletAction.java:192
-#: ../src\yakxin\columbina\features\transitionCurve\TransitionCurveAction.java:173
+#: ../src\yakxin\columbina\features\chamfer\ChamferAction.java:146
+#: ../src\yakxin\columbina\features\fillet\FilletAction.java:152
+#: ../src\yakxin\columbina\features\transitionCurve\TransitionCurveAction.java:133
 msgid ""
 "Internal error occurred while removing an old way:\n"
 "\n"
@@ -67,9 +67,9 @@ msgstr ""
 "移除某条旧路径时产生了内部错误：\n"
 "\n"
 
-#: ../src\yakxin\columbina\features\chamfer\ChamferAction.java:197
-#: ../src\yakxin\columbina\features\fillet\FilletAction.java:193
-#: ../src\yakxin\columbina\features\transitionCurve\TransitionCurveAction.java:174
+#: ../src\yakxin\columbina\features\chamfer\ChamferAction.java:147
+#: ../src\yakxin\columbina\features\fillet\FilletAction.java:153
+#: ../src\yakxin\columbina\features\transitionCurve\TransitionCurveAction.java:134
 msgid ""
 "Old way return value is abnormal (null), unable to get the old way.\n"
 "\n"
@@ -77,13 +77,13 @@ msgstr ""
 "旧路径返回值异常（null），无法获取旧路径。\n"
 "\n"
 
-#: ../src\yakxin\columbina\features\chamfer\ChamferAction.java:198
+#: ../src\yakxin\columbina\features\chamfer\ChamferAction.java:148
 msgid "This way may not have been properly chamferred or removed."
 msgstr "该路径可能未被正确斜角或移除。"
 
-#: ../src\yakxin\columbina\features\chamfer\ChamferAction.java:205
-#: ../src\yakxin\columbina\features\fillet\FilletAction.java:201
-#: ../src\yakxin\columbina\features\transitionCurve\TransitionCurveAction.java:181
+#: ../src\yakxin\columbina\features\chamfer\ChamferAction.java:155
+#: ../src\yakxin\columbina\features\fillet\FilletAction.java:161
+#: ../src\yakxin\columbina\features\transitionCurve\TransitionCurveAction.java:141
 msgid ""
 "Internal error occurred while removing old way {0}:\n"
 "\n"
@@ -91,9 +91,9 @@ msgstr ""
 "移除旧路径{0}时产生了内部错误：\n"
 "\n"
 
-#: ../src\yakxin\columbina\features\chamfer\ChamferAction.java:206
-#: ../src\yakxin\columbina\features\fillet\FilletAction.java:202
-#: ../src\yakxin\columbina\features\transitionCurve\TransitionCurveAction.java:182
+#: ../src\yakxin\columbina\features\chamfer\ChamferAction.java:156
+#: ../src\yakxin\columbina\features\fillet\FilletAction.java:162
+#: ../src\yakxin\columbina\features\transitionCurve\TransitionCurveAction.java:142
 msgid ""
 "New way return value is abnormal (null), unable to get the new way.\n"
 "\n"
@@ -101,13 +101,13 @@ msgstr ""
 "新路径返回值异常（null），无法获取新路径。\n"
 "\n"
 
-#: ../src\yakxin\columbina\features\chamfer\ChamferAction.java:207
+#: ../src\yakxin\columbina\features\chamfer\ChamferAction.java:157
 msgid "Old way {0} may not have been properly chamferred or removed."
 msgstr "旧路径{0}可能未被正确斜角或移除。"
 
-#: ../src\yakxin\columbina\features\chamfer\ChamferAction.java:220
-#: ../src\yakxin\columbina\features\fillet\FilletAction.java:216
-#: ../src\yakxin\columbina\features\transitionCurve\TransitionCurveAction.java:193
+#: ../src\yakxin\columbina\features\chamfer\ChamferAction.java:170
+#: ../src\yakxin\columbina\features\fillet\FilletAction.java:176
+#: ../src\yakxin\columbina\features\transitionCurve\TransitionCurveAction.java:153
 #: ../src\yakxin\columbina\utils\UtilsData.java:89
 msgid ""
 "Columbina attempted to use Utilsplugin2''s ''Replace Geometry'' function to replace the old way, but failed.\n"
@@ -116,9 +116,9 @@ msgstr ""
 "Columbina尝试调用Utilsplugin2插件之「替换几何图形」功能替换旧路径，但失败。\n"
 "\n"
 
-#: ../src\yakxin\columbina\features\chamfer\ChamferAction.java:221
-#: ../src\yakxin\columbina\features\fillet\FilletAction.java:217
-#: ../src\yakxin\columbina\features\transitionCurve\TransitionCurveAction.java:194
+#: ../src\yakxin\columbina\features\chamfer\ChamferAction.java:171
+#: ../src\yakxin\columbina\features\fillet\FilletAction.java:177
+#: ../src\yakxin\columbina\features\transitionCurve\TransitionCurveAction.java:154
 msgid ""
 "Message from Utilsplugin2:\n"
 "{0}\n"
@@ -128,46 +128,46 @@ msgstr ""
 "{0}\n"
 "\n"
 
-#: ../src\yakxin\columbina\features\chamfer\ChamferAction.java:222
-#: ../src\yakxin\columbina\features\fillet\FilletAction.java:218
-#: ../src\yakxin\columbina\features\transitionCurve\TransitionCurveAction.java:195
+#: ../src\yakxin\columbina\features\chamfer\ChamferAction.java:172
+#: ../src\yakxin\columbina\features\fillet\FilletAction.java:178
+#: ../src\yakxin\columbina\features\transitionCurve\TransitionCurveAction.java:155
 #: ../src\yakxin\columbina\utils\UtilsData.java:91
 msgid "Old way {0} was not removed."
 msgstr "旧路径{0}未被移除。"
 
-#: ../src\yakxin\columbina\features\chamfer\ChamferAction.java:228
-#: ../src\yakxin\columbina\features\fillet\FilletAction.java:224
-#: ../src\yakxin\columbina\features\transitionCurve\TransitionCurveAction.java:197
+#: ../src\yakxin\columbina\features\chamfer\ChamferAction.java:178
+#: ../src\yakxin\columbina\features\fillet\FilletAction.java:184
+#: ../src\yakxin\columbina\features\transitionCurve\TransitionCurveAction.java:157
 msgid "Unexpected error occurred while removing way {0}: {1}"
 msgstr "移除路径{0}时产生了意外错误：{1}"
 
-#: ../src\yakxin\columbina\features\chamfer\ChamferAction.java:294
-#: ../src\yakxin\columbina\features\chamfer\ChamferAction.java:295
+#: ../src\yakxin\columbina\features\chamfer\ChamferAction.java:244
+#: ../src\yakxin\columbina\features\chamfer\ChamferAction.java:245
 msgid "Chamfer of way {0}: {1}m, {2}m"
 msgstr "路径{0}倒斜角：{1}m, {2}m"
 
-#: ../src\yakxin\columbina\features\chamfer\ChamferAction.java:296
+#: ../src\yakxin\columbina\features\chamfer\ChamferAction.java:246
 msgid "Chamfer of {0} ways: {1}m, {2}m"
 msgstr "为{0}条路径倒角：{1}m, {2}m"
 
-#: ../src\yakxin\columbina\features\chamfer\ChamferAction.java:298
-#: ../src\yakxin\columbina\features\chamfer\ChamferAction.java:299
+#: ../src\yakxin\columbina\features\chamfer\ChamferAction.java:248
+#: ../src\yakxin\columbina\features\chamfer\ChamferAction.java:249
 msgid "Chamfer of way {0}: {1}m, {2}°"
 msgstr "为{0}条路径倒角：{1}m, {2}°"
 
-#: ../src\yakxin\columbina\features\chamfer\ChamferAction.java:300
+#: ../src\yakxin\columbina\features\chamfer\ChamferAction.java:250
 msgid "Chamfer of {0} ways: {1}m, {2}°"
 msgstr "为{0}条路径倒角：{1}m, {2}°"
 
-#: ../src\yakxin\columbina\features\chamfer\ChamferAction.java:311
+#: ../src\yakxin\columbina\features\chamfer\ChamferAction.java:261
 msgid ""
 "The following corner nodes could not be chamferred due to too short distance"
 " to adjacent nodes or not meeting the angle restrictions: "
 msgstr "下列拐点节点因与相邻节点距离过短或未满足拐角角度限制未能倒斜角："
 
-#: ../src\yakxin\columbina\features\chamfer\ChamferAction.java:315
-#: ../src\yakxin\columbina\features\fillet\FilletAction.java:307
-#: ../src\yakxin\columbina\features\transitionCurve\TransitionCurveAction.java:287
+#: ../src\yakxin\columbina\features\chamfer\ChamferAction.java:265
+#: ../src\yakxin\columbina\features\fillet\FilletAction.java:267
+#: ../src\yakxin\columbina\features\transitionCurve\TransitionCurveAction.java:247
 msgid ""
 "\n"
 "Way"
@@ -175,15 +175,15 @@ msgstr ""
 "\n"
 "路径"
 
-#: ../src\yakxin\columbina\features\chamfer\ChamferAction.java:316
-#: ../src\yakxin\columbina\features\fillet\FilletAction.java:308
-#: ../src\yakxin\columbina\features\transitionCurve\TransitionCurveAction.java:289
+#: ../src\yakxin\columbina\features\chamfer\ChamferAction.java:266
+#: ../src\yakxin\columbina\features\fillet\FilletAction.java:268
+#: ../src\yakxin\columbina\features\transitionCurve\TransitionCurveAction.java:249
 msgid ": "
 msgstr "："
 
-#: ../src\yakxin\columbina\features\chamfer\ChamferAction.java:327
-#: ../src\yakxin\columbina\features\fillet\FilletAction.java:319
-#: ../src\yakxin\columbina\features\transitionCurve\TransitionCurveAction.java:304
+#: ../src\yakxin\columbina\features\chamfer\ChamferAction.java:277
+#: ../src\yakxin\columbina\features\fillet\FilletAction.java:279
+#: ../src\yakxin\columbina\features\transitionCurve\TransitionCurveAction.java:264
 msgid "Columbina: Remove original ways"
 msgstr "Columbina：移除原有路径"
 
@@ -295,24 +295,24 @@ msgstr "最小张角应至少为0°，已设置为0°。"
 msgid "Maximum angle should be at most 180°, set to 180°."
 msgstr "最大张角应至多为180°，已设置为180°。"
 
-#: ../src\yakxin\columbina\features\fillet\FilletAction.java:194
+#: ../src\yakxin\columbina\features\fillet\FilletAction.java:154
 msgid "This way may not have been properly rounded or removed."
 msgstr "该路径可能未被正确圆角或移除。"
 
-#: ../src\yakxin\columbina\features\fillet\FilletAction.java:203
+#: ../src\yakxin\columbina\features\fillet\FilletAction.java:163
 msgid "Old way {0} may not have been properly rounded or removed."
 msgstr "旧路径{0}可能未被正确圆角或移除。"
 
-#: ../src\yakxin\columbina\features\fillet\FilletAction.java:292
-#: ../src\yakxin\columbina\features\fillet\FilletAction.java:293
+#: ../src\yakxin\columbina\features\fillet\FilletAction.java:252
+#: ../src\yakxin\columbina\features\fillet\FilletAction.java:253
 msgid "Round corners of way {0}: {1}m"
 msgstr "对路径{0}倒圆角：{1}m"
 
-#: ../src\yakxin\columbina\features\fillet\FilletAction.java:294
+#: ../src\yakxin\columbina\features\fillet\FilletAction.java:254
 msgid "Round corners of {0} ways: {1}m"
 msgstr "对路径{0}倒圆角：{1}m"
 
-#: ../src\yakxin\columbina\features\fillet\FilletAction.java:303
+#: ../src\yakxin\columbina\features\fillet\FilletAction.java:263
 msgid ""
 "The following corner nodes could not be rounded due to too short distance to"
 " adjacent nodes or not meeting the angle restrictions: "
@@ -371,37 +371,45 @@ msgstr "对选定路径的每个拐角节点按指定圆曲线半径和缓和曲
 msgid "Invalid curve radius, should be greater than 0m."
 msgstr "无效的圆曲线半径，应大于0米。"
 
-#: ../src\yakxin\columbina\features\transitionCurve\TransitionCurveAction.java:63
+#: ../src\yakxin\columbina\features\transitionCurve\TransitionCurveAction.java:62
 msgid "Invalid transition curve length, should be greater than 0m."
 msgstr "无效的缓和曲线长度，应大于0米。"
 
-#: ../src\yakxin\columbina\features\transitionCurve\TransitionCurveAction.java:68
+#: ../src\yakxin\columbina\features\transitionCurve\TransitionCurveAction.java:66
 msgid "Invalid chainage length, should be greater than 0m."
 msgstr "无效的桩距（节点间距），应大于0米。"
 
-#: ../src\yakxin\columbina\features\transitionCurve\TransitionCurveAction.java:175
+#: ../src\yakxin\columbina\features\transitionCurve\TransitionCurveAction.java:69
+msgid ""
+"Invalid transition curve length and chainage length. The curve length should"
+" be grater chainage length."
+msgstr ""
+"无效的缓和曲线长度和桩距，曲线长度应大于桩距离。"
+
+#: ../src\yakxin\columbina\features\transitionCurve\TransitionCurveAction.java:135
 msgid "This way may not have been properly processed or removed."
 msgstr "该路径可能未被正确绘制缓和曲线或移除。"
 
-#: ../src\yakxin\columbina\features\transitionCurve\TransitionCurveAction.java:183
+#: ../src\yakxin\columbina\features\transitionCurve\TransitionCurveAction.java:143
 msgid "Old way {0} may not have been properly processed or removed."
 msgstr "旧路径{0}可能未被正确绘制缓和曲线或移除。"
 
-#: ../src\yakxin\columbina\features\transitionCurve\TransitionCurveAction.java:263
-#: ../src\yakxin\columbina\features\transitionCurve\TransitionCurveAction.java:266
+#: ../src\yakxin\columbina\features\transitionCurve\TransitionCurveAction.java:223
+#: ../src\yakxin\columbina\features\transitionCurve\TransitionCurveAction.java:226
 msgid "Transition curve of way {0}: R={1}m, Ls={2}m"
 msgstr "为路径{0}绘制缓和曲线：R={1}m, Ls={2}m"
 
-#: ../src\yakxin\columbina\features\transitionCurve\TransitionCurveAction.java:269
+#: ../src\yakxin\columbina\features\transitionCurve\TransitionCurveAction.java:229
 msgid "Transition curve of {0} ways: R={1}m, Ls={2}m"
 msgstr "为{0}条路径绘制缓和曲线：R={1}m, Ls={2}m"
 
-#: ../src\yakxin\columbina\features\transitionCurve\TransitionCurveAction.java:282
+#: ../src\yakxin\columbina\features\transitionCurve\TransitionCurveAction.java:242
 msgid ""
-"The following corner nodes could not be processed due to geometric "
-"constraints or calculation errors: "
+"The following corner nodes could not be processed due to due to insufficient"
+" distance from adjacent nodes, excessively long specified transition curves,"
+" or angular issues: "
 msgstr ""
-"由于几何约束或计算错误，以下拐角节点无法处理："
+"下列拐点节点因与相邻节点距离过短、指定的缓和曲线过长、或角度问题无法生成缓和曲线。"
 
 #: ../src\yakxin\columbina\features\transitionCurve\TransitionCurveDialog.java:52
 msgid "Transition Curve Information"

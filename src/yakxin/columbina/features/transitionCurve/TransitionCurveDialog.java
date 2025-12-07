@@ -151,3 +151,5 @@ public class TransitionCurveDialog extends ExtendedDialog {
         return selectNewWays.isSelected();
     }
 }
+
+

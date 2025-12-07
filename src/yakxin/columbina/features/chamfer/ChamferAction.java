@@ -82,56 +82,6 @@ public class ChamferAction extends JosmAction {
     }
 
     /**
-     * 获取画一条线及其新节点的指令
-     * @param ds 当前数据集
-     * @param way 输入路径
-     * @param mode 模式：<code>chamferGenerator.USING_DISTANCE</code>或<code>chamferGenerator.USING_ANGLE_A</code>
-     * @param surfaceDistanceA 拐点B到A的地表距离
-     * @param surfaceDistanceC 拐点B到C的地表距离
-     * @param angleADeg 切角A的角度
-     * @param copyTag 是否复制标签
-     * @return 指令列表
-     */
-    //private NewNodeWayCommands getNewNodeWayCmd(
-    //        DataSet ds, Way way, int mode,
-    //        double surfaceDistanceA, double surfaceDistanceC,
-    //        double angleADeg,
-    //        boolean copyTag
-    //) {
-    //    // 计算斜角路径
-    //    DrawingNewNodeResult chamferResult = ChamferGenerator.buildChamferPolyline(
-    //            way, mode,
-    //            surfaceDistanceA, surfaceDistanceC,
-    //            angleADeg
-    //    );
-    //    if (chamferResult == null || chamferResult.newNodes == null || chamferResult.newNodes.size() < 2) {
-    //        return null;
-    //    }
-    //    List<Node> newNodes = chamferResult.newNodes;
-    //    List<Long> failedNodeIds = chamferResult.failedNodes;
-//
-    //    // 画新线
-    //    Way newWay = new Way();
-    //    for (Node n : newNodes) newWay.addNode(n);  // 向新路径添加所有新节点
-//
-    //    // 复制原Way标签
-    //    if (copyTag) {
-    //        Map<String, String> wayTags = way.getInterestingTags();  // 读取原Way的tag
-    //        newWay.setKeys(wayTags);
-    //    }
-//
-    //    // 正式构建绘制命令
-    //    List<Command> addCommands = new LinkedList<>();
-    //    for (Node n : newNodes.stream().distinct().toList()) {  // 路径内部可能有节点复用（如闭合线），去重
-    //        if (!ds.containsNode(n))  // 新路径的节点在ds中未绘制（不是复用的）才准备绘制
-    //            addCommands.add(new AddCommand(ds, n));  // 添加节点到命令序列
-    //    }
-    //    addCommands.add(new AddCommand(ds, newWay));  // 添加线到命令序列
-//
-    //    return new NewNodeWayCommands(newWay, addCommands, failedNodeIds);
-    //}
-
-    /**
      * 汇总全部添加命令
      * @param ds
      * @param selectedWays
