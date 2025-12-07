@@ -5,6 +5,7 @@ import org.openstreetmap.josm.data.osm.Node;
 import org.openstreetmap.josm.data.osm.Way;
 import yakxin.columbina.data.ColumbinaException;
 import yakxin.columbina.data.dto.DrawingNewNodeResult;
+import yakxin.columbina.utils.UtilsData;
 import yakxin.columbina.utils.UtilsMath;
 
 import java.util.ArrayList;
@@ -12,7 +13,31 @@ import java.util.List;
 
 
 // 圆角计算器
-public class FilletGenerator {
+public class FilletGenerator implements UtilsData.WayGenerator {
+    private final double surfaceRadius;
+    private final double angleStep;
+    private final int maxPointNum;
+    private final double minAngleDeg;
+    private final double maxAngleDeg;
+
+    public FilletGenerator(double surfaceRadius, double angleStep, int maxPointNum,
+                           double minAngleDeg, double maxAngleDeg
+    ) {
+        this.surfaceRadius = surfaceRadius;
+        this.angleStep = angleStep;
+        this.maxPointNum = maxPointNum;
+        this.minAngleDeg = minAngleDeg;
+        this.maxAngleDeg = maxAngleDeg;
+    }
+
+    @Override
+    public DrawingNewNodeResult getNewNodeWay(Way way) {
+        return buildSmoothPolyline(
+                way,
+                surfaceRadius, angleStep, maxPointNum,
+                minAngleDeg, maxAngleDeg
+        );
+    }
 
     /// 圆角算法
     // 绘制一个圆角（需要输入重算距离而不是直接的地表距离）
@@ -104,92 +129,54 @@ public class FilletGenerator {
         // 获取路径的所有节点
         List<Node> nodes = new ArrayList<>(way.getNodes());
         int nPts = nodes.size();
-        if (nPts < 2) return null;  // 路径至少需要2个点
+        if (nPts < 3) return null;  // 路径至少需要3个点
 
         // 将所有节点转换为平面坐标
-        List<EastNorth> en = new ArrayList<>();
-        for (Node n : nodes) en.add(UtilsMath.toEastNorth(n.getCoor()));
+        List<EastNorth> nodesEN = new ArrayList<>();
+        for (Node n : nodes) nodesEN.add(UtilsMath.toEastNorth(n.getCoor()));
 
         // 为每个拐角预计算圆角
         List<double[]> T1s = new ArrayList<>();  // 存储每个拐角的第一个切点
-        // List<double[]> T2s = new ArrayList<>();  // 存储每个拐角的第二个切点
         List<List<EastNorth>> arcs = new ArrayList<>();  // 存储每个拐角的圆弧
         for (int i = 0; i < nPts - 2; i ++) {
-            EastNorth A = en.get(i);      // 起点    B → C
-            EastNorth B = en.get(i + 1);  // 拐点    ↑
-            EastNorth C = en.get(i + 2);  // 终点    A
+            EastNorth A = nodesEN.get(i);      // 起点    B → C
+            EastNorth B = nodesEN.get(i + 1);  // 拐点    ↑
+            EastNorth C = nodesEN.get(i + 2);  // 终点    A
 
             // JOSM用Mercator投影的NorthEast坐标等角不等距，需要重算距离，以拐点B取维度计算
-            double latB = nodes.get(i + 1).getCoor().lat();
             double enRadius;
             try {
+                double latB = nodes.get(i + 1).getCoor().lat();
                 enRadius = UtilsMath.surfaceDistanceToEastNorth(surfaceRadius, latB);
+                // 有EN长度之后继续算圆弧
+                List<EastNorth> arc = getFilletArc(  // 为每个拐角生成PNum个点的圆弧
+                        A, B, C,
+                        enRadius, angleStep, maxPointNum,
+                        minAngleDeg, maxAngleDeg
+                );
+
+                if (arc == null) {  // 该拐角没有生成圆角（半径过大或角度问题）
+                    T1s.add(null);
+                    arcs.add(null);
+                    failedNodes.add(nodes.get(i).getUniqueId());
+                } else {  // 存储切点和圆弧
+                    EastNorth t1 = arc.getFirst();
+                    T1s.add(new double[]{t1.getX(), t1.getY()});
+                    arcs.add(arc);
+                }
             } catch (ColumbinaException exSurToEN) {
                 // 如果纬度接近90度，使用一个很小的正数，避免除0，但这样不准确，所以直接失败跳过这个圆弧吧
                 T1s.add(null);
                 arcs.add(null);
                 failedNodes.add(nodes.get(i).getUniqueId());
-                continue;
-            }
-//            double cosLat = Math.cos(Math.toRadians(latB));
-//            // 避免cosLat为0（极点附近）
-//            if (Math.abs(cosLat) < 1e-9) {
-//                // 如果纬度接近90度，使用一个很小的正数，避免除0，但这样不准确，所以直接失败跳过这个圆弧吧
-//                T1s.add(null);
-//                arcs.add(null);
-//                failedNodes.add(nodes.get(i).getUniqueId());
-//                continue;
-//            }
-            // 有EN长度之后继续算圆弧
-            List<EastNorth> arc = getFilletArc(  // 为每个拐角生成PNum个点的圆弧
-                    A, B, C,
-                    enRadius, angleStep, maxPointNum,
-                    minAngleDeg, maxAngleDeg
-            );
-
-            if (arc == null) {  // 该拐角没有生成圆角（半径过大或角度问题）
-                T1s.add(null);
-                // T2s.add(null);
-                arcs.add(null);
-                failedNodes.add(nodes.get(i).getUniqueId());
-            } else {  // 存储切点和圆弧
-                EastNorth t1 = arc.getFirst(); // EastNorth t2 = arc.getLast();
-                T1s.add(new double[]{t1.getX(), t1.getY()});
-                // T2s.add(new double[]{t2.getX(), t2.getY()});
-                arcs.add(arc);
             }
         }
         if (way.isClosed()) {  // 闭合曲线首尾相连的首末点曲线
-            double latB = nodes.getFirst().getCoor().lat();
-//            double cosLat = Math.cos(Math.toRadians(latB));
-//            if (Math.abs(cosLat) < 1e-9) {
-//                T1s.add(null);
-//                arcs.add(null);
-//                failedNodes.add(nodes.getFirst().getUniqueId());
-//            } else {  // 可以算出重算距离才继续
-//                double radiusCorrect = surfaceRadius / cosLat;
-//                List<EastNorth> arcEnd = filletArcEN(
-//                        en.get(nPts - 2), en.get(0), en.get(1),  // en.get(0) = getFirst() == en.get(-1)
-//                        radiusCorrect, angleStep, maxPointNum,
-//                        minAngleDeg, maxAngleDeg
-//                );
-//                if (arcEnd == null) {
-//                    T1s.add(null);
-//                    // T2s.add(null);
-//                    arcs.add(null);
-//                    failedNodes.add(nodes.getFirst().getUniqueId());
-//                } else {
-//                    EastNorth t1End = arcEnd.getFirst(); // EastNorth t2End = arcEnd.getLast();
-//                    T1s.add(new double[]{t1End.getX(), t1End.getY()});
-//                    // T2s.add(new double[]{t2End.getX(), t2End.getY()});
-//                    arcs.add(arcEnd);
-//                }
-//            }
             try {
+                double latB = nodes.getFirst().getCoor().lat();
                 double enRadius = UtilsMath.surfaceDistanceToEastNorth(surfaceRadius, latB);
-                // 这个try不在for里面，不能continue了，所以下面这几行搬进try；如果接近90°会直接走catch，不进入下面这几行
                 List<EastNorth> arcEnd = getFilletArc(
-                        en.get(nPts - 2), en.get(0), en.get(1),  // en.get(0) = getFirst() == en.get(-1)
+                        nodesEN.get(nPts - 2), nodesEN.get(0), nodesEN.get(1),  // nodesEN.get(0) = getFirst() == nodesEN.get(-1)
                         enRadius, angleStep, maxPointNum,
                         minAngleDeg, maxAngleDeg
                 );
@@ -198,9 +185,8 @@ public class FilletGenerator {
                     arcs.add(null);
                     failedNodes.add(nodes.getFirst().getUniqueId());
                 } else {
-                    EastNorth t1End = arcEnd.getFirst();  // EastNorth t2End = arcEnd.getLast();
+                    EastNorth t1End = arcEnd.getFirst();
                     T1s.add(new double[]{t1End.getX(), t1End.getY()});
-                    // T2s.add(new double[]{t2End.getX(), t2End.getY()});
                     arcs.add(arcEnd);
                 }
             } catch (ColumbinaException exSurToEN) {

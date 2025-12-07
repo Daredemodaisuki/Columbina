@@ -76,55 +76,49 @@ public class TransitionCurveAction extends JosmAction {
 
         return new TransitionCurveParams(
                 radius, length, chainage,
-                dialog.getIfDeleteOld(),
-                dialog.getIfSelectNew(),
-                dialog.getIfCopyTag()
+                dialog.getIfDeleteOld(), dialog.getIfSelectNew(), dialog.getIfCopyTag()
         );
     }
 
-    /**
-     * 获取画一条线及其新节点的指令
-     */
-    private NewNodeWayCommands getNewNodeWayCmd(
-            DataSet ds, Way way,
-            double surfaceRadius, double surfaceLength, double surfaceChainage,
-            boolean copyTag
-    ) {
-        // 使用新的generator方法生成过渡曲线路径
-        DrawingNewNodeResult transitionResult = TransitionCurveGenerator.buildTransitionCurvePolyline(
-                way, surfaceRadius, surfaceLength, surfaceChainage
-        );
-
-        if (transitionResult == null || transitionResult.newNodes == null || transitionResult.newNodes.size() < 2) {
-            return null;
-        }
-
-        List<Node> newNodes = transitionResult.newNodes;
-        List<Long> failedNodeIds = transitionResult.failedNodes;
-
-        // 画新线
-        Way newWay = new Way();
-        for (Node n : newNodes) {
-            newWay.addNode(n);
-        }
-
-        // 复制原Way标签
-        if (copyTag) {
-            Map<String, String> wayTags = way.getInterestingTags();
-            newWay.setKeys(wayTags);
-        }
-
-        // 正式构建绘制命令
-        List<Command> addCommands = new LinkedList<>();
-        for (Node n : newNodes.stream().distinct().toList()) {
-            if (!ds.containsNode(n)) {
-                addCommands.add(new AddCommand(ds, n));
-            }
-        }
-        addCommands.add(new AddCommand(ds, newWay));
-
-        return new NewNodeWayCommands(newWay, addCommands, failedNodeIds);
-    }
+    // /**
+    //  * 获取画一条线及其新节点的指令
+    //  */
+    // private NewNodeWayCommands getNewNodeWayCmd(
+    //         DataSet ds, Way way,
+    //         double surfaceRadius, double surfaceLength, double surfaceChainage,
+    //         boolean copyTag
+    // ) {
+    //     // 生成过渡曲线路径
+    //     DrawingNewNodeResult transitionResult = TransitionCurveGenerator.buildTransitionCurvePolyline(
+    //             way, surfaceRadius, surfaceLength, surfaceChainage
+    //     );
+    //     if (transitionResult == null || transitionResult.newNodes == null || transitionResult.newNodes.size() < 2) {
+    //         return null;
+    //     }
+    //     List<Node> newNodes = transitionResult.newNodes;
+    //     List<Long> failedNodeIds = transitionResult.failedNodes;
+//
+    //     // 画新线
+    //     Way newWay = new Way();
+    //     for (Node n : newNodes) newWay.addNode(n);
+//
+    //     // 复制原Way标签
+    //     if (copyTag) {
+    //         Map<String, String> wayTags = way.getInterestingTags();
+    //         newWay.setKeys(wayTags);
+    //     }
+//
+    //     // 正式构建绘制命令
+    //     List<Command> addCommands = new LinkedList<>();
+    //     for (Node n : newNodes.stream().distinct().toList()) {  // 路径内部可能有节点复用（如闭合线），去重
+    //         if (!ds.containsNode(n)) {  // 新路径的节点在ds中未绘制（不是复用的）才准备绘制
+    //             addCommands.add(new AddCommand(ds, n));  // 添加节点到命令序列
+    //         }
+    //     }
+    //     addCommands.add(new AddCommand(ds, newWay));
+//
+    //     return new NewNodeWayCommands(newWay, addCommands, failedNodeIds);
+    // }
 
     // 汇总全部添加命令
     public AddCommandsCollected concludeAddCommands(
@@ -136,11 +130,13 @@ public class TransitionCurveAction extends JosmAction {
         Map<Way, Way> oldNewWayPairs = new HashMap<>();
         Map<Way, List<Long>> failedNodeIds = new HashMap<>();
 
+        // 处理路径
+        TransitionCurveGenerator generator = new TransitionCurveGenerator(
+                radius, length, chainage
+        );
         for (Way w : selectedWays) {
             try {
-                NewNodeWayCommands newNWCmd = getNewNodeWayCmd(
-                        ds, w, radius, length, chainage, copyTag
-                );
+                NewNodeWayCommands newNWCmd = UtilsData.getAddCmd(ds, w, generator, copyTag);
 
                 if (newNWCmd != null) {
                     commands.addAll(newNWCmd.addCommands);

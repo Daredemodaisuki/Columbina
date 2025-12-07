@@ -15,7 +15,6 @@ import org.openstreetmap.josm.tools.Shortcut;
 
 import yakxin.columbina.data.ColumbinaException;
 import yakxin.columbina.data.dto.AddCommandsCollected;
-import yakxin.columbina.data.dto.DrawingNewNodeResult;
 import yakxin.columbina.data.dto.LayerDatasetAndWaySelected;
 import yakxin.columbina.data.dto.NewNodeWayCommands;
 import yakxin.columbina.data.preference.ChamferPreference;
@@ -94,46 +93,56 @@ public class ChamferAction extends JosmAction {
      * @param copyTag 是否复制标签
      * @return 指令列表
      */
-    private NewNodeWayCommands getNewNodeWayCmd(
-            DataSet ds, Way way, int mode,
-            double surfaceDistanceA, double surfaceDistanceC,
-            double angleADeg,
-            boolean copyTag
-    ) {
-        // 计算斜角路径
-        DrawingNewNodeResult chamferResult = ChamferGenerator.buildChamferPolyline(
-                way, mode,
-                surfaceDistanceA, surfaceDistanceC,
-                angleADeg
-        );
-        if (chamferResult == null || chamferResult.newNodes == null || chamferResult.newNodes.size() < 2) {
-            return null;
-        }
-        List<Node> newNodes = chamferResult.newNodes;
-        List<Long> failedNodeIds = chamferResult.failedNodes;
+    //private NewNodeWayCommands getNewNodeWayCmd(
+    //        DataSet ds, Way way, int mode,
+    //        double surfaceDistanceA, double surfaceDistanceC,
+    //        double angleADeg,
+    //        boolean copyTag
+    //) {
+    //    // 计算斜角路径
+    //    DrawingNewNodeResult chamferResult = ChamferGenerator.buildChamferPolyline(
+    //            way, mode,
+    //            surfaceDistanceA, surfaceDistanceC,
+    //            angleADeg
+    //    );
+    //    if (chamferResult == null || chamferResult.newNodes == null || chamferResult.newNodes.size() < 2) {
+    //        return null;
+    //    }
+    //    List<Node> newNodes = chamferResult.newNodes;
+    //    List<Long> failedNodeIds = chamferResult.failedNodes;
+//
+    //    // 画新线
+    //    Way newWay = new Way();
+    //    for (Node n : newNodes) newWay.addNode(n);  // 向新路径添加所有新节点
+//
+    //    // 复制原Way标签
+    //    if (copyTag) {
+    //        Map<String, String> wayTags = way.getInterestingTags();  // 读取原Way的tag
+    //        newWay.setKeys(wayTags);
+    //    }
+//
+    //    // 正式构建绘制命令
+    //    List<Command> addCommands = new LinkedList<>();
+    //    for (Node n : newNodes.stream().distinct().toList()) {  // 路径内部可能有节点复用（如闭合线），去重
+    //        if (!ds.containsNode(n))  // 新路径的节点在ds中未绘制（不是复用的）才准备绘制
+    //            addCommands.add(new AddCommand(ds, n));  // 添加节点到命令序列
+    //    }
+    //    addCommands.add(new AddCommand(ds, newWay));  // 添加线到命令序列
+//
+    //    return new NewNodeWayCommands(newWay, addCommands, failedNodeIds);
+    //}
 
-        // 画新线
-        Way newWay = new Way();
-        for (Node n : newNodes) newWay.addNode(n);  // 向新路径添加所有新节点
-
-        // 复制原Way标签
-        if (copyTag) {
-            Map<String, String> wayTags = way.getInterestingTags();  // 读取原Way的tag
-            newWay.setKeys(wayTags);
-        }
-
-        // 正式构建绘制命令
-        List<Command> addCommands = new LinkedList<>();
-        for (Node n : newNodes.stream().distinct().toList()) {  // 路径内部可能有节点复用（如闭合线），去重
-            if (!ds.containsNode(n))  // 新路径的节点在ds中未绘制（不是复用的）才准备绘制
-                addCommands.add(new AddCommand(ds, n));  // 添加节点到命令序列
-        }
-        addCommands.add(new AddCommand(ds, newWay));  // 添加线到命令序列
-
-        return new NewNodeWayCommands(newWay, addCommands, failedNodeIds);
-    }
-
-    // 汇总全部添加命令
+    /**
+     * 汇总全部添加命令
+     * @param ds
+     * @param selectedWays
+     * @param mode
+     * @param surfaceDistanceA
+     * @param surfaceDistanceC
+     * @param angleADeg
+     * @param copyTag
+     * @return
+     */
     public AddCommandsCollected concludeAddCommands(
             DataSet ds, List<Way> selectedWays, int mode,
             double surfaceDistanceA, double surfaceDistanceC,
@@ -145,15 +154,14 @@ public class ChamferAction extends JosmAction {
         Map<Way, List<Long>> failedNodeIds = new HashMap<>();
 
         // 处理路径
-        // List<Way> newWays = new ArrayList<>();
+        ChamferGenerator generator = new ChamferGenerator(
+                mode,
+                surfaceDistanceA, surfaceDistanceC,
+                angleADeg
+        );
         for (Way w : selectedWays) {  // 分别处理每条路径
             try {  // 一条路径出错尽可能不影响其他的
-                NewNodeWayCommands newNWCmd = getNewNodeWayCmd(
-                        ds, w, mode,
-                        surfaceDistanceA, surfaceDistanceC,
-                        angleADeg,
-                        copyTag
-                );
+                NewNodeWayCommands newNWCmd = UtilsData.getAddCmd(ds, w, generator, copyTag);
 
                 if (newNWCmd != null) {  // TODO：检查会否和已提交但未执行（进入ds）的重复提交？
                     commands.addAll(newNWCmd.addCommands);
