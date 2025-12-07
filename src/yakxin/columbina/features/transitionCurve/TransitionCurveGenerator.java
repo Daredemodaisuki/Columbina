@@ -238,6 +238,10 @@ public class TransitionCurveGenerator implements UtilsData.WayGenerator {
         //         + "起止点相对于圆心的角度" + Math.toDegrees(ang1) + " " + Math.toDegrees(ang2) + "\n"
         //         + "没归一化的角度差" + Math.toDegrees(ang2 - ang1) + " 归一化的角度差" + Math.toDegrees(UtilsMath.normAngle(ang2 - ang1))
         // );
+        if (centralAngleRad * leftRight < 0) {  // 发现左右拐不符（因为缓和曲线太长错开导致圆曲线需要反着画），返回空列表
+            return result;
+        }
+
 
         // 计算点数
         int numAngleSteps = Math.abs((int) (enRadius * centralAngleRad / enChainageLength));
@@ -254,7 +258,7 @@ public class TransitionCurveGenerator implements UtilsData.WayGenerator {
         return result;
     }
 
-    // 绘制一条完整的缓和曲线（汇总3段子曲线，返回null表示失败）
+    // 绘制一个拐角的完整的缓和曲线（汇总3段子曲线，返回null表示失败）
     public static ArrayList<EastNorth> getTransCurve(
             EastNorth A, EastNorth B, EastNorth C,
             double enCurveRadius, double enTransArcLength,  // 圆曲线半径（内圆R）、缓和段长度（ls）

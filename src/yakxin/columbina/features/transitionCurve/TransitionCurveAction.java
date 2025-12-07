@@ -54,19 +54,19 @@ public class TransitionCurveAction extends JosmAction {
         if (dialog.getValue() != 1) return null;  // 用户取消
 
         double radius = dialog.getTransitionRadius();
-        if (radius <= 0) {
+        if (radius <= 0)
             throw new IllegalArgumentException(I18n.tr("Invalid curve radius, should be greater than 0m."));
-        }
 
         double length = dialog.getTransitionLength();
-        if (length <= 0) {
+        if (length <= 0)
             throw new IllegalArgumentException(I18n.tr("Invalid transition curve length, should be greater than 0m."));
-        }
 
         double chainage = dialog.getChainageLength();
-        if (chainage <= 0) {
+        if (chainage <= 0)
             throw new IllegalArgumentException(I18n.tr("Invalid chainage length, should be greater than 0m."));
-        }
+
+        if (chainage > length)
+            throw new IllegalArgumentException(I18n.tr("Invalid transition curve length and chainage length. The curve length should be grater chainage length."));
 
         // 保存设置
         TransitionCurvePreference.setPreferenceFromDialog(dialog);
@@ -77,46 +77,6 @@ public class TransitionCurveAction extends JosmAction {
                 dialog.getIfDeleteOld(), dialog.getIfSelectNew(), dialog.getIfCopyTag()
         );
     }
-
-    // /**
-    //  * 获取画一条线及其新节点的指令
-    //  */
-    // private NewNodeWayCommands getNewNodeWayCmd(
-    //         DataSet ds, Way way,
-    //         double surfaceRadius, double surfaceLength, double surfaceChainage,
-    //         boolean copyTag
-    // ) {
-    //     // 生成过渡曲线路径
-    //     DrawingNewNodeResult transitionResult = TransitionCurveGenerator.buildTransitionCurvePolyline(
-    //             way, surfaceRadius, surfaceLength, surfaceChainage
-    //     );
-    //     if (transitionResult == null || transitionResult.newNodes == null || transitionResult.newNodes.size() < 2) {
-    //         return null;
-    //     }
-    //     List<Node> newNodes = transitionResult.newNodes;
-    //     List<Long> failedNodeIds = transitionResult.failedNodes;
-//
-    //     // 画新线
-    //     Way newWay = new Way();
-    //     for (Node n : newNodes) newWay.addNode(n);
-//
-    //     // 复制原Way标签
-    //     if (copyTag) {
-    //         Map<String, String> wayTags = way.getInterestingTags();
-    //         newWay.setKeys(wayTags);
-    //     }
-//
-    //     // 正式构建绘制命令
-    //     List<Command> addCommands = new LinkedList<>();
-    //     for (Node n : newNodes.stream().distinct().toList()) {  // 路径内部可能有节点复用（如闭合线），去重
-    //         if (!ds.containsNode(n)) {  // 新路径的节点在ds中未绘制（不是复用的）才准备绘制
-    //             addCommands.add(new AddCommand(ds, n));  // 添加节点到命令序列
-    //         }
-    //     }
-    //     addCommands.add(new AddCommand(ds, newWay));
-//
-    //     return new NewNodeWayCommands(newWay, addCommands, failedNodeIds);
-    // }
 
     // 汇总全部添加命令
     public AddCommandsCollected concludeAddCommands(
@@ -279,7 +239,7 @@ public class TransitionCurveAction extends JosmAction {
         if (failedNodeIds != null && !failedNodeIds.isEmpty()) {
             boolean hasFailedNodes = false;
             StringBuilder failedInfo = new StringBuilder(
-                    I18n.tr("The following corner nodes could not be processed due to geometric constraints or calculation errors: ")
+                    I18n.tr("The following corner nodes could not be processed due to due to insufficient distance from adjacent nodes, excessively long specified transition curves, or angular issues: ")
             );
 
             for (Map.Entry<Way, List<Long>> failedEntry : failedNodeIds.entrySet()) {
@@ -340,3 +300,5 @@ public class TransitionCurveAction extends JosmAction {
         }
     }
 }
+
+
