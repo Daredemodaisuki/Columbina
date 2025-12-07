@@ -51,7 +51,7 @@ public class UtilsMath {
     // 在指定位置的级数求和
     @FunctionalInterface  // 级数中单项函数的抽象接口
     public interface TermFunction {
-        abstract double compute(int termN, double independentVar, double... params);
+        public abstract double compute(int termN, double independentVar, double... params);
     }
     public static double sumSeriesAtVarValue(
             TermFunction termFunc,

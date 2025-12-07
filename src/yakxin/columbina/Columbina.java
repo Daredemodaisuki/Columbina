@@ -4,9 +4,9 @@ import org.openstreetmap.josm.gui.MainApplication;
 import org.openstreetmap.josm.gui.MainMenu;
 import org.openstreetmap.josm.plugins.Plugin;
 import org.openstreetmap.josm.plugins.PluginInformation;
-import yakxin.columbina.chamfer.ChamferAction;
-import yakxin.columbina.fillet.FilletAction;
-import yakxin.columbina.transitionCurve.TransitionCurveAction;
+import yakxin.columbina.features.chamfer.ChamferAction;
+import yakxin.columbina.features.fillet.FilletAction;
+import yakxin.columbina.features.transitionCurve.TransitionCurveAction;
 
 // %APPDATA%\JOSM\plugins\
 public class Columbina extends Plugin {

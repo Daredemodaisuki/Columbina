@@ -1,18 +1,43 @@
-package yakxin.columbina.chamfer;
+package yakxin.columbina.features.chamfer;
 
 import org.openstreetmap.josm.data.coor.EastNorth;
 import org.openstreetmap.josm.data.osm.Node;
 import org.openstreetmap.josm.data.osm.Way;
 import yakxin.columbina.data.ColumbinaException;
 import yakxin.columbina.data.dto.DrawingNewNodeResult;
+import yakxin.columbina.utils.UtilsData;
 import yakxin.columbina.utils.UtilsMath;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class ChamferGenerator {
+public class ChamferGenerator implements UtilsData.WayGenerator {
+    private final int mode;
+    private final double surfaceDistanceA;
+    private final double surfaceDistanceC;
+    private final double angleADeg;
+
     public static final int USING_DISTANCE = 0;
     public static final int USING_ANGLE_A = 1;
+
+    public ChamferGenerator(int mode,
+                            double surfaceDistanceA, double surfaceDistanceC,
+                            double angleADeg
+    ) {
+        this.mode = mode;
+        this.surfaceDistanceA = surfaceDistanceA;
+        this.surfaceDistanceC = surfaceDistanceC;
+        this.angleADeg = angleADeg;
+    }
+
+    @Override
+    public DrawingNewNodeResult getNewNodeWay(Way way) {
+        return buildChamferPolyline(
+                way, mode,
+                surfaceDistanceA, surfaceDistanceC,
+                angleADeg
+        );
+    }
 
     // 绘制一个斜角
     // TODO:检查距离是否足以生成斜角
@@ -98,7 +123,7 @@ public class ChamferGenerator {
         // 获取路径的所有节点
         List<Node> nodes = new ArrayList<>(way.getNodes());
         int nPts = nodes.size();
-        if (nPts < 2) return null;  // 路径至少需要2个点
+        if (nPts < 3) return null;  // 路径至少需要3个点
 
         // 将所有节点转换为平面坐标
         List<EastNorth> en = new ArrayList<>();

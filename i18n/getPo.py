@@ -10,7 +10,11 @@ from scanFiles import find_java_files_relative
 # 配置
 input_files = [f"../{file}" for file in find_java_files_relative("../")]
 
-VERSION = "v1.0.1"
+# ！！！！！！！！！！！！！！！！重要！！！！！！！！！！！！！！！！
+# 需要更新这里
+VERSION = "v1.0.2"
+# ！！！！！！！！！！！！！！！！重要！！！！！！！！！！！！！！！！
+
 OUTPUT_FILE = f"template_{VERSION}.po"
 
 # This file is distributed under the same license as the josm package.

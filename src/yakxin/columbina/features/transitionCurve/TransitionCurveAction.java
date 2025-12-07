@@ -1,20 +1,18 @@
-package yakxin.columbina.transitionCurve;
+package yakxin.columbina.features.transitionCurve;
 
 import org.openstreetmap.josm.actions.JosmAction;
-import org.openstreetmap.josm.command.AddCommand;
 import org.openstreetmap.josm.command.Command;
 import org.openstreetmap.josm.command.SequenceCommand;
 import org.openstreetmap.josm.data.UndoRedoHandler;
 import org.openstreetmap.josm.data.osm.DataSet;
-import org.openstreetmap.josm.data.osm.Node;
 import org.openstreetmap.josm.data.osm.Way;
 import org.openstreetmap.josm.gui.layer.OsmDataLayer;
 import org.openstreetmap.josm.plugins.utilsplugin2.replacegeometry.ReplaceGeometryException;
 import org.openstreetmap.josm.tools.I18n;
 import org.openstreetmap.josm.tools.Shortcut;
 import yakxin.columbina.data.ColumbinaException;
+import yakxin.columbina.data.ColumbinaSeqCommand;
 import yakxin.columbina.data.dto.AddCommandsCollected;
-import yakxin.columbina.data.dto.DrawingNewNodeResult;
 import yakxin.columbina.data.dto.LayerDatasetAndWaySelected;
 import yakxin.columbina.data.dto.NewNodeWayCommands;
 import yakxin.columbina.data.preference.TransitionCurvePreference;
@@ -76,55 +74,49 @@ public class TransitionCurveAction extends JosmAction {
 
         return new TransitionCurveParams(
                 radius, length, chainage,
-                dialog.getIfDeleteOld(),
-                dialog.getIfSelectNew(),
-                dialog.getIfCopyTag()
+                dialog.getIfDeleteOld(), dialog.getIfSelectNew(), dialog.getIfCopyTag()
         );
     }
 
-    /**
-     * 获取画一条线及其新节点的指令
-     */
-    private NewNodeWayCommands getNewNodeWayCmd(
-            DataSet ds, Way way,
-            double surfaceRadius, double surfaceLength, double surfaceChainage,
-            boolean copyTag
-    ) {
-        // 使用新的generator方法生成过渡曲线路径
-        DrawingNewNodeResult transitionResult = TransitionCurveGenerator.buildTransitionCurvePolyline(
-                way, surfaceRadius, surfaceLength, surfaceChainage
-        );
-
-        if (transitionResult == null || transitionResult.newNodes == null || transitionResult.newNodes.size() < 2) {
-            return null;
-        }
-
-        List<Node> newNodes = transitionResult.newNodes;
-        List<Long> failedNodeIds = transitionResult.failedNodes;
-
-        // 画新线
-        Way newWay = new Way();
-        for (Node n : newNodes) {
-            newWay.addNode(n);
-        }
-
-        // 复制原Way标签
-        if (copyTag) {
-            Map<String, String> wayTags = way.getInterestingTags();
-            newWay.setKeys(wayTags);
-        }
-
-        // 正式构建绘制命令
-        List<Command> addCommands = new LinkedList<>();
-        for (Node n : newNodes.stream().distinct().toList()) {
-            if (!ds.containsNode(n)) {
-                addCommands.add(new AddCommand(ds, n));
-            }
-        }
-        addCommands.add(new AddCommand(ds, newWay));
-
-        return new NewNodeWayCommands(newWay, addCommands, failedNodeIds);
-    }
+    // /**
+    //  * 获取画一条线及其新节点的指令
+    //  */
+    // private NewNodeWayCommands getNewNodeWayCmd(
+    //         DataSet ds, Way way,
+    //         double surfaceRadius, double surfaceLength, double surfaceChainage,
+    //         boolean copyTag
+    // ) {
+    //     // 生成过渡曲线路径
+    //     DrawingNewNodeResult transitionResult = TransitionCurveGenerator.buildTransitionCurvePolyline(
+    //             way, surfaceRadius, surfaceLength, surfaceChainage
+    //     );
+    //     if (transitionResult == null || transitionResult.newNodes == null || transitionResult.newNodes.size() < 2) {
+    //         return null;
+    //     }
+    //     List<Node> newNodes = transitionResult.newNodes;
+    //     List<Long> failedNodeIds = transitionResult.failedNodes;
+//
+    //     // 画新线
+    //     Way newWay = new Way();
+    //     for (Node n : newNodes) newWay.addNode(n);
+//
+    //     // 复制原Way标签
+    //     if (copyTag) {
+    //         Map<String, String> wayTags = way.getInterestingTags();
+    //         newWay.setKeys(wayTags);
+    //     }
+//
+    //     // 正式构建绘制命令
+    //     List<Command> addCommands = new LinkedList<>();
+    //     for (Node n : newNodes.stream().distinct().toList()) {  // 路径内部可能有节点复用（如闭合线），去重
+    //         if (!ds.containsNode(n)) {  // 新路径的节点在ds中未绘制（不是复用的）才准备绘制
+    //             addCommands.add(new AddCommand(ds, n));  // 添加节点到命令序列
+    //         }
+    //     }
+    //     addCommands.add(new AddCommand(ds, newWay));
+//
+    //     return new NewNodeWayCommands(newWay, addCommands, failedNodeIds);
+    // }
 
     // 汇总全部添加命令
     public AddCommandsCollected concludeAddCommands(
@@ -136,11 +128,13 @@ public class TransitionCurveAction extends JosmAction {
         Map<Way, Way> oldNewWayPairs = new HashMap<>();
         Map<Way, List<Long>> failedNodeIds = new HashMap<>();
 
+        // 处理路径
+        TransitionCurveGenerator generator = new TransitionCurveGenerator(
+                radius, length, chainage
+        );
         for (Way w : selectedWays) {
             try {
-                NewNodeWayCommands newNWCmd = getNewNodeWayCmd(
-                        ds, w, radius, length, chainage, copyTag
-                );
+                NewNodeWayCommands newNWCmd = UtilsData.getAddCmd(ds, w, generator, copyTag);
 
                 if (newNWCmd != null) {
                     commands.addAll(newNWCmd.addCommands);
@@ -277,7 +271,7 @@ public class TransitionCurveAction extends JosmAction {
         }
 
         if (!cmdsAdd.isEmpty()) {
-            Command cmdAdd = new SequenceCommand(undoRedoInfo, cmdsAdd);
+            Command cmdAdd = new ColumbinaSeqCommand(undoRedoInfo, cmdsAdd, "TransitionCurve");
             UndoRedoHandler.getInstance().add(cmdAdd);
         }
 
@@ -290,7 +284,7 @@ public class TransitionCurveAction extends JosmAction {
 
             for (Map.Entry<Way, List<Long>> failedEntry : failedNodeIds.entrySet()) {
                 if (failedEntry.getValue().isEmpty()) continue;
-                failedInfo.append(I18n.tr("\nWay "))
+                failedInfo.append(I18n.tr("\nWay"))
                         .append(failedEntry.getKey().getUniqueId())
                         .append(I18n.tr(": "))
                         .append(failedEntry.getValue());
@@ -307,7 +301,7 @@ public class TransitionCurveAction extends JosmAction {
             try {
                 List<Command> cmdsRmv = concludeRemoveCommands(dataset, oldNewWayPairs);
                 if (!cmdsRmv.isEmpty()) {
-                    Command cmdRmv = new SequenceCommand(I18n.tr("Remove original ways"), cmdsRmv);
+                    Command cmdRmv = new ColumbinaSeqCommand(I18n.tr("Columbina: Remove original ways"), cmdsRmv, "RemoveOldWays");
                     UndoRedoHandler.getInstance().add(cmdRmv);
                 }
             } catch (ColumbinaException | IllegalArgumentException | ReplaceGeometryException exRemove) {

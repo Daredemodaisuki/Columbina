@@ -24,6 +24,8 @@ hs_err_pid*
 replay_pid*
 
 # Others
+.idea/
+Ant/
 design/
 i18n/.idea
 i18n/example

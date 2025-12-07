@@ -1,13 +1,11 @@
-package yakxin.columbina.fillet;
+package yakxin.columbina.features.fillet;
 
 // JOSM GUI和数据处理类
 import org.openstreetmap.josm.actions.JosmAction;
-import org.openstreetmap.josm.command.AddCommand;
 import org.openstreetmap.josm.command.Command;
 import org.openstreetmap.josm.command.SequenceCommand;
 import org.openstreetmap.josm.data.UndoRedoHandler;
 import org.openstreetmap.josm.data.osm.DataSet;
-import org.openstreetmap.josm.data.osm.Node;
 import org.openstreetmap.josm.data.osm.Way;
 import org.openstreetmap.josm.gui.layer.OsmDataLayer;
 
@@ -18,8 +16,8 @@ import org.openstreetmap.josm.tools.Shortcut;
 
 // 哥伦比娅.data
 import yakxin.columbina.data.ColumbinaException;
+import yakxin.columbina.data.ColumbinaSeqCommand;
 import yakxin.columbina.data.dto.AddCommandsCollected;
-import yakxin.columbina.data.dto.DrawingNewNodeResult;
 import yakxin.columbina.data.dto.LayerDatasetAndWaySelected;
 import yakxin.columbina.data.dto.NewNodeWayCommands;
 import yakxin.columbina.data.preference.FilletPreference;
@@ -99,43 +97,44 @@ public class FilletAction extends JosmAction {
     }
 
     // 画一条线及其新节点的指令
-    private NewNodeWayCommands getNewNodeWayCmd(
-            DataSet ds, Way way,
-            double radius, double angleStep, int pointNum,
-            double minAngleDeg, double maxAngleDeg,
-            boolean copyTag
-    ) {
-        // 计算平滑路径，获取待画的新节点（按新路径节点顺序排列）
-        DrawingNewNodeResult filletResult = FilletGenerator.buildSmoothPolyline(
-                way,
-                radius, angleStep, pointNum,
-                minAngleDeg, maxAngleDeg);
-        if (filletResult == null || filletResult.newNodes == null || filletResult.newNodes.size() < 2) {
-            return null;
-        }
-        List<Node> newNodes = filletResult.newNodes;
-        List<Long> failedNodeIds = filletResult.failedNodes;
-
-        // 画新线
-        Way newWay = new Way();
-        for (Node n : newNodes) newWay.addNode(n);  // 向新路径添加所有新节点
-
-        // 复制原Way标签
-        if (copyTag) {
-            Map<String, String> wayTags = way.getInterestingTags();  // 读取原Way的tag
-            newWay.setKeys(wayTags);
-        }
-
-        // 正式构建绘制命令
-        List<Command> addCommands = new LinkedList<>();
-        for (Node n : newNodes.stream().distinct().toList()) {  // 路径内部可能有节点复用（如闭合线），去重
-            if (!ds.containsNode(n))  // 新路径的节点在ds中未绘制（不是复用的）才准备绘制
-                addCommands.add(new AddCommand(ds, n));  // 添加节点到命令序列
-        }
-        addCommands.add(new AddCommand(ds, newWay));  // 添加线到命令序列
-
-        return new NewNodeWayCommands(newWay, addCommands, failedNodeIds);
-    }
+    // private NewNodeWayCommands getNewNodeWayCmd(
+    //         DataSet ds, Way way,
+    //         double radius, double angleStep, int pointNum,
+    //         double minAngleDeg, double maxAngleDeg,
+    //         boolean copyTag
+    // ) {
+//
+    //     // 计算平滑路径，获取待画的新节点（按新路径节点顺序排列）
+    //     DrawingNewNodeResult filletResult = FilletGenerator.buildSmoothPolyline(
+    //             way,
+    //             radius, angleStep, pointNum,
+    //             minAngleDeg, maxAngleDeg);
+    //     if (filletResult == null || filletResult.newNodes == null || filletResult.newNodes.size() < 2) {
+    //         return null;
+    //     }
+    //     List<Node> newNodes = filletResult.newNodes;
+    //     List<Long> failedNodeIds = filletResult.failedNodes;
+//
+    //     // 画新线
+    //     Way newWay = new Way();
+    //     for (Node n : newNodes) newWay.addNode(n);  // 向新路径添加所有新节点
+//
+    //     // 复制原Way标签
+    //     if (copyTag) {
+    //         Map<String, String> wayTags = way.getInterestingTags();  // 读取原Way的tag
+    //         newWay.setKeys(wayTags);
+    //     }
+//
+    //     // 正式构建绘制命令
+    //     List<Command> addCommands = new LinkedList<>();
+    //     for (Node n : newNodes.stream().distinct().toList()) {  // 路径内部可能有节点复用（如闭合线），去重
+    //         if (!ds.containsNode(n))  // 新路径的节点在ds中未绘制（不是复用的）才准备绘制
+    //             addCommands.add(new AddCommand(ds, n));  // 添加节点到命令序列
+    //     }
+    //     addCommands.add(new AddCommand(ds, newWay));  // 添加线到命令序列
+//
+    //     return new NewNodeWayCommands(newWay, addCommands, failedNodeIds);
+    // }
 
     // 汇总全部添加指令
     public AddCommandsCollected concludeAddCommands(
@@ -149,15 +148,13 @@ public class FilletAction extends JosmAction {
         Map<Way, List<Long>> failedNodeIds = new HashMap<>();
 
         // 处理路径
-        // List<Way> newWays = new ArrayList<>();
+        FilletGenerator generator = new FilletGenerator(
+                radius, angleStep, maxPointNum,
+                minAngleDeg, maxAngleDeg
+        );
         for (Way w : selectedWays) {  // 分别处理每条路径
             try {  // 一条路径出错尽可能不影响其他的
-                NewNodeWayCommands newNWCmd = getNewNodeWayCmd(
-                        ds, w,
-                        radius, angleStep, maxPointNum,
-                        minAngleDeg, maxAngleDeg,
-                        copyTag
-                );
+                NewNodeWayCommands newNWCmd = UtilsData.getAddCmd(ds, w, generator, copyTag);
 
                 if (newNWCmd != null) {  // TODO：检查会否和已提交但未执行（进入ds）的重复提交？
                     commands.addAll(newNWCmd.addCommands);
@@ -296,7 +293,7 @@ public class FilletAction extends JosmAction {
         else if (selectedWays.size() <= 5) undoRedoInfo = I18n.tr("Round corners of way {0}: {1}m", selectedWays.stream().map(Way::getId).toList(), radius);
         else undoRedoInfo = I18n.tr("Round corners of {0} ways: {1}m", selectedWays.size(), radius);
         if (!cmdsAdd.isEmpty()) {
-            Command cmdAdd = new SequenceCommand(undoRedoInfo, cmdsAdd);
+            Command cmdAdd = new ColumbinaSeqCommand(undoRedoInfo, cmdsAdd, "RoundCorners");
             UndoRedoHandler.getInstance().add(cmdAdd);  // 正式提交执行到命令序列
         }
 
@@ -319,7 +316,7 @@ public class FilletAction extends JosmAction {
             try {
                 List<Command> cmdsRmv = concludeRemoveCommands(dataset, oldNewWayPairs);
                 if (!cmdsRmv.isEmpty()) {  // 如果全部都没有删除/替换，cmdsRmv为空会错错爆;
-                    Command cmdRmv = new SequenceCommand(I18n.tr("Remove original ways"), cmdsRmv);
+                    Command cmdRmv = new ColumbinaSeqCommand(I18n.tr("Columbina: Remove original ways"), cmdsRmv, "RemoveOldWays");
                     UndoRedoHandler.getInstance().add(cmdRmv);
                 }
             } catch (ColumbinaException | IllegalArgumentException | ReplaceGeometryException exRemove) {
@@ -364,7 +361,6 @@ public class FilletAction extends JosmAction {
             this.copyTag = copyTag;
         }
     }
-
 }
 
 

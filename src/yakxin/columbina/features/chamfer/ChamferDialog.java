@@ -1,4 +1,4 @@
-package yakxin.columbina.chamfer;
+package yakxin.columbina.features.chamfer;
 
 import org.openstreetmap.josm.gui.ExtendedDialog;
 import org.openstreetmap.josm.gui.MainApplication;

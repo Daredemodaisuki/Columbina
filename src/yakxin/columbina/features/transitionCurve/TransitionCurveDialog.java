@@ -1,4 +1,4 @@
-package yakxin.columbina.transitionCurve;
+package yakxin.columbina.features.transitionCurve;
 
 import org.openstreetmap.josm.gui.ExtendedDialog;
 import org.openstreetmap.josm.gui.MainApplication;
@@ -49,10 +49,10 @@ public class TransitionCurveDialog extends ExtendedDialog {
         // 窗体
         header = UtilsUI.addHeader(panel, I18n.tr("Transition Curve"), "TransitionCurve");
 
-        sectionCurveInfo = UtilsUI.addSection(panel, I18n.tr("Curve Parameters"));
+        sectionCurveInfo = UtilsUI.addSection(panel, I18n.tr("Transition Curve Information"));
         transitionRadius = UtilsUI.addInput(
                 panel,
-                I18n.tr("Circular curve radius (m):"),
+                I18n.tr("Circular curve radius (m): "),
                 String.valueOf(TransitionCurvePreference.getTransitionCurveRadius())
         );
         UtilsUI.addLabel(
@@ -65,7 +65,7 @@ public class TransitionCurveDialog extends ExtendedDialog {
 
         transitionLength = UtilsUI.addInput(
                 panel,
-                I18n.tr("Transition curve length (m):"),
+                I18n.tr("Transition curve length (m): "),
                 String.valueOf(TransitionCurvePreference.getTransitionCurveLength())
         );
         UtilsUI.addLabel(
@@ -78,7 +78,7 @@ public class TransitionCurveDialog extends ExtendedDialog {
 
         chainageLength = UtilsUI.addInput(
                 panel,
-                I18n.tr("Chainage length (node spacing, m):"),
+                I18n.tr("Chainage length (node spacing, m): "),
                 String.valueOf(TransitionCurvePreference.getTransitionChainageLength())
         );
         UtilsUI.addLabel(
