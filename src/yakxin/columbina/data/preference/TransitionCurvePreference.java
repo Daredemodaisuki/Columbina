@@ -1,7 +1,7 @@
 package yakxin.columbina.data.preference;
 
 import org.openstreetmap.josm.spi.preferences.Config;
-import yakxin.columbina.transitionCurve.TransitionCurveDialog;
+import yakxin.columbina.features.transitionCurve.TransitionCurveDialog;
 
 public final class TransitionCurvePreference {
     private TransitionCurvePreference() {}

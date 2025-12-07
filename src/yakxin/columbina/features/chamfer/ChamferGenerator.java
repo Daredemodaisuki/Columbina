@@ -1,4 +1,4 @@
-package yakxin.columbina.chamfer;
+package yakxin.columbina.features.chamfer;
 
 import org.openstreetmap.josm.data.coor.EastNorth;
 import org.openstreetmap.josm.data.osm.Node;

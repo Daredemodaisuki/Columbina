@@ -1,4 +1,4 @@
-package yakxin.columbina.transitionCurve;
+package yakxin.columbina.features.transitionCurve;
 
 import org.openstreetmap.josm.data.coor.EastNorth;
 import org.openstreetmap.josm.data.coor.LatLon;

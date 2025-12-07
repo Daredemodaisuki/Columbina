@@ -1,20 +1,18 @@
-package yakxin.columbina.transitionCurve;
+package yakxin.columbina.features.transitionCurve;
 
 import org.openstreetmap.josm.actions.JosmAction;
-import org.openstreetmap.josm.command.AddCommand;
 import org.openstreetmap.josm.command.Command;
 import org.openstreetmap.josm.command.SequenceCommand;
 import org.openstreetmap.josm.data.UndoRedoHandler;
 import org.openstreetmap.josm.data.osm.DataSet;
-import org.openstreetmap.josm.data.osm.Node;
 import org.openstreetmap.josm.data.osm.Way;
 import org.openstreetmap.josm.gui.layer.OsmDataLayer;
 import org.openstreetmap.josm.plugins.utilsplugin2.replacegeometry.ReplaceGeometryException;
 import org.openstreetmap.josm.tools.I18n;
 import org.openstreetmap.josm.tools.Shortcut;
 import yakxin.columbina.data.ColumbinaException;
+import yakxin.columbina.data.ColumbinaSeqCommand;
 import yakxin.columbina.data.dto.AddCommandsCollected;
-import yakxin.columbina.data.dto.DrawingNewNodeResult;
 import yakxin.columbina.data.dto.LayerDatasetAndWaySelected;
 import yakxin.columbina.data.dto.NewNodeWayCommands;
 import yakxin.columbina.data.preference.TransitionCurvePreference;
@@ -273,7 +271,7 @@ public class TransitionCurveAction extends JosmAction {
         }
 
         if (!cmdsAdd.isEmpty()) {
-            Command cmdAdd = new SequenceCommand(undoRedoInfo, cmdsAdd);
+            Command cmdAdd = new ColumbinaSeqCommand(undoRedoInfo, cmdsAdd, "TransitionCurve");
             UndoRedoHandler.getInstance().add(cmdAdd);
         }
 
@@ -303,7 +301,7 @@ public class TransitionCurveAction extends JosmAction {
             try {
                 List<Command> cmdsRmv = concludeRemoveCommands(dataset, oldNewWayPairs);
                 if (!cmdsRmv.isEmpty()) {
-                    Command cmdRmv = new SequenceCommand(I18n.tr("Remove original ways"), cmdsRmv);
+                    Command cmdRmv = new ColumbinaSeqCommand(I18n.tr("Remove original ways"), cmdsRmv, "RemoveOldWays");
                     UndoRedoHandler.getInstance().add(cmdRmv);
                 }
             } catch (ColumbinaException | IllegalArgumentException | ReplaceGeometryException exRemove) {

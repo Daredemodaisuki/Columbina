@@ -1,4 +1,4 @@
-package yakxin.columbina.fillet;
+package yakxin.columbina.features.fillet;
 
 import org.openstreetmap.josm.data.coor.EastNorth;
 import org.openstreetmap.josm.data.osm.Node;

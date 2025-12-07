@@ -1,8 +1,8 @@
 package yakxin.columbina.data.preference;
 
 import org.openstreetmap.josm.spi.preferences.Config;
-import yakxin.columbina.chamfer.ChamferDialog;
-import yakxin.columbina.chamfer.ChamferGenerator;
+import yakxin.columbina.features.chamfer.ChamferDialog;
+import yakxin.columbina.features.chamfer.ChamferGenerator;
 
 public class ChamferPreference {
     private ChamferPreference() {}
