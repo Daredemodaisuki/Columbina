@@ -195,7 +195,7 @@ public class ChamferAction extends JosmAction {
                 throw new ColumbinaException(
                         I18n.tr("Internal error occurred while removing an old way:\n\n")
                                 + I18n.tr("Old way return value is abnormal (null), unable to get the old way.\n\n")
-                                + I18n.tr("This way may not have been properly rounded or removed.")
+                                + I18n.tr("This way may not have been properly chamferred or removed.")
                         // "移除某条旧路径时产生了内部错误：\n\n"
                         //         + "旧路径返回值异常（null），无法获取旧路径。"
                         //         + "该路径可能未被正确倒角或移除。"
@@ -204,7 +204,7 @@ public class ChamferAction extends JosmAction {
                 throw new ColumbinaException(
                         I18n.tr("Internal error occurred while removing old way {0}:\n\n", oldWay.getUniqueId())
                                 + I18n.tr("New way return value is abnormal (null), unable to get the new way.\n\n")
-                                + I18n.tr("Old way {0} may not have been properly rounded or removed.", oldWay.getUniqueId()
+                                + I18n.tr("Old way {0} may not have been properly chamferred or removed.", oldWay.getUniqueId()
                         )
                         // "移除旧路径" + oldWay.getUniqueId() + "时产生了内部错误：\n\n"
                         //         + "新路径返回值异常（null），无法获取新路径。"
@@ -324,7 +324,7 @@ public class ChamferAction extends JosmAction {
             try {
                 List<Command> cmdsRmv = concludeRemoveCommands(dataset, oldNewWayPairs);
                 if (!cmdsRmv.isEmpty()) {  // 如果全部都没有删除/替换，cmdsRmv为空会错错爆;
-                    Command cmdRmv = new ColumbinaSeqCommand(I18n.tr("Remove original ways"), cmdsRmv, "RemoveOldWays");
+                    Command cmdRmv = new ColumbinaSeqCommand(I18n.tr("Columbina: Remove original ways"), cmdsRmv, "RemoveOldWays");
                     UndoRedoHandler.getInstance().add(cmdRmv);
                 }
             } catch (ColumbinaException | IllegalArgumentException | ReplaceGeometryException exRemove) {

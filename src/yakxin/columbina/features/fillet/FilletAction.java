@@ -316,7 +316,7 @@ public class FilletAction extends JosmAction {
             try {
                 List<Command> cmdsRmv = concludeRemoveCommands(dataset, oldNewWayPairs);
                 if (!cmdsRmv.isEmpty()) {  // 如果全部都没有删除/替换，cmdsRmv为空会错错爆;
-                    Command cmdRmv = new ColumbinaSeqCommand(I18n.tr("Remove original ways"), cmdsRmv, "RemoveOldWays");
+                    Command cmdRmv = new ColumbinaSeqCommand(I18n.tr("Columbina: Remove original ways"), cmdsRmv, "RemoveOldWays");
                     UndoRedoHandler.getInstance().add(cmdRmv);
                 }
             } catch (ColumbinaException | IllegalArgumentException | ReplaceGeometryException exRemove) {

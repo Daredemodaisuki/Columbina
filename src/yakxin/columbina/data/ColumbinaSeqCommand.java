@@ -8,7 +8,7 @@ import javax.swing.*;
 import java.util.Collection;
 
 public final class ColumbinaSeqCommand extends SequenceCommand {
-    // private final String description;
+    private final String description;
     private final String iconName;
 
     public ColumbinaSeqCommand(String description, Collection<Command> sequence) {
@@ -17,7 +17,12 @@ public final class ColumbinaSeqCommand extends SequenceCommand {
     public ColumbinaSeqCommand(String description, Collection<Command> sequence, String iconName) {
         super(description, sequence);
         this.iconName = iconName;
-        // this.description = description;
+        this.description = description;
+    }
+
+    @Override
+    public String getDescriptionText() {
+        return this.description;  // 不额外添加「序列：」的前缀，也不用额外翻译（调用时翻译了再传入）
     }
 
     @Override
