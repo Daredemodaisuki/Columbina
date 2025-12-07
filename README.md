@@ -49,13 +49,23 @@ For longer curves (when the radius remains constant, curves with smaller deflect
 Allows the user to chamfer each corner node of the selected way by a specified chamfer distance or chamfer angle.
 <br> 允许用户对选定路径的每个拐角节点按指定切距或者切角倒斜角。
 
-Assuming a corner is formed by points A → B → C, where B is the vertex, the plugin supports two modes: first, specifying the chamfer distance on both sides (A and C) of the vertex; second, specifying the chamfer distance on side A and the chamfer angle on side A. The plugin also provides options to copy tags from the original way, remove the original way after drawing, and toggle selection to the new way after drawing.
+Assuming a corner is formed by points A → B → C, where B is the vertex, the plugin supports two modes: first, specifying the chamfer distance on both sides (A and C) of the vertex;
+second, specifying the chamfer distance on side A and the chamfer angle on side A. The plugin also provides options to copy tags from the original way, remove the original way after drawing, and toggle selection to the new way after drawing.
 <br> 假定一个拐角是A→B→C，其中B是拐点，插件支持2种模式：一是指定拐点A和C两侧的切距；二是指定A侧的切距和A侧的切角。插件亦提供复制原有路径标签、绘制后移除原有路径、绘制后切换选择新路径的选项。
+
+### <img src="/images/TransitionCurve.png" alt="Chamfer Corner Menu" width="25px"> Transition Curve · 按路径绘制缓和曲线 〔Alt+Ctrl+Shift+T〕
+
+Allows users to draw transition curves (using the clothoid method) with specified circular curve radius and transition curve length for each corner node of the selected way.
+<br> 允许用户对选定路径的每个拐角节点按指定圆曲线半径、缓和曲线长度绘制缓和曲线（回旋线画法）。
+
+The plugin will draw two segments of Euler spiral and a circular curve for each corner.
+It supports specifying chainage length (node spacing) and provides options to copy tags from the original way, remove the original way after drawing, and toggle selection to the new way after drawing.
+<br> 插件将为每个拐角绘制两段回旋线（Euler回旋线）和圆曲线。插件支持指定桩距（节点距离），亦提供复制原有路径标签、绘制后移除原有路径、绘制后切换选择新路径的选项。
 
 ### Note · 注意
 
-When "Remove original way after drawing" is enabled:
-<br> 启用「绘制后移除原有路径」时：
+When " <img src="/images/RemoveOldWays.png" alt="Chamfer Corner Menu" width="10px"> Remove original way after drawing" is enabled:
+<br> 启用「 <img src="/images/RemoveOldWays.png" alt="Chamfer Corner Menu" width="10px"> 绘制后移除原有路径」时：
 
 * For old ways that have already been uploaded, the plugin will invoke the "Replace Geometry" function of the Utilsplugin2 to replace the old way in order to preserve its data history. Therefore, if the old way does not meet the requirements for the Replace Geometry function (e.g., it is not entirely within the downloaded area), the replacement will fail and the old way will be retained; <br> 对于已上传的旧路径，插件将调用Utilsplgin2之「替换几何图形」功能替换旧路径以保留数据历史版本，故当旧路径不满足替换几何图形功能的要求时（如未完全在下载区域中），替换将失败，旧路径将保留；
 * For newly drawn, unuploaded old ways, the plugin will delete them directly; <br> 对于新绘制、未上传的旧路径，插件将会直接删除；
