@@ -23,7 +23,7 @@ public final class TransitionCurvePreference {
     // 读取和储存
     public static void readPreference() {
         transitionCurveRadius = Config.getPref().getDouble(
-                "columbina.transition-curve.radius",
+                "columbina.transition-curve.surfaceRadius",
                 DEFAULT_TRANSITION_CURVE_RADIUS
         );
         transitionCurveLength = Config.getPref().getDouble(
@@ -58,7 +58,7 @@ public final class TransitionCurvePreference {
     }
 
     public static void savePreference() {
-        Config.getPref().putDouble("columbina.transition-curve.radius", transitionCurveRadius);
+        Config.getPref().putDouble("columbina.transition-curve.surfaceRadius", transitionCurveRadius);
         Config.getPref().putDouble("columbina.transition-curve.length", transitionCurveLength);
         Config.getPref().putDouble("columbina.transition-curve.chainage-length", transitionChainageLength);
         Config.getPref().putBoolean("columbina.transition-curve.need-copy-tags", transitionCopyTag);

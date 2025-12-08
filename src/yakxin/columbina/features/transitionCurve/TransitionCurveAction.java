@@ -55,7 +55,7 @@ public class TransitionCurveAction extends JosmAction {
 
         double radius = dialog.getTransitionRadius();
         if (radius <= 0)
-            throw new IllegalArgumentException(I18n.tr("Invalid curve radius, should be greater than 0m."));
+            throw new IllegalArgumentException(I18n.tr("Invalid curve surfaceRadius, should be greater than 0m."));
 
         double length = dialog.getTransitionLength();
         if (length <= 0)

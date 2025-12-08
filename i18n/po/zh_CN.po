@@ -260,11 +260,11 @@ msgid "Round Corners"
 msgstr "路径倒圆角"
 
 #: ../src\yakxin\columbina\features\fillet\FilletAction.java:48
-msgid "Round corners of selected ways with specified radius."
+msgid "Round corners of selected ways with specified surfaceRadius."
 msgstr "对选定路径的每个拐角节点按指定半径倒圆角。"
 
 #: ../src\yakxin\columbina\features\fillet\FilletAction.java:61
-msgid "Invalid round corner radius, should be greater than 0m."
+msgid "Invalid round corner surfaceRadius, should be greater than 0m."
 msgstr "路径倒圆角半径无效，应高于0m。"
 
 #: ../src\yakxin\columbina\features\fillet\FilletAction.java:67
@@ -323,7 +323,7 @@ msgid "Curve Information"
 msgstr "曲线信息"
 
 #: ../src\yakxin\columbina\features\fillet\FilletDialog.java:52
-msgid "Fillet (round corner) radius (m): "
+msgid "Fillet (round corner) surfaceRadius (m): "
 msgstr "倒角半径（m）："
 
 #: ../src\yakxin\columbina\features\fillet\FilletDialog.java:53
@@ -368,7 +368,7 @@ msgid "Create Euler spiral transition curves between straight segments."
 msgstr "对选定路径的每个拐角节点按指定圆曲线半径和缓和曲线长度绘制缓和曲线。"
 
 #: ../src\yakxin\columbina\features\transitionCurve\TransitionCurveAction.java:58
-msgid "Invalid curve radius, should be greater than 0m."
+msgid "Invalid curve surfaceRadius, should be greater than 0m."
 msgstr "无效的圆曲线半径，应大于0米。"
 
 #: ../src\yakxin\columbina\features\transitionCurve\TransitionCurveAction.java:62
@@ -416,7 +416,7 @@ msgid "Transition Curve Information"
 msgstr "缓和曲线信息"
 
 #: ../src\yakxin\columbina\features\transitionCurve\TransitionCurveDialog.java:55
-msgid "Circular curve radius (m): "
+msgid "Circular curve surfaceRadius (m): "
 msgstr "圆曲线参数（m）："
 
 #: ../src\yakxin\columbina\features\transitionCurve\TransitionCurveDialog.java:61

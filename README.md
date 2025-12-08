@@ -33,15 +33,15 @@ All features are located under the More Tools (M) menu.
 Also known as Fillet.
 <br> 英语又称「Fillet」。
 
-Allows users to fillet each corner node of the selected ways with a specified radius.
+Allows users to fillet each corner node of the selected ways with a specified surfaceRadius.
 <br> 允许用户对选定路径的每个拐角节点按指定半径倒圆角。
 
-The plugin supports specifying the arc radius for fillets. Node density can be controlled via central angle increments, and a maximum number of nodes per curve segment is also provided for control.
+The plugin supports specifying the arc surfaceRadius for fillets. Node density can be controlled via central angle increments, and a maximum number of nodes per curve segment is also provided for control.
 Additionally, the plugin offers options to copy tags from the original way, remove the original way after drawing, and toggle selection to the new way after drawing.
 <br> 插件支持指定圆角的圆弧半径，可以通过圆心角步进控制节点密度并提供每段曲线最大点数控制。插件亦提供复制原有路径标签、绘制后移除原有路径、绘制后切换选择新路径的选项。
 
 The plugin automatically and uniformly interpolates nodes along the curve, adding them at even intervals.
-For longer curves (when the radius remains constant, curves with smaller deflection angles become longer), a greater number of nodes will be generated.
+For longer curves (when the surfaceRadius remains constant, curves with smaller deflection angles become longer), a greater number of nodes will be generated.
 <br> 插件会自动在曲线上均匀地插值并添加节点，越长的曲线（当半径不变时，张角越小的拐点曲线越长）点数越多。
 
 ### <img src="/images/ChamferCorners.png" alt="Chamfer Corner Menu" width="25px"> Chamfer Corner · 斜角 〔Alt+Ctrl+Shift+X〕
@@ -55,7 +55,7 @@ second, specifying the chamfer distance on side A and the chamfer angle on side 
 
 ### <img src="/images/TransitionCurve.png" alt="Chamfer Corner Menu" width="25px"> Transition Curve · 按路径绘制缓和曲线 〔Alt+Ctrl+Shift+T〕
 
-Allows users to draw transition curves (using the clothoid method) with specified circular curve radius and transition curve length for each corner node of the selected way.
+Allows users to draw transition curves (using the clothoid method) with specified circular curve surfaceRadius and transition curve length for each corner node of the selected way.
 <br> 允许用户对选定路径的每个拐角节点按指定圆曲线半径、缓和曲线长度绘制缓和曲线（回旋线画法）。
 
 The plugin will draw two segments of Euler spiral and a circular curve for each corner.
@@ -84,7 +84,7 @@ Other issues are welcomed at this page ↓ <br> 其他问题欢迎在这个页�
 ## About · 关于
 
 Actually, this plugin was developed for OpenGeofiction (OGF), a fictional world mapping project based on the OpenStreetMap (OSM) framework.
-It addresses the difficulty in JOSM of drawing long-distance transportation features (such as railways and highways) and small-radius fillets (like the rounded corners at airport taxiway intersections).
+It addresses the difficulty in JOSM of drawing long-distance transportation features (such as railways and highways) and small-surfaceRadius fillets (like the rounded corners at airport taxiway intersections).
 This plugin is a small contribution to the OGF community.
 <br> 其实这个插件是为了OpenGeofiction（OGF）开发，这是一个基于OpenStreetMap（OSM）框架的架空地图项目，其中的长距离交通设置（如铁路、高速公路）和一些小拐角（如机场滑行道交叉点的圆角）在JOSM中很难实现，故开发了这个插件，算是对OGF社区的一点微小的贡献。
 

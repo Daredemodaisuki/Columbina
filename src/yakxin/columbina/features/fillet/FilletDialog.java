@@ -10,7 +10,6 @@ import javax.swing.*;
 import org.openstreetmap.josm.gui.ExtendedDialog;
 import org.openstreetmap.josm.gui.MainApplication;
 import org.openstreetmap.josm.tools.I18n;
-import yakxin.columbina.data.preference.FilletPreference;
 import yakxin.columbina.data.dto.PanelSectionResult;
 import yakxin.columbina.utils.UtilsUI;
 
@@ -49,7 +48,7 @@ public class FilletDialog extends ExtendedDialog {
         header = UtilsUI.addHeader(panel, I18n.tr("Round Corners"), "RoundCorners");
 
         sectionCurveInfo = UtilsUI.addSection(panel, I18n.tr("Curve Information"));
-        filletR = UtilsUI.addInput(panel, I18n.tr("Fillet (round corner) radius (m): "), String.valueOf(FilletPreference.getFilletRadius()));
+        filletR = UtilsUI.addInput(panel, I18n.tr("Fillet (round corner) surfaceRadius (m): "), String.valueOf(FilletPreference.getFilletRadius()));
         filletAngleStep = UtilsUI.addInput(panel, I18n.tr("Angle step for new curve (degrees°): "), String.valueOf(FilletPreference.getFilletAngleStep()));
         UtilsUI.addLabel(
                 panel,

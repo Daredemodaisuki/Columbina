@@ -4,7 +4,7 @@ import org.openstreetmap.josm.spi.preferences.Config;
 import yakxin.columbina.features.chamfer.ChamferDialog;
 import yakxin.columbina.features.chamfer.ChamferGenerator;
 
-public class ChamferPreference {
+public final class ChamferPreference {
     private ChamferPreference() {}
 
     static {readPreference();}
