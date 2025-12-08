@@ -1,12 +1,13 @@
-package yakxin.columbina.data.preference;
+package yakxin.columbina.features.transitionCurve;
 
 import org.openstreetmap.josm.spi.preferences.Config;
-import yakxin.columbina.features.transitionCurve.TransitionCurveDialog;
+import org.openstreetmap.josm.tools.I18n;
+import yakxin.columbina.abstractClasses.AbstractPreference;
 
-public final class TransitionCurvePreference {
-    private TransitionCurvePreference() {}
+public final class TransitionCurvePreference extends AbstractPreference<TransitionCurveParams> {
+    public TransitionCurvePreference() {readPreference();}
 
-    static { readPreference(); }
+    // static {readPreference();}
 
     private static double transitionCurveRadius;
     private static double transitionCurveLength;
@@ -23,7 +24,7 @@ public final class TransitionCurvePreference {
     // 读取和储存
     public static void readPreference() {
         transitionCurveRadius = Config.getPref().getDouble(
-                "columbina.transition-curve.radius",
+                "columbina.transition-curve.surfaceRadius",
                 DEFAULT_TRANSITION_CURVE_RADIUS
         );
         transitionCurveLength = Config.getPref().getDouble(
@@ -58,7 +59,7 @@ public final class TransitionCurvePreference {
     }
 
     public static void savePreference() {
-        Config.getPref().putDouble("columbina.transition-curve.radius", transitionCurveRadius);
+        Config.getPref().putDouble("columbina.transition-curve.surfaceRadius", transitionCurveRadius);
         Config.getPref().putDouble("columbina.transition-curve.length", transitionCurveLength);
         Config.getPref().putDouble("columbina.transition-curve.chainage-length", transitionChainageLength);
         Config.getPref().putBoolean("columbina.transition-curve.need-copy-tags", transitionCopyTag);
@@ -113,5 +114,39 @@ public final class TransitionCurvePreference {
 
     public static void setTransitionSelectNewWays(boolean transitionSelectNewWays) {
         TransitionCurvePreference.transitionSelectNewWays = transitionSelectNewWays;
+    }
+
+    /**
+     * 弹窗并保存、返回参数
+     * @return 输入的参数
+     */
+    @Override
+    public TransitionCurveParams getParams() {
+        TransitionCurveDialog dialog = new TransitionCurveDialog();
+
+        if (dialog.getValue() != 1) return null;  // 用户取消
+
+        double radius = dialog.getTransitionRadius();
+        if (radius <= 0)
+            throw new IllegalArgumentException(I18n.tr("Invalid curve surfaceRadius, should be greater than 0m."));
+
+        double length = dialog.getTransitionLength();
+        if (length <= 0)
+            throw new IllegalArgumentException(I18n.tr("Invalid transition curve length, should be greater than 0m."));
+
+        double chainage = dialog.getChainageLength();
+        if (chainage <= 0)
+            throw new IllegalArgumentException(I18n.tr("Invalid chainage length, should be greater than 0m."));
+
+        if (chainage > length)
+            throw new IllegalArgumentException(I18n.tr("Invalid transition curve length and chainage length. The curve length should be grater chainage length."));
+
+        // 保存设置
+        TransitionCurvePreference.setPreferenceFromDialog(dialog);  // 更新自身
+        TransitionCurvePreference.savePreference();
+        return new TransitionCurveParams(
+                transitionCurveRadius, transitionCurveLength, transitionChainageLength,
+                transitionDeleteOldWays, transitionSelectNewWays, transitionCopyTag
+        );
     }
 }

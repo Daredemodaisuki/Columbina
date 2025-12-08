@@ -3,9 +3,9 @@ package yakxin.columbina.features.fillet;
 import org.openstreetmap.josm.data.coor.EastNorth;
 import org.openstreetmap.josm.data.osm.Node;
 import org.openstreetmap.josm.data.osm.Way;
+import yakxin.columbina.abstractClasses.AbstractGenerator;
 import yakxin.columbina.data.ColumbinaException;
 import yakxin.columbina.data.dto.DrawingNewNodeResult;
-import yakxin.columbina.utils.UtilsData;
 import yakxin.columbina.utils.UtilsMath;
 
 import java.util.ArrayList;
@@ -13,29 +13,14 @@ import java.util.List;
 
 
 // 圆角计算器
-public class FilletGenerator implements UtilsData.WayGenerator {
-    private final double surfaceRadius;
-    private final double angleStep;
-    private final int maxPointNum;
-    private final double minAngleDeg;
-    private final double maxAngleDeg;
-
-    public FilletGenerator(double surfaceRadius, double angleStep, int maxPointNum,
-                           double minAngleDeg, double maxAngleDeg
-    ) {
-        this.surfaceRadius = surfaceRadius;
-        this.angleStep = angleStep;
-        this.maxPointNum = maxPointNum;
-        this.minAngleDeg = minAngleDeg;
-        this.maxAngleDeg = maxAngleDeg;
-    }
+public class FilletGenerator extends AbstractGenerator<FilletParams> {
 
     @Override
-    public DrawingNewNodeResult getNewNodeWay(Way way) {
+    public DrawingNewNodeResult getNewNodeWay(Way way, FilletParams params) {
         return buildSmoothPolyline(
                 way,
-                surfaceRadius, angleStep, maxPointNum,
-                minAngleDeg, maxAngleDeg
+                params.surfaceRadius, params.angleStep, params.maxPointNum,
+                params.minAngleDeg, params.maxAngleDeg
         );
     }
 

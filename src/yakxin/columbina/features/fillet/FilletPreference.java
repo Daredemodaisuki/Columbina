@@ -1,15 +1,16 @@
-package yakxin.columbina.data.preference;
+package yakxin.columbina.features.fillet;
 
 import org.openstreetmap.josm.spi.preferences.Config;
-import yakxin.columbina.features.fillet.FilletDialog;
+import org.openstreetmap.josm.tools.I18n;
+import yakxin.columbina.abstractClasses.AbstractPreference;
+import yakxin.columbina.utils.UtilsUI;
 
-public final class FilletPreference {
-    private FilletPreference() {
-    }  // 不让创建实例？
-
-    static {
+public final class FilletPreference extends AbstractPreference<FilletParams>  {
+    public FilletPreference() {
         readPreference();
     }
+
+    // static {readPreference();}
 
     private static double filletRadius;
     private static double filletAngleStep;
@@ -29,7 +30,7 @@ public final class FilletPreference {
 
     // 读取和储存
     public static void readPreference() {
-        filletRadius = Config.getPref().getDouble("columbina.round-corner.radius", DEFAULT_FILLET_RADIUS);
+        filletRadius = Config.getPref().getDouble("columbina.round-corner.surfaceRadius", DEFAULT_FILLET_RADIUS);
         filletAngleStep = Config.getPref().getDouble("columbina.round-corner.angle-step", DEFAULT_FILLET_ANGLE_STEP);
         filletMaxPointPerArc = Config.getPref().getInt("columbina.round-corner.max-num-of-point", DEFAULT_FILLET_MAX_POINT_PER_ARC);
         filletMinAngleDeg = Config.getPref().getDouble("columbina.round-corner.min-angle-deg", DEFAULT_FILLET_MIN_ANGLE_DEG);
@@ -51,7 +52,7 @@ public final class FilletPreference {
     }
 
     public static void savePreference() {
-        Config.getPref().putDouble("columbina.round-corner.radius", filletRadius);
+        Config.getPref().putDouble("columbina.round-corner.surfaceRadius", filletRadius);
         Config.getPref().putDouble("columbina.round-corner.angle-step", filletAngleStep);
         Config.getPref().putInt("columbina.round-corner.max-num-of-point", filletMaxPointPerArc);
         Config.getPref().putDouble("columbina.round-corner.min-angle-deg", filletMinAngleDeg);
@@ -124,6 +125,54 @@ public final class FilletPreference {
 
     public static void setFilletAngleStep(double filletAngleStep) {
         FilletPreference.filletAngleStep = filletAngleStep;
+    }
+
+    /**
+     * 弹窗并保存、返回参数
+     * @return 输入的参数
+     */
+    @Override
+    public FilletParams getParams() {
+        FilletDialog filletDialog = new FilletDialog();  // 创建设置对话框
+
+        if (filletDialog.getValue() != 1) return null;  // 按ESC（0）或点击取消（2），退出；点击确定继续是1
+
+        double radius = filletDialog.getFilletRadius();  // 圆角半径
+        if (radius <= 0.0) throw new IllegalArgumentException(I18n.tr("Invalid round corner surfaceRadius, should be greater than 0m."));
+
+        double angleStep = filletDialog.getFilletAngleStep();  // 圆角步进
+        if (angleStep < 0.1) {
+            angleStep = 0.1;
+            filletDialog.setFilletAngleStep(0.1);
+            UtilsUI.warnInfo(I18n.tr("Minimum angle step for round corner should be at least 0.1°, set to 0.1°."));
+        }
+        else if (angleStep > 10.0) UtilsUI.warnInfo(I18n.tr("Angle step is too large, the result may not be good."));
+        int maxPointNum = filletDialog.getFilletMaxPointNum();  // 曲线点数
+        if (maxPointNum < 1) throw new IllegalArgumentException(I18n.tr("Invalid maximum number of points for round corner, should be at least 1."));
+        else if (maxPointNum < 5) UtilsUI.warnInfo(I18n.tr("Maximum number of points for round corner is too low, the result may not be ideal."));
+
+        double minAngleDeg = filletDialog.getMinAngleDeg();  // 最小张角
+        if (minAngleDeg < 0.0) {
+            minAngleDeg = 0.0;
+            filletDialog.setMinAngleDeg(0.0);
+            UtilsUI.warnInfo(I18n.tr("Minimum angle should be at least 0°, set to 0°."));
+        }
+
+        double maxAngleDeg = filletDialog.getMaxAngleDeg();  // 最大张角
+        if (maxAngleDeg > 180.0) {
+            maxAngleDeg = 180.0;
+            filletDialog.setMaxAngleDeg(180.0);
+            UtilsUI.warnInfo(I18n.tr("Maximum angle should be at most 180°, set to 180°."));
+        }
+
+        // 保存设置
+        FilletPreference.setPreferenceFromDialog(filletDialog);  // 更新自身
+        FilletPreference.savePreference();
+        return new FilletParams(
+                filletRadius, filletAngleStep, filletMaxPointPerArc,
+                filletMinAngleDeg, filletMaxAngleDeg,
+                filletDeleteOldWays, filletSelectNewWays, filletCopyTag
+        );
     }
 }
 

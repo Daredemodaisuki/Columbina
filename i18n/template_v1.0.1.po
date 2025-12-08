@@ -200,12 +200,12 @@ msgid "Round Corners"
 msgstr "Round Corners"
 
 #: ../src\yakxin\columbina\fillet\FilletAction.java:50
-msgid "Round corners of selected ways with specified radius."
-msgstr "Round corners of selected ways with specified radius."
+msgid "Round corners of selected ways with specified surfaceRadius."
+msgstr "Round corners of selected ways with specified surfaceRadius."
 
 #: ../src\yakxin\columbina\fillet\FilletAction.java:63
-msgid "Invalid round corner radius, should be greater than 0m."
-msgstr "Invalid round corner radius, should be greater than 0m."
+msgid "Invalid round corner surfaceRadius, should be greater than 0m."
+msgstr "Invalid round corner surfaceRadius, should be greater than 0m."
 
 #: ../src\yakxin\columbina\fillet\FilletAction.java:69
 msgid "Minimum angle step for round corner should be at least 0.1°, set to 0.1°."
@@ -249,8 +249,8 @@ msgid "Curve Information"
 msgstr "Curve Information"
 
 #: ../src\yakxin\columbina\fillet\FilletDialog.java:52
-msgid "Fillet (round corner) radius (m): "
-msgstr "Fillet (round corner) radius (m): "
+msgid "Fillet (round corner) surfaceRadius (m): "
+msgstr "Fillet (round corner) surfaceRadius (m): "
 
 #: ../src\yakxin\columbina\fillet\FilletDialog.java:53
 msgid "Angle step for new curve (degrees°): "

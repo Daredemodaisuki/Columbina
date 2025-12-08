@@ -4,7 +4,6 @@ import org.openstreetmap.josm.gui.ExtendedDialog;
 import org.openstreetmap.josm.gui.MainApplication;
 import org.openstreetmap.josm.tools.I18n;
 import yakxin.columbina.data.dto.PanelSectionResult;
-import yakxin.columbina.data.preference.TransitionCurvePreference;
 import yakxin.columbina.utils.UtilsUI;
 
 import javax.swing.*;
@@ -52,7 +51,7 @@ public class TransitionCurveDialog extends ExtendedDialog {
         sectionCurveInfo = UtilsUI.addSection(panel, I18n.tr("Transition Curve Information"));
         transitionRadius = UtilsUI.addInput(
                 panel,
-                I18n.tr("Circular curve radius (m): "),
+                I18n.tr("Circular curve surfaceRadius (m): "),
                 String.valueOf(TransitionCurvePreference.getTransitionCurveRadius())
         );
         UtilsUI.addLabel(

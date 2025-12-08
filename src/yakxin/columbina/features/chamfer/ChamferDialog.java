@@ -3,8 +3,7 @@ package yakxin.columbina.features.chamfer;
 import org.openstreetmap.josm.gui.ExtendedDialog;
 import org.openstreetmap.josm.gui.MainApplication;
 import org.openstreetmap.josm.tools.I18n;
-import yakxin.columbina.data.preference.ChamferPreference;
-import yakxin.columbina.data.preference.FilletPreference;
+import yakxin.columbina.features.fillet.FilletPreference;
 import yakxin.columbina.data.dto.PanelSectionResult;
 import yakxin.columbina.utils.UtilsUI;
 

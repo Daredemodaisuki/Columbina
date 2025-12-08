@@ -1,13 +1,13 @@
-package yakxin.columbina.data.preference;
+package yakxin.columbina.features.chamfer;
 
 import org.openstreetmap.josm.spi.preferences.Config;
-import yakxin.columbina.features.chamfer.ChamferDialog;
-import yakxin.columbina.features.chamfer.ChamferGenerator;
+import org.openstreetmap.josm.tools.I18n;
+import yakxin.columbina.abstractClasses.AbstractPreference;
 
-public class ChamferPreference {
-    private ChamferPreference() {}
+public final class ChamferPreference extends AbstractPreference<ChamferParams> {
+    public ChamferPreference() {readPreference();}
 
-    static {readPreference();}
+    // static {readPreference();}
 
     private static double chamferDistanceA;
     private static double chamferDistanceC;
@@ -109,6 +109,40 @@ public class ChamferPreference {
 
     public static void setChamferMode(int chamferMode) {
         ChamferPreference.chamferMode = chamferMode;
+    }
+
+    /**
+     * 弹窗并保存、返回参数
+     * @return 输入的参数
+     */
+    @Override
+    public ChamferParams getParams() {
+        ChamferDialog chamferDialog = new ChamferDialog();
+        if (chamferDialog.getValue() != 1) return null;  // 按ESC（0）或点击取消（2），退出；点击确定继续是1
+
+        int mode = chamferDialog.getChamferMode();
+
+        double distanceA = chamferDialog.getChamferDistanceA();
+        if (distanceA <= 0) throw new IllegalArgumentException(I18n.tr("Invalid round chamfer distance BA, should be greater than 0m."));
+
+        double distanceC = chamferDialog.getChamferDistanceC();
+        if (mode == ChamferGenerator.USING_DISTANCE) {
+            if (distanceC <= 0) throw new IllegalArgumentException(I18n.tr("Invalid round chamfer distance BC, should be greater than 0m."));
+        }
+
+        double angleADeg = chamferDialog.getChamferAngleADeg();
+        if (mode == ChamferGenerator.USING_ANGLE_A) {
+            if (angleADeg <= 0) throw new IllegalArgumentException(I18n.tr("Invalid round chamfer angle A, should be greater than 0m."));
+        }
+
+        // 保存设置
+        ChamferPreference.setPreferenceFromDialog(chamferDialog);  // 更新自身
+        ChamferPreference.savePreference();
+        return new ChamferParams(
+                chamferMode,
+                chamferDistanceA, chamferDistanceC, chamferAngleADeg,
+                chamferDeleteOldWays, chamferSelectNewWays, chamferCopyTag
+        );
     }
 }
 

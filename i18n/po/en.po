@@ -227,12 +227,12 @@ msgid "Round Corners"
 msgstr "Round Corners"
 
 #: ../src\yakxin\columbina\features\fillet\FilletAction.java:48
-msgid "Round corners of selected ways with specified radius."
-msgstr "Round corners of selected ways with specified radius."
+msgid "Round corners of selected ways with specified surfaceRadius."
+msgstr "Round corners of selected ways with specified surfaceRadius."
 
 #: ../src\yakxin\columbina\features\fillet\FilletAction.java:61
-msgid "Invalid round corner radius, should be greater than 0m."
-msgstr "Invalid round corner radius, should be greater than 0m."
+msgid "Invalid round corner surfaceRadius, should be greater than 0m."
+msgstr "Invalid round corner surfaceRadius, should be greater than 0m."
 
 #: ../src\yakxin\columbina\features\fillet\FilletAction.java:67
 msgid "Minimum angle step for round corner should be at least 0.1°, set to 0.1°."
@@ -284,8 +284,8 @@ msgid "Curve Information"
 msgstr "Curve Information"
 
 #: ../src\yakxin\columbina\features\fillet\FilletDialog.java:52
-msgid "Fillet (round corner) radius (m): "
-msgstr "Fillet (round corner) radius (m): "
+msgid "Fillet (round corner) surfaceRadius (m): "
+msgstr "Fillet (round corner) surfaceRadius (m): "
 
 #: ../src\yakxin\columbina\features\fillet\FilletDialog.java:53
 msgid "Angle step for new curve (degrees°): "
@@ -325,8 +325,8 @@ msgid "Create Euler spiral transition curves between straight segments."
 msgstr "Create Euler spiral transition curves between straight segments."
 
 #: ../src\yakxin\columbina\features\transitionCurve\TransitionCurveAction.java:58
-msgid "Invalid curve radius, should be greater than 0m."
-msgstr "Invalid curve radius, should be greater than 0m."
+msgid "Invalid curve surfaceRadius, should be greater than 0m."
+msgstr "Invalid curve surfaceRadius, should be greater than 0m."
 
 #: ../src\yakxin\columbina\features\transitionCurve\TransitionCurveAction.java:62
 msgid "Invalid transition curve length, should be greater than 0m."
@@ -366,8 +366,8 @@ msgid "Transition Curve Information"
 msgstr "Transition Curve Information"
 
 #: ../src\yakxin\columbina\features\transitionCurve\TransitionCurveDialog.java:55
-msgid "Circular curve radius (m): "
-msgstr "Circular curve radius (m): "
+msgid "Circular curve surfaceRadius (m): "
+msgstr "Circular curve surfaceRadius (m): "
 
 #: ../src\yakxin\columbina\features\transitionCurve\TransitionCurveDialog.java:61
 msgid "※ Radius of the circular arc section. Must be positive."
