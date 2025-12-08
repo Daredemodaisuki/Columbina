@@ -1,4 +1,4 @@
-package yakxin.columbina.abstractThings;
+package yakxin.columbina.abstractClasses;
 
 import org.openstreetmap.josm.actions.JosmAction;
 import org.openstreetmap.josm.command.Command;
@@ -38,6 +38,10 @@ public abstract class AbstractDrawingAction
 
     /// 所有需要由具体action类定义的东西
     public abstract String getUndoRedoInfo(List<Way> selectedWays, ParamType params);
+    // 每种Action所需的名字、图标等是固定的，为了简便、不在Columbina主类写太多参数，
+    // 每个action可以写一个静态的create函数返回new自身（静态工厂），但是貌似语法不支持在这里限制必须实现一个abstract static，
+    // 这里需要自行注意一下，且如果写了这个函数，action的构造函数可以改为private
+    // 或者不嫌麻烦就在Columbina填一大堆也行。
 
 
     /**

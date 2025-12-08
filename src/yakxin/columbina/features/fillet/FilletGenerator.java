@@ -3,7 +3,7 @@ package yakxin.columbina.features.fillet;
 import org.openstreetmap.josm.data.coor.EastNorth;
 import org.openstreetmap.josm.data.osm.Node;
 import org.openstreetmap.josm.data.osm.Way;
-import yakxin.columbina.abstractThings.AbstractGenerator;
+import yakxin.columbina.abstractClasses.AbstractGenerator;
 import yakxin.columbina.data.ColumbinaException;
 import yakxin.columbina.data.dto.DrawingNewNodeResult;
 import yakxin.columbina.utils.UtilsMath;
@@ -14,8 +14,6 @@ import java.util.List;
 
 // 圆角计算器
 public class FilletGenerator extends AbstractGenerator<FilletParams> {
-
-    // public FilletGeneratorA() {}
 
     @Override
     public DrawingNewNodeResult getNewNodeWay(Way way, FilletParams params) {

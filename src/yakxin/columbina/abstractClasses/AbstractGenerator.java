@@ -1,4 +1,4 @@
-package yakxin.columbina.abstractThings;
+package yakxin.columbina.abstractClasses;
 
 import org.openstreetmap.josm.data.osm.Way;
 import yakxin.columbina.data.dto.DrawingNewNodeResult;

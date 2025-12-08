@@ -3,8 +3,9 @@ package yakxin.columbina.features.fillet;
 import org.openstreetmap.josm.data.osm.Way;
 import org.openstreetmap.josm.tools.I18n;
 import org.openstreetmap.josm.tools.Shortcut;
-import yakxin.columbina.abstractThings.AbstractDrawingAction;
+import yakxin.columbina.abstractClasses.AbstractDrawingAction;
 
+import java.awt.event.KeyEvent;
 import java.util.List;
 
 public final class FilletAction extends AbstractDrawingAction
@@ -20,8 +21,27 @@ public final class FilletAction extends AbstractDrawingAction
      * @param generator   生成器实例
      * @param preference  首选项实例
      */
-    public FilletAction(String name, String iconName, String description, Shortcut shortcut, FilletGenerator generator, FilletPreference preference) {
+    private FilletAction(String name, String iconName, String description, Shortcut shortcut, FilletGenerator generator, FilletPreference preference) {
         super(name, iconName, description, shortcut, generator, preference);
+    }
+
+    /**
+     * 懒得在主类填参数就用静态工厂方法
+     * @return 构建好的实例
+     */
+    public static FilletAction create() {
+        return new FilletAction(
+                I18n.tr("Round Corners"), "RoundCorners",
+                I18n.tr("Round corners of selected ways with specified surfaceRadius."),
+                Shortcut.registerShortcut(
+                        "tools:filletCorners",
+                        "More tools: Columbina/Round corners",
+                        KeyEvent.VK_C,
+                        Shortcut.ALT_CTRL_SHIFT
+                ),
+                new FilletGenerator(),
+                new FilletPreference()
+        );
     }
 
     @Override
@@ -33,3 +53,5 @@ public final class FilletAction extends AbstractDrawingAction
         return undoRedoInfo;
     }
 }
+
+
