@@ -23,7 +23,7 @@ import java.util.List;
  */
 
 
-public class TransitionCurveGenerator extends AbstractGenerator<TransitionCurveParams> {
+public final class TransitionCurveGenerator extends AbstractGenerator<TransitionCurveParams> {
 
     public static final int LEFT = 1;
     public static final int RIGHT = -LEFT;  // -1

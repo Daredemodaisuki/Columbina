@@ -11,7 +11,7 @@ import yakxin.columbina.utils.UtilsMath;
 import java.util.ArrayList;
 import java.util.List;
 
-public class ChamferGenerator extends AbstractGenerator<ChamferParams> {
+public final class ChamferGenerator extends AbstractGenerator<ChamferParams> {
 
     public static final int USING_DISTANCE = 0;
     public static final int USING_ANGLE_A = 1;

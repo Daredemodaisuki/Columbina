@@ -14,7 +14,7 @@ import yakxin.columbina.data.dto.PanelSectionResult;
 import yakxin.columbina.utils.UtilsUI;
 
 /// 倒圆角对话框
-public class FilletDialog extends ExtendedDialog {
+public final class FilletDialog extends ExtendedDialog {
     private static final String[] BUTTON_TEXTS = new String[] {I18n.tr("Confirm"), I18n.tr("Cancel")};
     private static final String[] BUTTON_ICONS = new String[] {"ok", "cancel"};
 

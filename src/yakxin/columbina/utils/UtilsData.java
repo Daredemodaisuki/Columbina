@@ -128,44 +128,8 @@ public class UtilsData {
     }
 
     /**
-     * 抽象接口：各个Generator类的get汇总后的单条路径方法
+     * 各个Generator类的get汇总后的获得新增单条路径所需指令的方法
      */
-    @FunctionalInterface
-    public interface WayGenerator {
-        public abstract DrawingNewNodeResult getNewNodeWay(Way way);
-    }
-    /**
-     * 统合「画一条线及其新节点的指令」函数
-     */
-    public static NewNodeWayCommands getAddCmd(DataSet ds, Way way, WayGenerator generator, boolean copyTag) {
-        // 调用生成传入的函数计算路径
-        DrawingNewNodeResult filletResult = generator.getNewNodeWay(way);
-        if (filletResult == null || filletResult.newNodes == null || filletResult.newNodes.size() < 2) {
-            return null;
-        }
-        List<Node> newNodes = filletResult.newNodes;
-        List<Long> failedNodeIds = filletResult.failedNodes;
-        // 画新线
-        Way newWay = new Way();
-        for (Node n : newNodes) newWay.addNode(n);  // 向新路径添加所有新节点
-
-        // 复制原Way标签
-        if (copyTag) {
-            Map<String, String> wayTags = way.getInterestingTags();  // 读取原Way的tag
-            newWay.setKeys(wayTags);
-        }
-
-        // 正式构建绘制命令
-        List<Command> addCommands = new LinkedList<>();
-        for (Node n : newNodes.stream().distinct().toList()) {  // 路径内部可能有节点复用（如闭合线），去重
-            if (!ds.containsNode(n))  // 新路径的节点在ds中未绘制（不是复用的）才准备绘制
-                addCommands.add(new AddCommand(ds, n));  // 添加节点到命令序列
-        }
-        addCommands.add(new AddCommand(ds, newWay));  // 添加线到命令序列
-
-        return new NewNodeWayCommands(newWay, addCommands, failedNodeIds);
-    }
-    // TODO：正在重构
     public static <GeneratorType extends AbstractGenerator<ParamType>, ParamType extends AbstractParams> NewNodeWayCommands getAddCmd (
             DataSet ds, Way way,
             GeneratorType generator, ParamType params,

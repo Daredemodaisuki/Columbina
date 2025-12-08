@@ -15,7 +15,7 @@ import java.util.Locale;
 /**
  * 过渡曲线（缓和曲线）对话框
  */
-public class TransitionCurveDialog extends ExtendedDialog {
+public final class TransitionCurveDialog extends ExtendedDialog {
     private static final String[] BUTTON_TEXTS = new String[] {
             I18n.tr("Confirm"), I18n.tr("Cancel")
     };

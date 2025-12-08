@@ -13,7 +13,7 @@ import java.util.List;
 
 
 // 圆角计算器
-public class FilletGenerator extends AbstractGenerator<FilletParams> {
+public final class FilletGenerator extends AbstractGenerator<FilletParams> {
 
     @Override
     public DrawingNewNodeResult getNewNodeWay(Way way, FilletParams params) {

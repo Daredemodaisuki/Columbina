@@ -11,7 +11,7 @@ import java.util.*;
 /**
  * 过渡曲线（缓和曲线）交互类
  */
-public class TransitionCurveAction extends AbstractDrawingAction
+public final class TransitionCurveAction extends AbstractDrawingAction
     <TransitionCurveGenerator, TransitionCurvePreference, TransitionCurveParams>
 {
     /**
