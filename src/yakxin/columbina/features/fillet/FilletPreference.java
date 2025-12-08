@@ -166,7 +166,7 @@ public final class FilletPreference extends AbstractPreference<FilletParams>  {
         }
 
         // 保存设置
-        FilletPreference.setPreferenceFromDialog(filletDialog);
+        FilletPreference.setPreferenceFromDialog(filletDialog);  // 更新自身
         FilletPreference.savePreference();
         return new FilletParams(
                 filletRadius, filletAngleStep, filletMaxPointPerArc,

@@ -136,14 +136,12 @@ public final class ChamferPreference extends AbstractPreference<ChamferParams> {
         }
 
         // 保存设置
-        ChamferPreference.setPreferenceFromDialog(chamferDialog);
+        ChamferPreference.setPreferenceFromDialog(chamferDialog);  // 更新自身
         ChamferPreference.savePreference();
-
         return new ChamferParams(
-                mode,  // 模式
-                distanceA, distanceC, angleADeg,
-                // 是否删除旧路径、选择新路径、复制旧路径标签
-                chamferDialog.getIfDeleteOld(), chamferDialog.getIfSelectNew(), chamferDialog.getIfCopyTag()
+                chamferMode,
+                chamferDistanceA, chamferDistanceC, chamferAngleADeg,
+                chamferDeleteOldWays, chamferSelectNewWays, chamferCopyTag
         );
     }
 }

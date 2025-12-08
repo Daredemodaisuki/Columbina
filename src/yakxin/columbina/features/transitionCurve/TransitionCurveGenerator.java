@@ -5,9 +5,9 @@ import org.openstreetmap.josm.data.coor.LatLon;
 import org.openstreetmap.josm.data.osm.Node;
 import org.openstreetmap.josm.data.osm.Way;
 import org.openstreetmap.josm.tools.I18n;
+import yakxin.columbina.abstractClasses.AbstractGenerator;
 import yakxin.columbina.data.ColumbinaException;
 import yakxin.columbina.data.dto.DrawingNewNodeResult;
-import yakxin.columbina.utils.UtilsData;
 import yakxin.columbina.utils.UtilsMath;
 
 import java.util.ArrayList;
@@ -23,26 +23,17 @@ import java.util.List;
  */
 
 
-public class TransitionCurveGenerator implements UtilsData.WayGenerator {
-    private final double surfaceRadius;
-    private final double surfaceLength;
-    private final double surfaceChainage;
+public class TransitionCurveGenerator extends AbstractGenerator<TransitionCurveParams> {
 
     public static final int LEFT = 1;
     public static final int RIGHT = -LEFT;  // -1
     public static final int TERM_MAX = 10;  // 前11项（n从0到10）
 
-    public TransitionCurveGenerator(double surfaceRadius, double surfaceLength, double surfaceChainage) {
-        this.surfaceRadius = surfaceRadius;
-        this.surfaceLength = surfaceLength;
-        this.surfaceChainage = surfaceChainage;
-    }
-
     @Override
-    public DrawingNewNodeResult getNewNodeWay(Way way) {
+    public DrawingNewNodeResult getNewNodeWay(Way way, TransitionCurveParams params) {
         return buildTransitionCurvePolyline(
                 way,
-                surfaceRadius, surfaceLength, surfaceChainage
+                params.surfaceRadius, params.surfaceTransArcLength, params.chainageNum
         );
     }
 
@@ -308,7 +299,7 @@ public class TransitionCurveGenerator implements UtilsData.WayGenerator {
         List<EastNorth> transArcA = new ArrayList<>(rotatedTransArcA.arcNodes);
         List<EastNorth> transArcC = new ArrayList<>(rotatedTransArcC.arcNodes);
         if (transArcA.size() < 2 || circularArc.size() < 2 || transArcC.size() < 2) return null;  // 曲线不完整，绘制失败
-        transArcA.removeFirst();  // 不要ArcA的最后一个点（=圆曲线第一个点）
+        transArcA.removeLast();  // 不要ArcA的最后一个点（=圆曲线第一个点）
         Collections.reverse(transArcC);  // 倒着画的原地逆序正回来
         transArcC.removeFirst();  // 正序之后不要第一个点（=圆曲线最后一个点）
 
@@ -433,7 +424,7 @@ public class TransitionCurveGenerator implements UtilsData.WayGenerator {
             for (int i = 0; i < nPts - 1; i++) {
                 if (i < transCurves.size() && transCurves.get(i) != null) {  // 有过渡曲线就添加曲线上的所有点
                     List<EastNorth> curve = transCurves.get(i);
-                    for (int j = 1; j < curve.size(); j++) {
+                    for (int j = 0; j < curve.size(); j++) {
                         finalNodes.add(new Node(UtilsMath.toLatLon(curve.get(j))));
                     }
                 } else finalNodes.add(nodes.get(i + 1));

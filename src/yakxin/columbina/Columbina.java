@@ -21,7 +21,7 @@ public class Columbina extends Plugin {
         MainApplication.getMenu().moreToolsMenu.addSeparator();  // 分隔线
         MainMenu.add(MainApplication.getMenu().moreToolsMenu, FilletAction.create());  // 倒圆角
         MainMenu.add(MainApplication.getMenu().moreToolsMenu, ChamferAction.create());  // 倒斜角
-        MainMenu.add(MainApplication.getMenu().moreToolsMenu, new TransitionCurveAction());  // 过渡曲线
+        MainMenu.add(MainApplication.getMenu().moreToolsMenu, TransitionCurveAction.create());  // 过渡曲线
     }
 }
 
