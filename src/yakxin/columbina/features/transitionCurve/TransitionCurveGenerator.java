@@ -23,16 +23,16 @@ import java.util.List;
  */
 
 
-public final class TransitionCurveGenerator extends AbstractGenerator<TransitionCurveParams> {
+public final class TransitionCurveGenerator extends AbstractGenerator<TransitionCurveParams, Way> {
 
     public static final int LEFT = 1;
     public static final int RIGHT = -LEFT;  // -1
     public static final int TERM_MAX = 10;  // 前11项（n从0到10）
 
     @Override
-    public DrawingNewNodeResult getNewNodeWay(Way way, TransitionCurveParams params) {
+    public DrawingNewNodeResult getNewNodeWayForSingleInput(Way input, TransitionCurveParams params) {
         return buildTransitionCurvePolyline(
-                way,
+                input,
                 params.surfaceRadius, params.surfaceTransArcLength, params.chainageNum
         );
     }

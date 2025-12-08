@@ -13,12 +13,12 @@ import java.util.List;
 
 
 // 圆角计算器
-public final class FilletGenerator extends AbstractGenerator<FilletParams> {
+public final class FilletGenerator extends AbstractGenerator<FilletParams, Way> {
 
     @Override
-    public DrawingNewNodeResult getNewNodeWay(Way way, FilletParams params) {
+    public DrawingNewNodeResult getNewNodeWayForSingleInput(Way input, FilletParams params) {
         return buildSmoothPolyline(
-                way,
+                input,
                 params.surfaceRadius, params.angleStep, params.maxPointNum,
                 params.minAngleDeg, params.maxAngleDeg
         );

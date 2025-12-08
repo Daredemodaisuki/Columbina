@@ -11,8 +11,8 @@ import java.util.*;
 /**
  * 过渡曲线（缓和曲线）交互类
  */
-public final class TransitionCurveAction extends AbstractDrawingAction
-    <TransitionCurveGenerator, TransitionCurvePreference, TransitionCurveParams>
+public final class TransitionCurveAction extends
+        AbstractDrawingAction<TransitionCurveGenerator, TransitionCurvePreference, TransitionCurveParams, Way>
 {
     /**
      * 构造函数
@@ -25,7 +25,11 @@ public final class TransitionCurveAction extends AbstractDrawingAction
      * @param preference  首选项实例
      */
     private TransitionCurveAction(String name, String iconName, String description, Shortcut shortcut, TransitionCurveGenerator generator, TransitionCurvePreference preference) {
-        super(name, iconName, description, shortcut, generator, preference);
+        super(
+                name, iconName, description, shortcut,
+                generator, preference, Way.class,
+                AbstractDrawingAction.NO_LIMITATION_ON_INPUT_NUM, AbstractDrawingAction.NO_LIMITATION_ON_INPUT_NUM
+        );
     }
 
     /**
@@ -48,17 +52,17 @@ public final class TransitionCurveAction extends AbstractDrawingAction
     }
 
     @Override
-    public String getUndoRedoInfo(List<Way> selectedWays, TransitionCurveParams params) {
+    public String getUndoRedoInfo(List<Way> selections, TransitionCurveParams params) {
         String undoRedoInfo;
-        if (selectedWays.size() == 1) {
+        if (selections.size() == 1) {
             undoRedoInfo = I18n.tr("Transition curve of way {0}: R={1}m, Ls={2}m",
-                    selectedWays.getFirst().getUniqueId(), params.surfaceRadius, params.surfaceTransArcLength);
-        } else if (selectedWays.size() <= 5) {
+                    selections.getFirst().getUniqueId(), params.surfaceRadius, params.surfaceTransArcLength);
+        } else if (selections.size() <= 5) {
             undoRedoInfo = I18n.tr("Transition curve of way {0}: R={1}m, Ls={2}m",
-                    selectedWays.stream().map(Way::getId).toList(), params.surfaceRadius, params.surfaceTransArcLength);
+                    selections.stream().map(Way::getId).toList(), params.surfaceRadius, params.surfaceTransArcLength);
         } else {
             undoRedoInfo = I18n.tr("Transition curve of {0} ways: R={1}m, Ls={2}m",
-                    selectedWays.size(), params.surfaceRadius, params.surfaceTransArcLength);
+                    selections.size(), params.surfaceRadius, params.surfaceTransArcLength);
         }
         return undoRedoInfo;
     }

@@ -116,7 +116,7 @@ public final class ChamferPreference extends AbstractPreference<ChamferParams> {
      * @return 输入的参数
      */
     @Override
-    public ChamferParams getParams() {
+    public ChamferParams getParamsAndUpdatePreference() {
         ChamferDialog chamferDialog = new ChamferDialog();
         if (chamferDialog.getValue() != 1) return null;  // 按ESC（0）或点击取消（2），退出；点击确定继续是1
 

@@ -8,8 +8,8 @@ import yakxin.columbina.abstractClasses.AbstractDrawingAction;
 import java.awt.event.KeyEvent;
 import java.util.List;
 
-public final class FilletAction extends AbstractDrawingAction
-        <FilletGenerator, FilletPreference, FilletParams>
+public final class FilletAction extends
+        AbstractDrawingAction<FilletGenerator, FilletPreference, FilletParams, Way>
 {
     /**
      * 构造函数
@@ -22,7 +22,11 @@ public final class FilletAction extends AbstractDrawingAction
      * @param preference  首选项实例
      */
     private FilletAction(String name, String iconName, String description, Shortcut shortcut, FilletGenerator generator, FilletPreference preference) {
-        super(name, iconName, description, shortcut, generator, preference);
+        super(
+                name, iconName, description, shortcut,
+                generator, preference, Way.class,
+                AbstractDrawingAction.NO_LIMITATION_ON_INPUT_NUM, AbstractDrawingAction.NO_LIMITATION_ON_INPUT_NUM
+        );
     }
 
     /**
@@ -45,11 +49,11 @@ public final class FilletAction extends AbstractDrawingAction
     }
 
     @Override
-    public String getUndoRedoInfo(List<Way> selectedWays, FilletParams params) {
+    public String getUndoRedoInfo(List<Way> selections, FilletParams params) {
         String undoRedoInfo;
-        if (selectedWays.size() == 1) undoRedoInfo = I18n.tr("Round corners of way {0}: {1}m", selectedWays.getFirst().getUniqueId(), params.surfaceRadius);
-        else if (selectedWays.size() <= 5) undoRedoInfo = I18n.tr("Round corners of way {0}: {1}m", selectedWays.stream().map(Way::getId).toList(), params.surfaceRadius);
-        else undoRedoInfo = I18n.tr("Round corners of {0} ways: {1}m", selectedWays.size(), params.surfaceRadius);
+        if (selections.size() == 1) undoRedoInfo = I18n.tr("Round corners of way {0}: {1}m", selections.getFirst().getUniqueId(), params.surfaceRadius);
+        else if (selections.size() <= 5) undoRedoInfo = I18n.tr("Round corners of way {0}: {1}m", selections.stream().map(Way::getId).toList(), params.surfaceRadius);
+        else undoRedoInfo = I18n.tr("Round corners of {0} ways: {1}m", selections.size(), params.surfaceRadius);
         return undoRedoInfo;
     }
 }

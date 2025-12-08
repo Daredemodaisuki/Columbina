@@ -121,7 +121,7 @@ public final class TransitionCurvePreference extends AbstractPreference<Transiti
      * @return 输入的参数
      */
     @Override
-    public TransitionCurveParams getParams() {
+    public TransitionCurveParams getParamsAndUpdatePreference() {
         TransitionCurveDialog dialog = new TransitionCurveDialog();
 
         if (dialog.getValue() != 1) return null;  // 用户取消
@@ -150,4 +150,5 @@ public final class TransitionCurvePreference extends AbstractPreference<Transiti
         );
     }
 }
+
 

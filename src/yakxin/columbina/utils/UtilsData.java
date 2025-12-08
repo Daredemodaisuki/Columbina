@@ -1,20 +1,18 @@
 package yakxin.columbina.utils;
 
 import org.openstreetmap.josm.command.*;
-import org.openstreetmap.josm.data.osm.DataSet;
-import org.openstreetmap.josm.data.osm.Node;
-import org.openstreetmap.josm.data.osm.OsmPrimitive;
-import org.openstreetmap.josm.data.osm.Way;
+import org.openstreetmap.josm.data.osm.*;
 import org.openstreetmap.josm.gui.MainApplication;
 import org.openstreetmap.josm.gui.layer.OsmDataLayer;
 import org.openstreetmap.josm.plugins.utilsplugin2.replacegeometry.ReplaceGeometryCommand;
 import org.openstreetmap.josm.plugins.utilsplugin2.replacegeometry.ReplaceGeometryUtils;
 import org.openstreetmap.josm.tools.I18n;
+import yakxin.columbina.abstractClasses.AbstractDrawingAction;
 import yakxin.columbina.abstractClasses.AbstractGenerator;
 import yakxin.columbina.abstractClasses.AbstractParams;
 import yakxin.columbina.data.ColumbinaException;
 import yakxin.columbina.data.dto.DrawingNewNodeResult;
-import yakxin.columbina.data.dto.LayerDatasetAndWaySelected;
+import yakxin.columbina.data.dto.LayerDatasetAndFeatureSelected;
 import yakxin.columbina.data.dto.NewNodeWayCommands;
 
 import javax.swing.*;
@@ -43,32 +41,45 @@ public class UtilsData {
     /**
      * 获取选中的图层、数据库和路径
      * 如果图层、数据库有问题或没有选中路径，将抛出IllegalArgumentException异常
-     * @return 获取到的图层、数据库和路径
+     * @return 获取到的图层、数据库和输入要素（Node、Way或Relation）
      */
-    public static LayerDatasetAndWaySelected getLayerDatasetAndWaySelected() {
+    public static <InputFeatureType extends OsmPrimitive> LayerDatasetAndFeatureSelected<InputFeatureType>
+    getLayerDatasetAndFeaturesSelected (
+            Class<InputFeatureType> type,
+            int minSelection, int maxSelection
+    ) {
         OsmDataLayer layer = MainApplication.getLayerManager().getEditLayer();  // 当前的编辑图层
         if (layer == null) throw new ColumbinaException(I18n.tr("Current layer is not available."));
 
         DataSet dataset = MainApplication.getLayerManager().getEditDataSet();  // 当前的编辑数据库
         if (dataset == null) throw new ColumbinaException(I18n.tr("Current dataset is not available."));
 
-        List<Way> waySelection = new ArrayList<>();  // 当前选中路径
-        for (OsmPrimitive p : layer.data.getSelected()) {
-            if (p instanceof Way) waySelection.add((Way) p);
-        }
         // List<Way> waySelection = new ArrayList<>(dataset.getSelectedWays());  // 未测试的方法
-        if (waySelection.isEmpty()) throw new IllegalArgumentException(I18n.tr("No way is selected."));
-        if (waySelection.size() > 5) {
+
+        // 筛选输入类型
+        List<InputFeatureType> selection = new ArrayList<>();
+        for (OsmPrimitive p : layer.data.getSelected()) {if (type.isInstance(p)) selection.add(type.cast(p));}
+
+        // 数量检查
+        String typeNameI18n;
+        if (type == Node.class) typeNameI18n = I18n.tr("node");
+        else if (type == Way.class) typeNameI18n = I18n.tr("way");
+        else typeNameI18n = I18n.tr("relation");
+        if (selection.isEmpty()) throw new IllegalArgumentException(I18n.tr("No {0} is selected.", typeNameI18n));
+        // 最小最大选择数量检查（有限制时）
+        if (minSelection != AbstractDrawingAction.NO_LIMITATION_ON_INPUT_NUM && selection.size() < minSelection) throw new IllegalArgumentException(I18n.tr("Too few {0}s are selected, should be grater than {1}.", typeNameI18n, minSelection));
+        if (maxSelection != AbstractDrawingAction.NO_LIMITATION_ON_INPUT_NUM && selection.size() > maxSelection) throw new IllegalArgumentException(I18n.tr("Too many {0}s are selected, should be less than {1}.", typeNameI18n, maxSelection));
+        if (selection.size() > 5) {
             int confirmTooMany = JOptionPane.showConfirmDialog(
                     null,
-                    I18n.tr("Are you sure you want to process {0} ways at once? This may take a long time.", waySelection.size()),
+                    I18n.tr("Are you sure you want to process {0} {1}s at once? This may take a long time.", selection.size(), typeNameI18n),
                     I18n.tr("Columbina"),
                     JOptionPane.YES_NO_OPTION
             );
             if (confirmTooMany == JOptionPane.NO_OPTION) return null;
         }
 
-        return new LayerDatasetAndWaySelected(layer, dataset, waySelection);
+        return new LayerDatasetAndFeatureSelected<InputFeatureType>(layer, dataset, selection);
     }
 
     /**
@@ -130,12 +141,13 @@ public class UtilsData {
     /**
      * 各个Generator类的get汇总后的获得新增单条路径所需指令的方法
      */
-    public static <GeneratorType extends AbstractGenerator<ParamType>, ParamType extends AbstractParams> NewNodeWayCommands getAddCmd (
-            DataSet ds, Way way,
+    public static <GeneratorType extends AbstractGenerator<ParamType, InputFeatureType>, ParamType extends AbstractParams, InputFeatureType extends OsmPrimitive>
+    NewNodeWayCommands getAddCmd (
+            DataSet ds, InputFeatureType selection,
             GeneratorType generator, ParamType params,
             boolean copyTag) {
         // 调用生成传入的函数计算路径
-        DrawingNewNodeResult filletResult = generator.getNewNodeWay(way, params);
+        DrawingNewNodeResult filletResult = generator.getNewNodeWayForSingleInput(selection, params);
         if (filletResult == null || filletResult.newNodes == null || filletResult.newNodes.size() < 2) {
             return null;
         }
@@ -147,7 +159,7 @@ public class UtilsData {
 
         // 复制原Way标签
         if (copyTag) {
-            Map<String, String> wayTags = way.getInterestingTags();  // 读取原Way的tag
+            Map<String, String> wayTags = selection.getInterestingTags();  // 读取原Way的tag
             newWay.setKeys(wayTags);
         }
 

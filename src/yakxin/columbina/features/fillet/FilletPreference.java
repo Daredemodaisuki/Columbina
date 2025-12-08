@@ -132,7 +132,7 @@ public final class FilletPreference extends AbstractPreference<FilletParams>  {
      * @return 输入的参数
      */
     @Override
-    public FilletParams getParams() {
+    public FilletParams getParamsAndUpdatePreference() {
         FilletDialog filletDialog = new FilletDialog();  // 创建设置对话框
 
         if (filletDialog.getValue() != 1) return null;  // 按ESC（0）或点击取消（2），退出；点击确定继续是1

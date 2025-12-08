@@ -9,8 +9,8 @@ import yakxin.columbina.abstractClasses.AbstractDrawingAction;
 import java.awt.event.KeyEvent;
 import java.util.*;
 
-public final class ChamferAction extends AbstractDrawingAction
-    <ChamferGenerator, ChamferPreference, ChamferParams>
+public final class ChamferAction extends
+        AbstractDrawingAction<ChamferGenerator, ChamferPreference, ChamferParams, Way>
 {
     // TODO:距离模式的角度检查
 
@@ -25,7 +25,11 @@ public final class ChamferAction extends AbstractDrawingAction
      * @param preference  首选项实例
      */
     private ChamferAction(String name, String iconName, String description, Shortcut shortcut, ChamferGenerator generator, ChamferPreference preference) {
-        super(name, iconName, description, shortcut, generator, preference);
+        super(
+                name, iconName, description, shortcut,
+                generator, preference, Way.class,
+                AbstractDrawingAction.NO_LIMITATION_ON_INPUT_NUM, AbstractDrawingAction.NO_LIMITATION_ON_INPUT_NUM
+        );
     }
 
     /**
@@ -48,16 +52,16 @@ public final class ChamferAction extends AbstractDrawingAction
     }
 
     @Override
-    public String getUndoRedoInfo(List<Way> selectedWays, ChamferParams params) {
+    public String getUndoRedoInfo(List<Way> selections, ChamferParams params) {
         String undoRedoInfo;
         if (params.mode == ChamferGenerator.USING_DISTANCE) {
-            if (selectedWays.size() == 1) undoRedoInfo = I18n.tr("Chamfer of way {0}: {1}m, {2}m", selectedWays.getFirst().getUniqueId(), params.surfaceDistanceA, params.surfaceDistanceC);
-            else if (selectedWays.size() <= 5) undoRedoInfo = I18n.tr("Chamfer of way {0}: {1}m, {2}m", selectedWays.stream().map(Way::getId).toList(), params.surfaceDistanceA, params.surfaceDistanceC);
-            else undoRedoInfo = I18n.tr("Chamfer of {0} ways: {1}m, {2}m", selectedWays.size(), params.surfaceDistanceA, params.surfaceDistanceC);
+            if (selections.size() == 1) undoRedoInfo = I18n.tr("Chamfer of way {0}: {1}m, {2}m", selections.getFirst().getUniqueId(), params.surfaceDistanceA, params.surfaceDistanceC);
+            else if (selections.size() <= 5) undoRedoInfo = I18n.tr("Chamfer of way {0}: {1}m, {2}m", selections.stream().map(Way::getId).toList(), params.surfaceDistanceA, params.surfaceDistanceC);
+            else undoRedoInfo = I18n.tr("Chamfer of {0} ways: {1}m, {2}m", selections.size(), params.surfaceDistanceA, params.surfaceDistanceC);
         } else {
-            if (selectedWays.size() == 1) undoRedoInfo = I18n.tr("Chamfer of way {0}: {1}m, {2}°", selectedWays.getFirst().getUniqueId(), params.surfaceDistanceA, params.angleADeg);
-            else if (selectedWays.size() <= 5) undoRedoInfo = I18n.tr("Chamfer of way {0}: {1}m, {2}°", selectedWays.stream().map(Way::getId).toList(), params.surfaceDistanceA, params.angleADeg);
-            else undoRedoInfo = I18n.tr("Chamfer of {0} ways: {1}m, {2}°", selectedWays.size(), params.surfaceDistanceA, params.angleADeg);
+            if (selections.size() == 1) undoRedoInfo = I18n.tr("Chamfer of way {0}: {1}m, {2}°", selections.getFirst().getUniqueId(), params.surfaceDistanceA, params.angleADeg);
+            else if (selections.size() <= 5) undoRedoInfo = I18n.tr("Chamfer of way {0}: {1}m, {2}°", selections.stream().map(Way::getId).toList(), params.surfaceDistanceA, params.angleADeg);
+            else undoRedoInfo = I18n.tr("Chamfer of {0} ways: {1}m, {2}°", selections.size(), params.surfaceDistanceA, params.angleADeg);
         }
         return undoRedoInfo;
     }
