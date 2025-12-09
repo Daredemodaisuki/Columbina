@@ -11,18 +11,21 @@ import yakxin.columbina.utils.UtilsMath;
 import java.util.ArrayList;
 import java.util.List;
 
-public final class ChamferGenerator extends AbstractGenerator<ChamferParams, Way> {
+public final class ChamferGenerator extends AbstractGenerator<ChamferParams> {
 
     public static final int USING_DISTANCE = 0;
     public static final int USING_ANGLE_A = 1;
 
     @Override
-    public DrawingNewNodeResult getNewNodeWayForSingleInput(Way input, ChamferParams params) {
-        return buildChamferPolyline(
-                input, params.mode,
-                params.surfaceDistanceA, params.surfaceDistanceC,
-                params.angleADeg
-        );
+    public DrawingNewNodeResult getNewNodeWayForSingleInput(Object input, ChamferParams params) {
+        if (input instanceof Way) {
+            return buildChamferPolyline(
+                    (Way) input, params.mode,
+                    params.surfaceDistanceA, params.surfaceDistanceC,
+                    params.angleADeg
+            );
+        }
+        return null;
     }
 
     // 绘制一个斜角

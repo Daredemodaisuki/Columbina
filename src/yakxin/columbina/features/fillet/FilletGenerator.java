@@ -13,15 +13,18 @@ import java.util.List;
 
 
 // 圆角计算器
-public final class FilletGenerator extends AbstractGenerator<FilletParams, Way> {
+public final class FilletGenerator extends AbstractGenerator<FilletParams> {
 
     @Override
-    public DrawingNewNodeResult getNewNodeWayForSingleInput(Way input, FilletParams params) {
-        return buildSmoothPolyline(
-                input,
-                params.surfaceRadius, params.angleStep, params.maxPointNum,
-                params.minAngleDeg, params.maxAngleDeg
-        );
+    public DrawingNewNodeResult getNewNodeWayForSingleInput(Object input, FilletParams params) {
+        if (input instanceof Way) {
+            return buildSmoothPolyline(
+                    (Way) input,
+                    params.surfaceRadius, params.angleStep, params.maxPointNum,
+                    params.minAngleDeg, params.maxAngleDeg
+            );
+        }
+        return null;
     }
 
     /// 圆角算法

@@ -23,18 +23,21 @@ import java.util.List;
  */
 
 
-public final class TransitionCurveGenerator extends AbstractGenerator<TransitionCurveParams, Way> {
+public final class TransitionCurveGenerator extends AbstractGenerator<TransitionCurveParams> {
 
     public static final int LEFT = 1;
     public static final int RIGHT = -LEFT;  // -1
     public static final int TERM_MAX = 10;  // 前11项（n从0到10）
 
     @Override
-    public DrawingNewNodeResult getNewNodeWayForSingleInput(Way input, TransitionCurveParams params) {
-        return buildTransitionCurvePolyline(
-                input,
-                params.surfaceRadius, params.surfaceTransArcLength, params.chainageNum
-        );
+    public DrawingNewNodeResult getNewNodeWayForSingleInput(Object input, TransitionCurveParams params) {
+        if (input instanceof Way) {
+            return buildTransitionCurvePolyline(
+                    (Way) input,
+                    params.surfaceRadius, params.surfaceTransArcLength, params.chainageNum
+            );
+        }
+        return null;
     }
 
     /// 求和级数的单项：使用匿名函数具体定义TermFunction的抽象compute方法
