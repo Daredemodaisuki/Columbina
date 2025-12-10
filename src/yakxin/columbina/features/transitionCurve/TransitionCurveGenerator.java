@@ -25,8 +25,6 @@ import java.util.List;
 
 public final class TransitionCurveGenerator extends AbstractGenerator<TransitionCurveParams> {
 
-    public static final int LEFT = 1;
-    public static final int RIGHT = -LEFT;  // -1
     public static final int TERM_MAX = 10;  // 前11项（n从0到10）
 
     @Override
@@ -107,7 +105,7 @@ public final class TransitionCurveGenerator extends AbstractGenerator<Transition
         // 判断左右拐
         int leftRight;
         double crossz = u1[0] * u2[1] - u1[1] * u2[0];  // 向量叉积的Z分量，<0左拐，>0右拐（注意crossz是BA×BC不是AB×BC，所以这里正负判断是反过来的）
-        if (crossz < 0) leftRight = LEFT; else leftRight = RIGHT;
+        if (crossz < 0) leftRight = UtilsMath.LEFT; else leftRight = UtilsMath.RIGHT;
 
         /// 计算（从A侧缓曲线起点开始计算双螺旋1、从C侧缓曲线终点倒过来计算双螺旋2、中间的圆弧）
         // 计算两侧切线长
@@ -146,7 +144,7 @@ public final class TransitionCurveGenerator extends AbstractGenerator<Transition
             double enChainageLength,  // 每个桩（节点）之间的距离
             int leftRight  // 往左走往右走
     ) {
-        if (leftRight != LEFT && leftRight != RIGHT)  // 哇，还有凉面派
+        if (leftRight != UtilsMath.LEFT && leftRight != UtilsMath.RIGHT)  // 哇，还有凉面派
             throw new IllegalArgumentException(I18n.tr("getUnrotatedTransitionArc: Unexpected leftRight arg."));
         if (enChainageLength > enTransArcLength)  // 桩距不能比总长度还大
             throw new IllegalArgumentException(I18n.tr("getUnrotatedTransitionArc: enChainageLength > enTransArcLength."));

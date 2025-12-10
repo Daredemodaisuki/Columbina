@@ -3,6 +3,7 @@ package yakxin.columbina.features.transitionCurve;
 import org.openstreetmap.josm.spi.preferences.Config;
 import org.openstreetmap.josm.tools.I18n;
 import yakxin.columbina.abstractClasses.AbstractPreference;
+import yakxin.columbina.data.inputs.ColumbinaInput;
 
 public final class TransitionCurvePreference extends AbstractPreference<TransitionCurveParams> {
     public TransitionCurvePreference() {readPreference();}
@@ -121,7 +122,7 @@ public final class TransitionCurvePreference extends AbstractPreference<Transiti
      * @return 输入的参数
      */
     @Override
-    public TransitionCurveParams getParamsAndUpdatePreference() {
+    public TransitionCurveParams getParamsAndUpdatePreference(ColumbinaInput input) {
         TransitionCurveDialog dialog = new TransitionCurveDialog();
 
         if (dialog.getValue() != 1) return null;  // 用户取消

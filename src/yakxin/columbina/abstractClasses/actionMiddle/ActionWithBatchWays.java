@@ -76,9 +76,20 @@ public abstract class ActionWithBatchWays<
 
     @Override
     public int checkInputNum(ColumbinaInput inputs) {
+        boolean ifOnlyContain2NodeWays = true;
         // 没有选定路径、（有限制时）选择太少或太多中止流程
         if (inputs.isEmpty(Way.class))
             throw new IllegalArgumentException(I18n.tr("No way is selected."));
+        // 检查是否只包含2点路径
+        for (Way way : inputs.getWays()) {
+            if ((!way.isClosed() && way.getNodes().size() >= 3) || (way.isClosed() && way.getNodes().size() >= 4)) {
+                ifOnlyContain2NodeWays = false;
+                break;
+            }
+        }
+        if (ifOnlyContain2NodeWays) throw new IllegalArgumentException("All selected ways only contain 2 nodes, and cannot find corners.");
+
+        // 参数检查
         if (minSelection != NO_LIMITATION_ON_INPUT_NUM && inputs.getInputNum(Way.class) < minSelection)
             throw new IllegalArgumentException(I18n.tr("Too few ways are selected, should be grater than {0}.", minSelection));
         if (maxSelection != NO_LIMITATION_ON_INPUT_NUM && inputs.getInputNum(Way.class) > maxSelection)

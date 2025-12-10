@@ -3,6 +3,7 @@ package yakxin.columbina.features.angleLine;
 import org.openstreetmap.josm.spi.preferences.Config;
 import org.openstreetmap.josm.tools.I18n;
 import yakxin.columbina.abstractClasses.AbstractPreference;
+import yakxin.columbina.data.inputs.ColumbinaInput;
 
 public final class AngleLinePreference extends AbstractPreference<AngleLineParams> {
     private static double angleLineAngleDeg;
@@ -59,7 +60,7 @@ public final class AngleLinePreference extends AbstractPreference<AngleLineParam
      * @return 输入的参数
      */
     @Override
-    public AngleLineParams getParamsAndUpdatePreference() {
+    public AngleLineParams getParamsAndUpdatePreference(ColumbinaInput input) {
         AngleLineDialog angleLineDialog = new AngleLineDialog();
         if (angleLineDialog.getValue() != 1) return null;  // 按ESC（0）或点击取消（2），退出；点击确定继续是1
 

@@ -157,7 +157,9 @@ public abstract class AbstractDrawingAction <
             if (checkInputNum(input) == USER_CANCEL) return;  // 用户取消时直接退出
 
             // 弹出参数设置窗口，获取参数
-            final ParamType params = preference.getParamsAndUpdatePreference();  // 重构后preference负责弹窗，本来也就是设置preference的窗口
+            // 重构后preference负责弹窗，本来也就是设置preference的窗口
+            // 把input也给到getParamsAndUpdatePreference，以便窗口可以实时计算一些内容并反馈给用户
+            final ParamType params = preference.getParamsAndUpdatePreference(input);
             if (params == null) return;  // 用户取消操作
             // 存入类成员以便concludeAddCommands之UtilsData.getAddCmd(…, params, …)
             // 和下面的ColumbinaSeqCommand(getUndoRedoInfo(…, params), …);使用

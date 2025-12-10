@@ -20,7 +20,7 @@ public final class FilletGenerator extends AbstractGenerator<FilletParams> {
         if (input instanceof Way) {
             return buildSmoothPolyline(
                     (Way) input,
-                    params.surfaceRadius, params.angleStep, params.maxPointNum,
+                    params.surfaceRadius, params.surfaceChainageLength, params.maxPointNum,
                     params.minAngleDeg, params.maxAngleDeg
             );
         }
@@ -31,74 +31,114 @@ public final class FilletGenerator extends AbstractGenerator<FilletParams> {
     // 绘制一个圆角（需要输入重算距离而不是直接的地表距离）
     private static ArrayList<EastNorth> getFilletArc(
             EastNorth A, EastNorth B, EastNorth C,
-            double enRadius, double angleStep, int maxNumPoints,
+            double enRadius, double enChainageLength, int maxNumPoints,
             double minAngleDeg, double maxAngleDeg
     ) {
         // 获取node坐标
         double[] a = new double[]{A.getX(), A.getY()};  // A起点     B → C
         double[] b = new double[]{B.getX(), B.getY()};  // B拐点     ↑
         double[] c = new double[]{C.getX(), C.getY()};  // C终点     A
+//
+        // // 方向向量
+        // double[] v1 = UtilsMath.sub(a, b);  // BA向量
+        // double[] v2 = UtilsMath.sub(c, b);  // BC向量
+        // double n1 = UtilsMath.norm(v1);     // BA长度
+        // double n2 = UtilsMath.norm(v2);     // BC长度
+        // if (n1 < 1e-9 || n2 < 1e-9) return null;  // 检查向量有效性（不能太短近乎于点挤在一起）
+//
+        // double[] u1 = UtilsMath.mul(v1, 1.0 / n1);  // BA单位向量
+        // double[] u2 = UtilsMath.mul(v2, 1.0 / n2);  // BC单位向量
+//
+        // // 拐点夹角（方向向量点积取acos）
+        // double dp = Math.max(-1.0, Math.min(1.0, UtilsMath.dot(u1, u2)));  // 点积（限制在[-1,1]范围内）
+        // double theta = Math.acos(dp);  // 夹角（弧度[0,π]）
+//
+        // // 检查张角有效性
+        // double minAngleRad = Math.toRadians(minAngleDeg);
+        // double maxAngleRad = Math.toRadians(maxAngleDeg);
+        // if (theta < minAngleRad || theta > maxAngleRad) return null;  // 自定义角度控制
+        // if (theta < 1e-9 || theta > Math.PI - 1e-9) return null;  // θ为0说明成了发卡角，θ为π说明张角基本是直线
+//
+        // // 圆弧的起点和终点（切点）
+        // double t = enRadius / Math.tan(theta / 2.0);  // 从B到两侧切点的距离
+        // if (t > n1 - 1e-9 || t > n2 - 1e-9) return null;  // 检查半径是否过大
+        // double[] T1 = UtilsMath.add(b, UtilsMath.mul(u1, t));  // BA上的切点坐标T1
+        // double[] T2 = UtilsMath.add(b, UtilsMath.mul(u2, t));  // BC上的切点坐标T2
+//
+        // // 圆弧圆心坐标
+        // double d = enRadius / Math.sin(theta / 2.0);  // B到圆心的距离
+        // double[] bis = UtilsMath.add(u1, u2);  // 角平分线方向
+        // if (UtilsMath.norm(bis) < 1e-12) return null;  // 角平分线是否有效
+        // double[] center = UtilsMath.add(b, UtilsMath.mul(bis, d / UtilsMath.norm(bis))); // 圆心坐标
+//
+        // // 圆弧起始和结束角度
+        // double ang1 = UtilsMath.getBearingRadFromAtoB(center, T1);  // 圆心到T1的角度
+        // double ang2 = UtilsMath.getBearingRadFromAtoB(center, T2);  // 圆心到T2的角度
 
         // 方向向量
-        double[] v1 = UtilsMath.sub(a, b);  // BA向量
-        double[] v2 = UtilsMath.sub(c, b);  // BC向量
-        double n1 = UtilsMath.norm(v1);     // BA长度
-        double n2 = UtilsMath.norm(v2);     // BC长度
-        if (n1 < 1e-9 || n2 < 1e-9) return null;  // 检查向量有效性（不能太短近乎于点挤在一起）
-
-        double[] u1 = UtilsMath.mul(v1, 1.0 / n1);  // BA单位向量
-        double[] u2 = UtilsMath.mul(v2, 1.0 / n2);  // BC单位向量
-
-        // 拐点夹角（方向向量点积取acos）
-        double dp = Math.max(-1.0, Math.min(1.0, UtilsMath.dot(u1, u2)));  // 点积（限制在[-1,1]范围内）
-        double theta = Math.acos(dp);  // 夹角（弧度[0,π]）
-        // 检查张角有效性
-        double minAngleRad = Math.toRadians(minAngleDeg);
-        double maxAngleRad = Math.toRadians(maxAngleDeg);
-        if (theta < minAngleRad || theta > maxAngleRad) return null;  // 自定义角度控制
+        double[] BA = UtilsMath.sub(a, b);
+        double[] BC = UtilsMath.sub(c, b);
+        double[] AB = UtilsMath.mul(BA, -1.0);
+        // 拐点张角（方向向量点积取acos）和张角有效性
+        double theta = UtilsMath.getAngleRadBetweenVec(BA, BC);
+        if (theta < Math.toRadians(minAngleDeg) || theta > Math.toRadians(maxAngleDeg)) return null;  // 自定义角度控制
         if (theta < 1e-9 || theta > Math.PI - 1e-9) return null;  // θ为0说明成了发卡角，θ为π说明张角基本是直线
+        // 节点数控制
+        int arcSegments;  // 曲线有多少桩段，也就是不计首尾的节点数+1
+        if (enChainageLength * (maxNumPoints + 1) < (Math.PI - theta) * enRadius)  // 如果最大段数*点距不足弧线长度（π-θ是圆心角或路径偏转角）
+            arcSegments = maxNumPoints + 1;  // 强制使用最大段数，会扩大点距离
+        else arcSegments = Math.max(1, Math.min(  // max保证至少有1点，min防止ceil成maxNumPoints+2了多一个点
+                maxNumPoints + 1,
+                (int) (Math.ceil((Math.PI - theta) * enRadius) / enChainageLength)
+        ));
+        // 圆心
+        double centerToB = enRadius / Math.sin(theta / 2.0);  // B到圆心的距离
+        double[] center = UtilsMath.walkAlongAngleDistance(  // 沿着ABC角平分线方向走B到圆心的距离
+                b, UtilsMath.getVecBearingRad(UtilsMath.add(
+                        UtilsMath.getUnitVec(BA),
+                        UtilsMath.getUnitVec(BC)
+                )), centerToB
+        );
+        EastNorth enCenter = new EastNorth(center[0], center[1]);
+        // 进出曲线方向角
+        double startBearingRad = UtilsMath.getVecBearingRad(AB);
+        double endBearingRad = UtilsMath.getVecBearingRad(BC);
+        int leftRight = UtilsMath.getLeftRight(AB, BC);
 
-        // 圆弧的起点和终点（切点）
-        double t = enRadius / Math.tan(theta / 2.0);  // 从B到两侧切点的距离
-        if (t > n1 - 1e-9 || t > n2 - 1e-9) return null;  // 检查半径是否过大
-        double[] T1 = UtilsMath.add(b, UtilsMath.mul(u1, t));  // BA上的切点坐标T1
-        double[] T2 = UtilsMath.add(b, UtilsMath.mul(u2, t));  // BC上的切点坐标T2
+        // 计算、返回
+        return (ArrayList<EastNorth>)
+                UtilsMath.getCircleArcPointsWithBearingRad(
+                        enCenter, enRadius,
+                        startBearingRad, endBearingRad,
+                        arcSegments,
+                        leftRight
+                );
 
-        // 圆弧圆心坐标
-        double d = enRadius / Math.sin(theta / 2.0);  // B到圆心的距离
-        double[] bis = UtilsMath.add(u1, u2);  // 角平分线方向
-        if (UtilsMath.norm(bis) < 1e-12) return null;  // 角平分线是否有效
-        double[] center = UtilsMath.add(b, UtilsMath.mul(bis, d / UtilsMath.norm(bis))); // 圆心坐标
-
-        // 圆弧起始和结束角度
-        double ang1 = Math.atan2(T1[1] - center[1], T1[0] - center[0]);  // 圆心到T1的角度
-        double ang2 = Math.atan2(T2[1] - center[1], T2[0] - center[0]);  // 圆心到T2的角度
-
-        // 圆弧方向
-        double crossz = u1[0] * u2[1] - u1[1] * u2[0];  // 向量叉积的Z分量
-        if (crossz < 0) {
-            // 逆时针方向（BA到BC需要逆时针旋转），确保ang2 > ang1
-            if (ang2 < ang1) ang2 += 2*Math.PI;
-        } else {
-            // 顺时针方向，确保ang2 < ang1
-            if (ang2 > ang1) ang2 -= 2*Math.PI;
-        }
-
-        // 生成圆弧上的点
-        int numAngleSteps = Math.max(  // 步进段数，不算开头结尾的点数=步进段数-2
-                Math.min((int) ((Math.PI - theta) / Math.toRadians(angleStep)), maxNumPoints + 1),  // 最大50点的话步进有51段
-                1  // 注意θ是张角，张角越小圆心角越大、弧长越长，点数越多
-        );  // 至少1段0点（相当于切角），至多maxNumPoints+1段maxNumPoints点
-        // TODO：切角可以快速实现了
-        ArrayList<EastNorth> arc = new ArrayList<>();
-        for (int i = 0; i <= numAngleSteps; i ++){
-            double tt = (double) i / numAngleSteps;    // 插值参数 [0,1]
-            double ang = ang1 + (ang2 - ang1) * tt;    // 当前角度
-            double x = center[0] + enRadius * Math.cos(ang);  // 圆弧点X坐标
-            double y = center[1] + enRadius * Math.sin(ang);  // 圆弧点Y坐标
-            arc.add(new EastNorth(x, y));
-        }
-        return arc;
+        // // 圆弧方向
+        // double crossz = u1[0] * u2[1] - u1[1] * u2[0];  // 向量叉积的Z分量
+        // if (crossz < 0) {
+        //     // 逆时针方向（BA到BC需要逆时针旋转），确保ang2 > ang1
+        //     if (ang2 < ang1) ang2 += 2*Math.PI;
+        // } else {
+        //     // 顺时针方向，确保ang2 < ang1
+        //     if (ang2 > ang1) ang2 -= 2*Math.PI;
+        // }
+//
+        // // 生成圆弧上的点
+        // int numAngleSteps = Math.max(  // 步进段数，不算开头结尾的点数=步进段数-2
+        //         Math.min((int) ((Math.PI - theta) / Math.toRadians(enChainageLength)), maxNumPoints + 1),  // 最大50点的话步进有51段
+        //         1  // 注意θ是张角，张角越小圆心角越大、弧长越长，点数越多
+        // );  // 至少1段0点（相当于切角），至多maxNumPoints+1段maxNumPoints点
+        // // TODO：切角可以快速实现了
+        // ArrayList<EastNorth> arc = new ArrayList<>();
+        // for (int i = 0; i <= numAngleSteps; i ++){
+        //     double tt = (double) i / numAngleSteps;    // 插值参数 [0,1]
+        //     double ang = ang1 + (ang2 - ang1) * tt;    // 当前角度
+        //     double x = center[0] + enRadius * Math.cos(ang);  // 圆弧点X坐标
+        //     double y = center[1] + enRadius * Math.sin(ang);  // 圆弧点Y坐标
+        //     arc.add(new EastNorth(x, y));
+        // }
+        // return arc;
     }
 
     public static DrawingNewNodeResult buildSmoothPolyline(Way way, double surfaceRadius) {
@@ -110,7 +150,7 @@ public final class FilletGenerator extends AbstractGenerator<FilletParams> {
     // 汇总所有的圆角
     public static DrawingNewNodeResult buildSmoothPolyline(
             Way way,
-            double surfaceRadius, double angleStep, int maxPointNum,
+            double surfaceRadius, double surfaceChainageLength, int maxPointNum,
             double minAngleDeg, double maxAngleDeg
     ) {
         List<Long> failedNodes = new ArrayList<>();
@@ -132,14 +172,14 @@ public final class FilletGenerator extends AbstractGenerator<FilletParams> {
             EastNorth C = nodesEN.get(i + 2);  // 终点    A
 
             // JOSM用Mercator投影的NorthEast坐标等角不等距，需要重算距离，以拐点B取维度计算
-            double enRadius;
             try {
                 double latB = nodes.get(i + 1).getCoor().lat();
-                enRadius = UtilsMath.surfaceDistanceToEastNorth(surfaceRadius, latB);
+                double enRadius = UtilsMath.surfaceDistanceToEastNorth(surfaceRadius, latB);
+                double enChainageLength = UtilsMath.surfaceDistanceToEastNorth(surfaceChainageLength, latB);
                 // 有EN长度之后继续算圆弧
                 List<EastNorth> arc = getFilletArc(  // 为每个拐角生成PNum个点的圆弧
                         A, B, C,
-                        enRadius, angleStep, maxPointNum,
+                        enRadius, enChainageLength, maxPointNum,
                         minAngleDeg, maxAngleDeg
                 );
 
@@ -163,9 +203,10 @@ public final class FilletGenerator extends AbstractGenerator<FilletParams> {
             try {
                 double latB = nodes.getFirst().getCoor().lat();
                 double enRadius = UtilsMath.surfaceDistanceToEastNorth(surfaceRadius, latB);
+                double enChainageLength = UtilsMath.surfaceDistanceToEastNorth(surfaceChainageLength, latB);
                 List<EastNorth> arcEnd = getFilletArc(
                         nodesEN.get(nPts - 2), nodesEN.get(0), nodesEN.get(1),  // nodesEN.get(0) = getFirst() == nodesEN.get(-1)
-                        enRadius, angleStep, maxPointNum,
+                        enRadius, enChainageLength, maxPointNum,
                         minAngleDeg, maxAngleDeg
                 );
                 if (arcEnd == null) {

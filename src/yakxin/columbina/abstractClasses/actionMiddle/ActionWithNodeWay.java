@@ -45,11 +45,6 @@ public abstract class ActionWithNodeWay<
     }
 
     @Override
-    public String getUndoRedoInfo(ColumbinaInput inputs, ParamType params) {
-        return "";
-    }
-
-    @Override
     public List<Command> concludeAddCommands(
             DataSet ds, ColumbinaInput input,
             boolean copyTag
@@ -64,7 +59,7 @@ public abstract class ActionWithNodeWay<
 
     @Override
     public int checkInputNum(ColumbinaInput inputs) {
-        return 0;
+        return CHECK_OK;
     }
 
     @Override
@@ -72,3 +67,5 @@ public abstract class ActionWithNodeWay<
         return new ArrayList<>();
     }
 }
+
+
