@@ -120,7 +120,7 @@ public final class FilletDialog extends ExtendedDialog {
             boolean isClosed = way.isClosed();  // 路径是否闭合
             int numNode = isClosed ? nodes.size() - 1 : nodes.size();  // 实际节点数（去除闭合点）
             int numSec = isClosed ? numNode : numNode - 1;
-            if (!isClosed && numNode < 3) continue;  // 至少需要3个节点才能形成拐角
+            if (numNode < 3) continue;  // 至少需要3个节点才能形成拐角
 
             // 储存所有的节点
             for (int i = 0; i < numNode; i ++) {
@@ -145,8 +145,8 @@ public final class FilletDialog extends ExtendedDialog {
                         UtilsMath.sub(nodeXY.get((i + 2) % numNode), nodeXY.get((i + 1) % numNode)),
                         UtilsMath.sub(nodeXY.get((i + 0) % numNode), nodeXY.get((i + 1) % numNode))
                 );
-                double cotAng2 = (!isClosed && i == numNode - 1  || ang2 < Math.max(minAngleRad, 10e-6) || ang2 > Math.min(maxAngleRad, Math.PI - 10e-6)) ?
-                        0 : 1 / Math.tan(ang2 / 2);
+                double cotAng2 = (!isClosed && i == numSec - 1  || ang2 < Math.max(minAngleRad, 10e-6) || ang2 > Math.min(maxAngleRad, Math.PI - 10e-6)) ?
+                        0 : 1 / Math.tan(ang2 / 2);  // 非闭合曲线端点记为0、发卡弯或直线记为0
                 double maxRForCorner;
                 if (cotAng1 + cotAng2 == 0) maxRForCorner = Double.POSITIVE_INFINITY;
                 else maxRForCorner = UtilsMath.eastNorthDistanceToSurface(
