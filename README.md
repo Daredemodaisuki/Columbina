@@ -1,7 +1,7 @@
 # <img src="/images/Columbina.png" alt="Chamfer Corner Menu" width="40px"> Corner-Optimal Line Utility Modifier for Better Inflection and Node Adjustment (*Columbina*) <br> 用于改进弯折与节点调整的转角优化线型之实用修改器
 
-A Java OpenStreetMap (JOSM) pulgin providing convenient Fillet (round corner) and Chamfer drawing, and … <br> might provide Transition Curve features in the future.
-<br> 一个提供倒圆角和倒斜角工具的Java OpenStreetMap（JOSM）插件，未来计划开发缓和曲线功能。
+A Java OpenStreetMap (JOSM) pulgin providing convenient Fillet (round corner), Chamfer, Transition Curve drawing, and … <br> might provide more features in the future.
+<br> 一个提供倒圆角、倒斜角、缓和曲线工具的Java OpenStreetMap（JOSM）插件，未来计划开发更多功能。
 
 <p align="right">
   <img src="ColumbinaRC.png" alt="Round Corner Menu" width="60%">
@@ -61,6 +61,14 @@ Allows users to draw transition curves (using the clothoid method) with specifie
 The plugin will draw two segments of Euler spiral and a circular curve for each corner.
 It supports specifying chainage length (node spacing) and provides options to copy tags from the original way, remove the original way after drawing, and toggle selection to the new way after drawing.
 <br> 插件将为每个拐角绘制两段回旋线（Euler回旋线）和圆曲线。插件支持指定桩距（节点距离），亦提供复制原有路径标签、绘制后移除原有路径、绘制后切换选择新路径的选项。
+
+### <img src="/images/OrientedLine.png" alt="Chamfer Corner Menu" width="25px"> Oriented Line · 绘制导向直线 〔Alt+Ctrl+Shift+F〕
+
+Allows the user to draw a straight line starting from the selected node, based on a specified deflection angle and length relative to the selected way.
+<br> 允许用户在选定的路径和节点的基础上指定偏角和长度绘制从该节点出发的直线。
+
+A positive deflection angle indicates a turn to the left, and a negative angle indicates a turn to the right.
+<br> 其中偏角向左拐为正角度，向右为负角度。
 
 ### Note · 注意
 
