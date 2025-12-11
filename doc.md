@@ -18,7 +18,9 @@
 
 根据JOSM插件要求提供的插件入口点（定义在`build.xml`中的必需的清单属性之`Plugin-Class`），通过新建动作类的实体来在JOSM菜单中注册功能项。
 
-~~→ 月之门由此进 ←~~
+<p align="center">
+  <del>→ <a href="src/yakxin/columbina/Columbina.java">月之门由此进</a> ←</del>
+</p>
 
 ### 抽象基类
 
@@ -112,7 +114,7 @@
 
 #### 抽象参数类（`yakxin.columbina.abstractClasses.AbstractParams`）
 
-因为发现所有功能的输入参数几乎都包含了「绘制后切换选择新路径」「绘制后移除旧路径」「复制旧路径标签」这3个，同时出于方便生成器辨别的考虑，抽象了参数类，不同的操作具体实现参数，同时也作为类型标识符。
+因为发现所有功能的输入参数几乎都包含了「绘制后切换选择新路径」「绘制后移除旧路径」「复制旧路径标签」这3个，同时出于方便生成器辨别的考虑（明确泛函的类型标识符），抽象了参数类，不同的操作具体实现参数。
 
 #### 抽象首选项类（`yakxin.columbina.abstractClasses.AbstractPreference`）
 
