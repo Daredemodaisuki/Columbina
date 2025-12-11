@@ -1,5 +1,6 @@
 package yakxin.columbina.abstractClasses.actionMiddle;
 
+import org.openstreetmap.josm.command.AddCommand;
 import org.openstreetmap.josm.command.Command;
 import org.openstreetmap.josm.data.osm.DataSet;
 import org.openstreetmap.josm.data.osm.Node;
@@ -16,6 +17,7 @@ import yakxin.columbina.data.dto.inputs.ColumbinaInput;
 import yakxin.columbina.data.dto.inputs.ColumbinaSingleInput;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public abstract class ActionWithNodeWay<
@@ -28,6 +30,7 @@ public abstract class ActionWithNodeWay<
     // private final int maxNodeSelection;
     // private final int minWaySelection;
     // private final int maxWaySelection;
+    private Way newWay = null;
 
     /**
      * 构造函数
@@ -53,13 +56,13 @@ public abstract class ActionWithNodeWay<
 
     @Override
     public int checkInputNum(ColumbinaInput inputs) {
-        // 检查是否是输入一个节点+一条路径，且节点在路径上
+        // 检查是否是输入一个节点+一条路径，不检查节点是否在路径上（由生成器内部判断）
         if (inputs.getInputNum(Node.class) != 1)
             throw new IllegalArgumentException(I18n.tr("No node or multiple nodes are selected."));
         if (inputs.getInputNum(Way.class) != 1)
             throw new IllegalArgumentException(I18n.tr("No way or multiple ways are selected."));
-        if (!inputs.getNodes().getFirst().getReferrers().contains(inputs.getWays().getFirst()))
-            throw new IllegalArgumentException(I18n.tr("The way selected doesn''t contain the node selected."));
+        // if (!inputs.getNodes().getFirst().getReferrers().contains(inputs.getWays().getFirst()))
+        //     throw new IllegalArgumentException(I18n.tr("The way selected doesn''t contain the node selected."));
         return CHECK_OK;
     }
 
@@ -68,23 +71,40 @@ public abstract class ActionWithNodeWay<
             DataSet ds, ColumbinaInput input,
             boolean copyTag
     ) {
-        List<Command> commands = new ArrayList<>();
-        // 批量输入分包（这个模板不支持批量，所以直接将全部输入扔进去）
-        ColumbinaSingleInput singleInput = new ColumbinaSingleInput(input);
-        // 调用生成传入的函数计算路径
-        ColumbinaSingleOutput singleOutput = generator.getNewNodeWayForSingleInput(singleInput, params);
+        List<Command> addCommands = new ArrayList<>();
 
-        return new ArrayList<>();
+        // 调用生成传入的函数计算路径
+        ColumbinaSingleInput singleInput = new ColumbinaSingleInput(input);  // 批量输入分包（这个模板不支持批量，所以直接将全部输入扔进去）
+        ColumbinaSingleOutput singleOutput = generator.getOutputForSingleInput(singleInput, params);
+
+        // 画新线
+        newWay = singleOutput.linkNodesToWay();
+
+        // 复制原Way标签
+        if (copyTag) {
+            newWay.setKeys(getNewWayTags(singleInput));
+        }
+
+        // 正式构建绘制命令
+        for (Node n : singleOutput.newNodes.stream().distinct().toList()) {  // 路径内部可能有节点复用（如闭合线），去重
+            if (!ds.containsNode(n))  // 新路径的节点在ds中未绘制（不是复用的）才准备绘制
+                addCommands.add(new AddCommand(ds, n));  // 添加节点到命令序列
+        }
+        addCommands.add(new AddCommand(ds, newWay));  // 添加线到命令序列
+
+        return addCommands;
     }
 
     @Override
     public List<Command> concludeRemoveCommands(DataSet ds) {
-        return List.of();
+        return new ArrayList<Command>();  // 这个模板下不需要移除
     }
 
     @Override
     public List<OsmPrimitive> getWhatToSelectAfterDraw() {
-        return new ArrayList<>();
+        if (newWay != null)
+            return new ArrayList<>(Collections.singleton(newWay));
+        else return null;
     }
 }
 

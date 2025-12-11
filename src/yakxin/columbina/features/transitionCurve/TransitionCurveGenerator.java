@@ -29,7 +29,7 @@ public final class TransitionCurveGenerator extends AbstractGenerator<Transition
     public static final int TERM_MAX = 10;  // 前11项（n从0到10）
 
     @Override
-    public ColumbinaSingleOutput getNewNodeWayForSingleInput(ColumbinaSingleInput input, TransitionCurveParams params) {
+    public ColumbinaSingleOutput getOutputForSingleInput(ColumbinaSingleInput input, TransitionCurveParams params) {
         if (input.ways != null && input.ways.size() == 1) {
             return buildTransitionCurvePolyline(
                     input.ways.getFirst(),

@@ -115,7 +115,7 @@ public abstract class ActionWithBatchWays<
         List<Command> commands = new ArrayList<>();
         inputOutputPairs = new HashMap<>();  // 输入节点/路径k与新绘制的路径v的打包对
         Map<Way, List<Long>> failedNodeIds = new HashMap<>();  // 处理输入节点/路径k与处理时k上失败的节点v的打包对
-        List<Way> selectedWays = input.getWays();
+        // List<Way> selectedWays = input.getWays();
         // 批量输入分包
         // TODO：把getAddCmd放到主抽象类去abstract
         List<ColumbinaSingleInput> singleInputs = new ArrayList<>();
@@ -242,7 +242,7 @@ public abstract class ActionWithBatchWays<
             GeneratorType generator, ParamType params,
             boolean copyTag) {
         // 调用生成传入的函数计算路径
-        ColumbinaSingleOutput singleOutput = generator.getNewNodeWayForSingleInput(singleInput, params);
+        ColumbinaSingleOutput singleOutput = generator.getOutputForSingleInput(singleInput, params);
         if (!singleOutput.ifCanMakeAWay()) return null;
         List<Node> newNodes = singleOutput.newNodes;
         List<Long> failedNodeIds = singleOutput.failedNodes;

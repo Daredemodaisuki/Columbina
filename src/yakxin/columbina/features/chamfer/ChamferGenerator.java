@@ -18,7 +18,7 @@ public final class ChamferGenerator extends AbstractGenerator<ChamferParams> {
     public static final int USING_ANGLE_A = 1;
 
     @Override
-    public ColumbinaSingleOutput getNewNodeWayForSingleInput(ColumbinaSingleInput input, ChamferParams params) {
+    public ColumbinaSingleOutput getOutputForSingleInput(ColumbinaSingleInput input, ChamferParams params) {
         if (input.ways != null && input.ways.size() == 1) {
             return buildChamferPolyline(
                     input.ways.getFirst(), params.mode,

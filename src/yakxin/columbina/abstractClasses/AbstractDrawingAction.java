@@ -91,6 +91,7 @@ public abstract class AbstractDrawingAction <
      * 获取需要选中的新路径
      * <p>如有必要，根据类内部记录的输入输出对（由concludeAddCommands负责）返回绘图后需要选择的对象；
      * <p>如无必要，返回空列表。
+     * <p>如因生成有问题等整个是失败的，返回null。
      * @return 需要选择的对象列表
      */
     public abstract List<OsmPrimitive> getWhatToSelectAfterDraw();
@@ -207,7 +208,7 @@ public abstract class AbstractDrawingAction <
         // 选中新路径
         if (selectNew) {
             List<OsmPrimitive> whatToSelectAfterDraw = getWhatToSelectAfterDraw();
-            if (!whatToSelectAfterDraw.isEmpty()) dataSet.setSelected(whatToSelectAfterDraw);
+            if (whatToSelectAfterDraw != null && !whatToSelectAfterDraw.isEmpty()) dataSet.setSelected(whatToSelectAfterDraw);
         }
     }
 }

@@ -17,7 +17,7 @@ import java.util.List;
 public final class FilletGenerator extends AbstractGenerator<FilletParams> {
 
     @Override
-    public ColumbinaSingleOutput getNewNodeWayForSingleInput(ColumbinaSingleInput input, FilletParams params) {
+    public ColumbinaSingleOutput getOutputForSingleInput(ColumbinaSingleInput input, FilletParams params) {
         if (input.ways != null && input.ways.size() == 1) {
             return buildSmoothPolyline(
                     input.ways.getFirst(),
