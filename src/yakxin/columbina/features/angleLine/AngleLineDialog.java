@@ -3,8 +3,6 @@ package yakxin.columbina.features.angleLine;
 import org.openstreetmap.josm.gui.ExtendedDialog;
 import org.openstreetmap.josm.gui.MainApplication;
 import org.openstreetmap.josm.tools.I18n;
-import yakxin.columbina.data.dto.PanelSectionResult;
-import yakxin.columbina.features.fillet.FilletPreference;
 import yakxin.columbina.utils.UtilsUI;
 
 import javax.swing.*;
@@ -19,12 +17,9 @@ public final class AngleLineDialog extends ExtendedDialog {
 
     // 窗体组件
     protected final JPanel panel = new JPanel(new GridBagLayout());
-    private final JPanel header;
-    private final PanelSectionResult sectionLineInfo;
     private final JFormattedTextField angleLineAngleDeg;
     private final JFormattedTextField angleLineLength;
 
-    private final PanelSectionResult sectionOptionInfo;
     private final JCheckBox selectNewWays;
 
     protected AngleLineDialog() {
@@ -37,14 +32,14 @@ public final class AngleLineDialog extends ExtendedDialog {
         setDefaultButton(1);  // ESC取消
 
         // 窗体
-        header = UtilsUI.addHeader(panel, I18n.tr("Oriented Line"), "OrientedLine");
+        UtilsUI.addHeader(panel, I18n.tr("Oriented Line"), "OrientedLine");
 
-        sectionLineInfo = UtilsUI.addSection(panel, I18n.tr("Line Information"));
-        angleLineAngleDeg = UtilsUI.addInput(panel, I18n.tr("Angle (degrees°): "));
-        angleLineLength = UtilsUI.addInput(panel, I18n.tr("Length (m): "));
+        UtilsUI.addSection(panel, I18n.tr("Line Information"));
+        angleLineAngleDeg = UtilsUI.addInput(panel, I18n.tr("Angle (degrees°): "), String.valueOf(AngleLinePreference.getAngleLineAngleDeg()));
+        angleLineLength = UtilsUI.addInput(panel, I18n.tr("Length (m): "), String.valueOf(AngleLinePreference.getAngleLineLength()));
 
-        sectionOptionInfo = UtilsUI.addSection(panel, I18n.tr("Other Operations"));
-        selectNewWays = UtilsUI.addCheckbox(panel, I18n.tr("Select new ways after drawing"), FilletPreference.isFilletSelectNewWays());
+        UtilsUI.addSection(panel, I18n.tr("Other Operations"));
+        selectNewWays = UtilsUI.addCheckbox(panel, I18n.tr("Select new ways after drawing"), AngleLinePreference.isAngleLineSelectNewWays());
 
         contentInsets = new Insets(5, 15, 5, 15);  // 内容边距
         setContent(panel);
@@ -72,3 +67,5 @@ public final class AngleLineDialog extends ExtendedDialog {
     }
     public boolean getIfSelectNew() {return selectNewWays.isSelected();}
 }
+
+

@@ -9,7 +9,7 @@ import java.util.List;
 /**
  * 整个输入由action类分包之后的喂给generator的单个输入
  */
-public class ColumbinaSingleInput {
+public final class ColumbinaSingleInput {
     public List<Node> nodes;
     public List<Way> ways;
 
@@ -27,3 +27,5 @@ public class ColumbinaSingleInput {
         this.ways = totalInput.getWays();
     }
 }
+
+

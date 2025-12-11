@@ -30,3 +30,5 @@ public final class ColumbinaSeqCommand extends SequenceCommand {
         return new ImageProvider(iconName).setSize(16,16).get();
     }
 }
+
+

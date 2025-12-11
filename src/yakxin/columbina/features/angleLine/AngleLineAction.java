@@ -4,8 +4,10 @@ import org.openstreetmap.josm.tools.I18n;
 import org.openstreetmap.josm.tools.Shortcut;
 import yakxin.columbina.abstractClasses.actionMiddle.ActionWithNodeWay;
 import yakxin.columbina.data.dto.inputs.ColumbinaInput;
+import yakxin.columbina.data.dto.inputs.ColumbinaSingleInput;
 
 import java.awt.event.KeyEvent;
+import java.util.HashMap;
 import java.util.Map;
 
 public final class AngleLineAction extends
@@ -50,12 +52,12 @@ public final class AngleLineAction extends
 
     @Override
     public String getUndoRedoInfo(ColumbinaInput inputs, AngleLineParams params) {
-        return I18n.tr("");
+        return I18n.tr("Make oriented line: from node {0}, {1} {2}°, {3}m",
+                inputs.getWays().getFirst().getUniqueId(),
+                params.angleDeg < 0 ? I18n.tr("left") : I18n.tr("right"),
+                params.angleDeg,
+                params.surfaceLength);
     }
-
-    @Override
-    public Map<String, String> getNewWayTags(Object singleInput) {
-        return Map.of();
-    }
-
 }
+
+

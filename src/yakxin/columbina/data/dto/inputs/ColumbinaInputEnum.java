@@ -17,3 +17,5 @@ public enum ColumbinaInputEnum {
         return this.descriptionI18n;
     }
 }
+
+

@@ -6,6 +6,10 @@ import yakxin.columbina.abstractClasses.AbstractPreference;
 import yakxin.columbina.data.dto.inputs.ColumbinaInput;
 
 public final class AngleLinePreference extends AbstractPreference<AngleLineParams> {
+    public AngleLinePreference() {
+        readPreference();
+    }
+
     private static double angleLineAngleDeg;
     private static double angleLineLength;
     private static boolean angleLineSelectNewWays;
@@ -65,7 +69,7 @@ public final class AngleLinePreference extends AbstractPreference<AngleLineParam
         if (angleLineDialog.getValue() != 1) return null;  // 按ESC（0）或点击取消（2），退出；点击确定继续是1
 
         // 数值检查
-        double LineLength = angleLineDialog.getAngleLineAngleDeg();
+        double LineLength = angleLineDialog.getAngleLineLength();
         if (LineLength <= 0) throw new IllegalArgumentException(I18n.tr("Invalid length, should be greater than 0m."));
 
         // 保存设置

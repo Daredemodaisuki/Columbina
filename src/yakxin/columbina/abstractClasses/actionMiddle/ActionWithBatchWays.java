@@ -220,9 +220,10 @@ public abstract class ActionWithBatchWays<
     }
 
     @Override
-    public Map<String, String> getNewWayTags(Object singleInput) {
+    public Map<String, String> getNewWayTags(ColumbinaSingleInput singleInput) {
         Map<String, String> newWayTags = new HashMap<>();
-        if (singleInput instanceof Way) newWayTags = ((Way) singleInput).getInterestingTags();  // 读取原Way的tag
+        if (singleInput.ways != null && singleInput.ways.size() == 1)
+            newWayTags = singleInput.ways.getFirst().getInterestingTags();  // 读取原Way的tag
         return newWayTags;
     }
 
@@ -243,25 +244,30 @@ public abstract class ActionWithBatchWays<
             boolean copyTag) {
         // 调用生成传入的函数计算路径
         ColumbinaSingleOutput singleOutput = generator.getOutputForSingleInput(singleInput, params);
+        if (singleOutput == null) return null;
         if (!singleOutput.ifCanMakeAWay()) return null;
         List<Node> newNodes = singleOutput.newNodes;
         List<Long> failedNodeIds = singleOutput.failedNodes;
+        List<Command> addCommands = new LinkedList<>();
 
         // 画新线
         Way newWay = singleOutput.linkNodesToWay();
 
         // 复制原Way标签
         if (copyTag) {
-            newWay.setKeys(getNewWayTags(singleInput));
+            Map<String, String> keys = getNewWayTags(singleInput);
+            if (newWay != null && keys != null)
+                newWay.setKeys(keys);
         }
 
         // 正式构建绘制命令
-        List<Command> addCommands = new LinkedList<>();
-        for (Node n : newNodes.stream().distinct().toList()) {  // 路径内部可能有节点复用（如闭合线），去重
-            if (!ds.containsNode(n))  // 新路径的节点在ds中未绘制（不是复用的）才准备绘制
-                addCommands.add(new AddCommand(ds, n));  // 添加节点到命令序列
+        if (newWay != null) {
+            for (Node n : newNodes.stream().distinct().toList()) {  // 路径内部可能有节点复用（如闭合线），去重
+                if (!ds.containsNode(n))  // 新路径的节点在ds中未绘制（不是复用的）才准备绘制
+                    addCommands.add(new AddCommand(ds, n));  // 添加节点到命令序列
+            }
+            addCommands.add(new AddCommand(ds, newWay));  // 添加线到命令序列
         }
-        addCommands.add(new AddCommand(ds, newWay));  // 添加线到命令序列
 
         return new NewNodeWayCommands(newWay, addCommands, failedNodeIds);
     }

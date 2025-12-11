@@ -12,6 +12,7 @@ import org.openstreetmap.josm.tools.Shortcut;
 import yakxin.columbina.data.ColumbinaException;
 import yakxin.columbina.data.ColumbinaSeqCommand;
 import yakxin.columbina.data.dto.inputs.ColumbinaInput;
+import yakxin.columbina.data.dto.inputs.ColumbinaSingleInput;
 import yakxin.columbina.utils.UtilsUI;
 
 import java.awt.event.ActionEvent;
@@ -52,7 +53,7 @@ public abstract class AbstractDrawingAction <
     public abstract String getUndoRedoInfo(ColumbinaInput inputs, ParamType params);
 
     /**
-     * 将输入要素全部传入generator获取并汇总全部添加指令
+     * 将输入要素传入generator获取并汇总全部添加指令
      * <p>对于允许批量操作的操作类，需要将全部输入要素拆包（拆为一组一组的，每组输入产生一条路径），在for中获取单组输入产生的指令并合并到一起
      * <p>如果一组输入中有部分失败，在这个函数中直接弹窗警告，不影响全流程；
      * <p>如果一组输入完全失败，则抛出异常；如果是批量操作中某组完全失败，在for中抛出异常以不影响其他组输入。
@@ -101,7 +102,7 @@ public abstract class AbstractDrawingAction <
      * @param singleInput 单组输入要素
      * @return 标签映射
      */
-    public abstract Map<String, String> getNewWayTags(Object singleInput);
+    public abstract Map<String, String> getNewWayTags(ColumbinaSingleInput singleInput);
 
     // 上述之外，每种Action所需的名字、图标等是固定的，为了简便、不在Columbina主类写太多参数，
     // 每个action可以写一个静态的create函数返回new自身（静态工厂），但是貌似语法不支持在这里限制必须实现一个abstract static，
