@@ -7,7 +7,8 @@ import org.openstreetmap.josm.data.osm.Way;
 import org.openstreetmap.josm.tools.I18n;
 import yakxin.columbina.abstractClasses.AbstractGenerator;
 import yakxin.columbina.data.ColumbinaException;
-import yakxin.columbina.data.dto.DrawingNewNodeResult;
+import yakxin.columbina.data.dto.ColumbinaSingleOutput;
+import yakxin.columbina.data.dto.inputs.ColumbinaSingleInput;
 import yakxin.columbina.utils.UtilsMath;
 
 import java.util.ArrayList;
@@ -23,18 +24,19 @@ import java.util.List;
  */
 
 
-public class TransitionCurveGenerator extends AbstractGenerator<TransitionCurveParams> {
+public final class TransitionCurveGenerator extends AbstractGenerator<TransitionCurveParams> {
 
-    public static final int LEFT = 1;
-    public static final int RIGHT = -LEFT;  // -1
     public static final int TERM_MAX = 10;  // 前11项（n从0到10）
 
     @Override
-    public DrawingNewNodeResult getNewNodeWay(Way way, TransitionCurveParams params) {
-        return buildTransitionCurvePolyline(
-                way,
-                params.surfaceRadius, params.surfaceTransArcLength, params.chainageNum
-        );
+    public ColumbinaSingleOutput getOutputForSingleInput(ColumbinaSingleInput input, TransitionCurveParams params) {
+        if (input.ways != null && input.ways.size() == 1) {
+            return buildTransitionCurvePolyline(
+                    input.ways.getFirst(),
+                    params.surfaceRadius, params.surfaceTransArcLength, params.chainageNum
+            );
+        }
+        return null;
     }
 
     /// 求和级数的单项：使用匿名函数具体定义TermFunction的抽象compute方法
@@ -104,7 +106,7 @@ public class TransitionCurveGenerator extends AbstractGenerator<TransitionCurveP
         // 判断左右拐
         int leftRight;
         double crossz = u1[0] * u2[1] - u1[1] * u2[0];  // 向量叉积的Z分量，<0左拐，>0右拐（注意crossz是BA×BC不是AB×BC，所以这里正负判断是反过来的）
-        if (crossz < 0) leftRight = LEFT; else leftRight = RIGHT;
+        if (crossz < 0) leftRight = UtilsMath.LEFT; else leftRight = UtilsMath.RIGHT;
 
         /// 计算（从A侧缓曲线起点开始计算双螺旋1、从C侧缓曲线终点倒过来计算双螺旋2、中间的圆弧）
         // 计算两侧切线长
@@ -143,7 +145,7 @@ public class TransitionCurveGenerator extends AbstractGenerator<TransitionCurveP
             double enChainageLength,  // 每个桩（节点）之间的距离
             int leftRight  // 往左走往右走
     ) {
-        if (leftRight != LEFT && leftRight != RIGHT)  // 哇，还有凉面派
+        if (leftRight != UtilsMath.LEFT && leftRight != UtilsMath.RIGHT)  // 哇，还有凉面派
             throw new IllegalArgumentException(I18n.tr("getUnrotatedTransitionArc: Unexpected leftRight arg."));
         if (enChainageLength > enTransArcLength)  // 桩距不能比总长度还大
             throw new IllegalArgumentException(I18n.tr("getUnrotatedTransitionArc: enChainageLength > enTransArcLength."));
@@ -321,7 +323,7 @@ public class TransitionCurveGenerator extends AbstractGenerator<TransitionCurveP
      * @param surfaceChainage 桩距（节点间距，米）
      * @return 包含新节点列表和失败节点ID的DrawingNewNodeResult
      */
-    public static DrawingNewNodeResult buildTransitionCurvePolyline(
+    public static ColumbinaSingleOutput buildTransitionCurvePolyline(
             Way way,
             double surfaceRadius, double surfaceLength, double surfaceChainage
     ) {
@@ -391,7 +393,7 @@ public class TransitionCurveGenerator extends AbstractGenerator<TransitionCurveP
             }
         }
         if (transCurves.isEmpty()) {  // 没有曲线，返回原始路径
-            return new DrawingNewNodeResult(new ArrayList<>(nodes), failedNodes);
+            return new ColumbinaSingleOutput(new ArrayList<>(nodes), failedNodes);
         }
 
         // 最终的经纬度坐标序列
@@ -431,7 +433,7 @@ public class TransitionCurveGenerator extends AbstractGenerator<TransitionCurveP
             }
         }
 
-        return new DrawingNewNodeResult(finalNodes, failedNodes);
+        return new ColumbinaSingleOutput(finalNodes, failedNodes);
     }
 
     // 打包双螺旋曲线的起始点、起始偏角

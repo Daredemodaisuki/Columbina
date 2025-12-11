@@ -4,41 +4,107 @@ import org.openstreetmap.josm.actions.JosmAction;
 import org.openstreetmap.josm.command.Command;
 import org.openstreetmap.josm.data.UndoRedoHandler;
 import org.openstreetmap.josm.data.osm.DataSet;
-import org.openstreetmap.josm.data.osm.Way;
+import org.openstreetmap.josm.data.osm.OsmPrimitive;
 import org.openstreetmap.josm.gui.layer.OsmDataLayer;
 import org.openstreetmap.josm.plugins.utilsplugin2.replacegeometry.ReplaceGeometryException;
 import org.openstreetmap.josm.tools.I18n;
 import org.openstreetmap.josm.tools.Shortcut;
 import yakxin.columbina.data.ColumbinaException;
 import yakxin.columbina.data.ColumbinaSeqCommand;
-import yakxin.columbina.data.dto.AddCommandsCollected;
-import yakxin.columbina.data.dto.LayerDatasetAndWaySelected;
-import yakxin.columbina.data.dto.NewNodeWayCommands;
-import yakxin.columbina.utils.UtilsData;
+import yakxin.columbina.data.dto.inputs.ColumbinaInput;
+import yakxin.columbina.data.dto.inputs.ColumbinaSingleInput;
 import yakxin.columbina.utils.UtilsUI;
 
 import java.awt.event.ActionEvent;
 import java.util.*;
 
 /**
- * 总的功能操作逻辑
+ * 总的功能操作逻辑：根据输入的节点或者路径绘制新路径
  * <p>不管具体的参数、生成方式是什么了，只管通用逻辑，一切差异化的东西在具体的action类实现，具体的参数、生成方式分别在各自类实现之后传实体进来。
+ * <p>通用的逻辑是：获取当前选择输入（目前支持Way或Node）；弹出参数设置窗口，获取参数；对每个输入Way或Node使用生成器绘制新路径，并记录输入输出对；
+ * 对输入中处理失败的节点提示；移除旧路径（目前只考虑输入Way可能需要移除，节点有需求再扩充）
  * @param <GeneratorType> 具体的生成器类
  * @param <PreferenceType> 具体的首选项类
  * @param <ParamType> 具体的参数类
  */
-public abstract class AbstractDrawingAction
-        <GeneratorType extends AbstractGenerator<ParamType>, PreferenceType extends AbstractPreference<ParamType>, ParamType extends AbstractParams>
+public abstract class AbstractDrawingAction <
+        GeneratorType extends AbstractGenerator<ParamType>,  // 生成器泛型
+        PreferenceType extends AbstractPreference<ParamType>,  // 首选项泛型
+        ParamType extends AbstractParams>  // 输入参数泛型
         extends JosmAction
-{
+    {
+    public static final int NO_LIMITATION_ON_INPUT_NUM = -1;
+    public static final int CHECK_OK = 0;
+    public static final int CHECK_OK_BUT_WARN = 1;
+    public static final int USER_CANCEL = 2;
+
     /// 具体的参数、生成方式
-    private final GeneratorType generator;
-    private final PreferenceType preference;  // preference是final但是不影响它内部自己变
-    private ParamType params;  // params将在执行点击事件时具体获取，每次获取可能不一致
+    protected final GeneratorType generator;
+    protected final PreferenceType preference;  // preference是final但是不影响它内部自己变
+    protected ParamType params;  // params将在执行点击事件时具体获取，每次获取可能不一致
 
     /// 所有需要由具体action类定义的东西
-    public abstract String getUndoRedoInfo(List<Way> selectedWays, ParamType params);
-    // 每种Action所需的名字、图标等是固定的，为了简便、不在Columbina主类写太多参数，
+    /**
+     * 获取撤销重做栈的说明
+     * @param inputs 输入要素
+     * @param params 输入参数
+     * @return 说明文本（I18n后）
+     */
+    public abstract String getUndoRedoInfo(ColumbinaInput inputs, ParamType params);
+
+    /**
+     * 将输入要素传入generator获取并汇总全部添加指令
+     * <p>对于允许批量操作的操作类，需要将全部输入要素拆包（拆为一组一组的，每组输入产生一条路径），在for中获取单组输入产生的指令并合并到一起
+     * <p>如果一组输入中有部分失败，在这个函数中直接弹窗警告，不影响全流程；
+     * <p>如果一组输入完全失败，则抛出异常；如果是批量操作中某组完全失败，在for中抛出异常以不影响其他组输入。
+     * <p>如有必要，这个函数应该在中间层或具体操作类中自行储存输入与输出的对应关系，以便concludeRemoveCommands使用。
+     * <p>如果不需要添加，返回空的列表。
+     * <p>如果全部都处理失败而没有添加指令，返回null。
+     * @param ds 数据集
+     * @param input 选定的旧路径
+     * @param copyTag 是否拷贝标签
+     * @return 对于全部输入产生的添加指令列表
+     */
+    public abstract List<Command> concludeAddCommands(
+            DataSet ds, ColumbinaInput input,
+            boolean copyTag
+    );
+
+    /**
+     * 汇总全部移除指令
+     * <p>通常是移除旧的输入要素，如有此必要，应让concludeAddCommands在中间层或具体操作类中自行储存输入与输出的对应关系，以便此处对照移除。
+     * <p>如果有无法移除的情况，则不要移除该要素，直接弹窗警告，不影响全流程。
+     * <p>如果不需要移除，返回空的列表。
+     * @param ds 数据集
+     * @return 对于全部输入产生的移除指令列表
+     */
+    public abstract List<Command> concludeRemoveCommands(DataSet ds);
+
+    /**
+     * 检查输入要素的数量是否合法
+     * <p>具体的数量要求应在中间层或具体操作类中定义。
+     * @param inputs 输入要素
+     * @return 检查结果状态
+     */
+    public abstract int checkInputNum(ColumbinaInput inputs);
+
+    /**
+     * 获取需要选中的新路径
+     * <p>如有必要，根据类内部记录的输入输出对（由concludeAddCommands负责）返回绘图后需要选择的对象；
+     * <p>如无必要，返回空列表。
+     * <p>如因生成有问题等整个是失败的，返回null。
+     * @return 需要选择的对象列表
+     */
+    public abstract List<OsmPrimitive> getWhatToSelectAfterDraw();
+
+    /**
+     * 获取新绘制路径所需的标签，为getAddCmd所用
+     * @param singleInput 单组输入要素
+     * @return 标签映射
+     */
+    public abstract Map<String, String> getNewWayTags(ColumbinaSingleInput singleInput);
+
+    // 上述之外，每种Action所需的名字、图标等是固定的，为了简便、不在Columbina主类写太多参数，
     // 每个action可以写一个静态的create函数返回new自身（静态工厂），但是貌似语法不支持在这里限制必须实现一个abstract static，
     // 这里需要自行注意一下，且如果写了这个函数，action的构造函数可以改为private
     // 或者不嫌麻烦就在Columbina填一大堆也行。
@@ -50,6 +116,8 @@ public abstract class AbstractDrawingAction
      * @param iconName 菜单栏功能图标（I18n后）
      * @param description 功能描述（I18n后）
      * @param shortcut 快捷键
+     * @param generator 生成器实例
+     * @param preference 首选项实例
      */
     public AbstractDrawingAction(
             String name, String iconName, String description, Shortcut shortcut,
@@ -67,110 +135,9 @@ public abstract class AbstractDrawingAction
         this.generator = generator;
         this.preference = preference;
         // params将在执行点击事件时具体获取，每次获取可能不一致
-    }
-
-    /**
-     * 通过传入的generator汇总全部添加指令
-     * @param ds 数据库
-     * @param selectedWays 选定的旧路径
-     * @param copyTag 是否拷贝标签
-     * @return 添加所需的指令、新旧路径对、失败的节点的打包
-     */
-    public AddCommandsCollected concludeAddCommands(
-            DataSet ds, List<Way> selectedWays,
-            boolean copyTag
-    ) {
-        List<Command> commands = new ArrayList<>();
-        Map<Way, Way> oldNewWayPairs = new HashMap<>();
-        Map<Way, List<Long>> failedNodeIds = new HashMap<>();
-
-        // 处理路径
-        for (Way w : selectedWays) {  // 分别处理每条路径
-            try {  // 一条路径出错尽可能不影响其他的
-                NewNodeWayCommands newNWCmd = UtilsData.getAddCmd(ds, w, generator, params, copyTag);  // 获取路径
-
-                if (newNWCmd != null) {  // 应该不会和已提交但未执行（进入ds）的重复提交
-                    commands.addAll(newNWCmd.addCommands);
-                    oldNewWayPairs.put(w, newNWCmd.newWay);
-                    failedNodeIds.put(w, newNWCmd.failedNodeIds);
-                }
-                else UtilsUI.warnInfo(I18n.tr(
-                        "Algorithm did not return at least 2 nodes to form a way for way {0}, this way was not processed.",
-                        w.getUniqueId()
-                ));
-            } catch (Exception exAdd) {
-                UtilsUI.errorInfo(I18n.tr("Unexpected error occurred while processing way {0}: {1}",
-                        w.getUniqueId(), exAdd.getMessage()
-                ));
-            }
-        }
-
-        if (commands.isEmpty()) {  // 未能成功生成一条线
-            throw new ColumbinaException(I18n.tr("Failed to generate any new way."));
-        }
-        // 去重防止提交重复添加
-        commands = commands.stream().distinct().toList();
-
-        return new AddCommandsCollected(commands, oldNewWayPairs, failedNodeIds);
-    }
-
-    /**
-     * 汇总全部移除指令
-     * @param ds 数据库
-     * @param oldNewWayPairs 新旧路径对（用于执行替换）
-     * @return 移除所需的指令
-     */
-    public List<Command> concludeRemoveCommands(
-            DataSet ds, Map<Way, Way> oldNewWayPairs
-    ) {
-        List<Command> commands = new ArrayList<>();
-        for (Map.Entry<Way, Way> oldNewWayEntry: oldNewWayPairs.entrySet()) {
-            Way oldWay = oldNewWayEntry.getKey();
-            Way newWay = oldNewWayEntry.getValue();
-            if (oldWay == null)
-                throw new ColumbinaException(
-                        I18n.tr("Internal error occurred while removing an old way:\n\n")
-                                + I18n.tr("Old way return value is abnormal (null), unable to get the old way.\n\n")
-                                + I18n.tr("This way may not have been properly rounded or removed.")
-                        // "移除某条旧路径时产生了内部错误：\n\n"
-                        //         + "旧路径返回值异常（null），无法获取旧路径。"
-                        //         + "该路径可能未被正确倒角或移除。"
-                );
-            if (newWay == null)
-                throw new ColumbinaException(
-                        I18n.tr("Internal error occurred while removing old way {0}:\n\n", oldWay.getUniqueId())
-                                + I18n.tr("New way return value is abnormal (null), unable to get the new way.\n\n")
-                                + I18n.tr("Old way {0} may not have been properly rounded or removed.", oldWay.getUniqueId()
-                        )
-                        // "移除旧路径" + oldWay.getUniqueId() + "时产生了内部错误：\n\n"
-                        //         + "新路径返回值异常（null），无法获取新路径。"
-                        //         + "\n\n旧路径" + oldWay.getUniqueId() + "可能未被正确倒角或移除。"
-                );
-
-            try {
-                List<Command> cmdRmv = UtilsData.getRemoveCmd(ds, oldWay, newWay);
-                if (!cmdRmv.isEmpty()) {  // cmdRmv != null &&
-                    commands.addAll(cmdRmv);
-                }
-            } catch (ReplaceGeometryException | IllegalArgumentException exUtils2) {
-                UtilsUI.warnInfo(I18n.tr("Columbina attempted to use Utilsplugin2''s ''Replace Geometry'' function to replace the old way, but failed.\n\n")
-                        + I18n.tr("Message from Utilsplugin2:\n{0}\n\n", exUtils2.getMessage())
-                        + I18n.tr("Old way {0} was not removed.", oldWay.getUniqueId()));
-                // "Columbina尝试调用Utilsplugin2插件之「替换几何图形」功能替换旧路径，但失败。\n\n"
-                // + "来自Utilsplugin2的消息：\n"
-                // + exUtils2.getMessage()
-                // + "\n\n旧路径" + oldWay.getUniqueId() + "未被移除。"
-            } catch (Exception exRmv) {
-                UtilsUI.errorInfo(I18n.tr(
-                        "Unexpected error occurred while removing way {0}: {1}",
-                        oldWay.getUniqueId(),
-                        exRmv.getMessage()
-                ));
-            }
-        }
-        // 去重防止提交重复删除
-        commands = commands.stream().distinct().toList();
-        return commands;
+        // this.inputFeatureType = inputFeatureType;  // 弃用
+        // this.minSelection = minSelection;  // 下放到中间层
+        // this.maxSelection = maxSelection;
     }
 
     /**
@@ -179,24 +146,27 @@ public abstract class AbstractDrawingAction
      */
     @Override
     public void actionPerformed(ActionEvent e) {
-        OsmDataLayer layer; DataSet dataset; List<Way> selectedWays;
+        OsmDataLayer layer; DataSet dataSet; ColumbinaInput input;
         boolean deleteOld; boolean selectNew; boolean copyTag;
 
         // 检查
         try {
-            final LayerDatasetAndWaySelected lyDsWs = UtilsData.getLayerDatasetAndWaySelected();
-            if (lyDsWs == null) return;  // 用户取消操作
-            layer = lyDsWs.layer;
-            dataset = lyDsWs.dataset;
-            selectedWays = lyDsWs.selectedWays;
+            input = new ColumbinaInput();
+            layer = input.getLayer();
+            dataSet = input.getDataSet();
+
+            // 数量检查（不可接受的数量将在checkInputNum抛IllegalArgumentException）
+            if (checkInputNum(input) == USER_CANCEL) return;  // 用户取消时直接退出
 
             // 弹出参数设置窗口，获取参数
-            final ParamType params = preference.getParams();  // 重构后preference负责弹窗，本来也就是设置preference的窗口
+            // 重构后preference负责弹窗，本来也就是设置preference的窗口
+            // 把input也给到getParamsAndUpdatePreference，以便窗口可以实时计算一些内容并反馈给用户
+            final ParamType params = preference.getParamsAndUpdatePreference(input);
             if (params == null) return;  // 用户取消操作
             // 存入类成员以便concludeAddCommands之UtilsData.getAddCmd(…, params, …)
             // 和下面的ColumbinaSeqCommand(getUndoRedoInfo(…, params), …);使用
             this.params = params;
-            // 获取影响整个动作模板逻辑的关键参数
+            // 获取影响整个动作模板逻辑的关键通用参数
             deleteOld = params.deleteOld;
             selectNew = params.selectNew;
             copyTag = params.copyTag;
@@ -206,18 +176,11 @@ public abstract class AbstractDrawingAction
         }
 
         // 绘制新路径
-        AddCommandsCollected cmdsAddAndWayPairs;
         List<Command> cmdsAdd;
-        Map<Way, Way> oldNewWayPairs;
-        Map<Way, List<Long>> failedNodeIds;
         try {
-            cmdsAddAndWayPairs = concludeAddCommands(
-                    dataset, selectedWays,
-                    copyTag
-            );
-            cmdsAdd = cmdsAddAndWayPairs.commands;
-            oldNewWayPairs = cmdsAddAndWayPairs.oldNewWayPairs;
-            failedNodeIds = cmdsAddAndWayPairs.failedNodeIds;
+            cmdsAdd = concludeAddCommands(dataSet, input, copyTag);
+            if (cmdsAdd == null)
+                throw new ColumbinaException(I18n.tr("No input was successfully processed."));
         } catch (ColumbinaException | IllegalArgumentException exAdd) {
             UtilsUI.errorInfo(exAdd.getMessage());
             return;
@@ -225,45 +188,30 @@ public abstract class AbstractDrawingAction
 
         // 绘制部分的撤销重做栈处理并正式提交执行
         if (!cmdsAdd.isEmpty()) {
-            Command cmdAdd = new ColumbinaSeqCommand(getUndoRedoInfo(selectedWays, params), cmdsAdd, "RoundCorners");
+            Command cmdAdd = new ColumbinaSeqCommand(getUndoRedoInfo(input, params), cmdsAdd, "RoundCorners");
             UndoRedoHandler.getInstance().add(cmdAdd);
         }
 
-        // 如果有拐角处理失败，则提示
-        if (failedNodeIds != null && !failedNodeIds.isEmpty()) {
-            boolean hasFailedNodes = false;
-            String failedInfo = I18n.tr("The following corner nodes could not be rounded due to too short distance to adjacent nodes or not meeting the angle restrictions: ");
-            for (Map.Entry<Way, List<Long>> failedEntry : failedNodeIds.entrySet()) {
-                if (failedEntry.getValue().isEmpty()) continue;
-                failedInfo = failedInfo
-                        + I18n.tr("\nWay") + failedEntry.getKey().getUniqueId()
-                        + I18n.tr(": ") + failedEntry.getValue();
-                hasFailedNodes = true;
-            }
-            if (hasFailedNodes) UtilsUI.warnInfo(failedInfo);
-        }
-
-        // 移除旧路径
+        // 移除旧路径（如果需要的话）
         if (deleteOld) {
             try {
-                List<Command> cmdsRmv = concludeRemoveCommands(dataset, oldNewWayPairs);
+                List<Command> cmdsRmv = concludeRemoveCommands(dataSet);
                 if (!cmdsRmv.isEmpty()) {  // 如果全部都没有删除/替换，cmdsRmv为空会错错爆;
                     Command cmdRmv = new ColumbinaSeqCommand(I18n.tr("Columbina: Remove original ways"), cmdsRmv, "RemoveOldWays");
                     UndoRedoHandler.getInstance().add(cmdRmv);
                 }
             } catch (ColumbinaException | IllegalArgumentException | ReplaceGeometryException exRemove) {
                 UtilsUI.warnInfo(exRemove.getMessage());
-                // return;
+                // 一个不能换不影响尝试换其他的
             }
-            // TODO:选中的旧路径之间有交点且不与其他路径连接时，因为现在删/换数条线是打包到一次undoRedo中同时操作。
-            //  删way1时认为交点在way2上，way2认为在way1上，一起做这些交点不会被删除/替换，需要手动处理。
         }
 
         // 选中新路径
         if (selectNew) {
-            List<Way> newWays = new ArrayList<>();
-            for (Map.Entry<Way, Way> oldNewWayEntry: oldNewWayPairs.entrySet()) newWays.add(oldNewWayEntry.getValue());
-            dataset.setSelected(newWays);
+            List<OsmPrimitive> whatToSelectAfterDraw = getWhatToSelectAfterDraw();
+            if (whatToSelectAfterDraw != null && !whatToSelectAfterDraw.isEmpty()) dataSet.setSelected(whatToSelectAfterDraw);
         }
     }
 }
+
+

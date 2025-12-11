@@ -16,3 +16,5 @@ public final class TransitionCurveParams extends AbstractParams {
         this.chainageNum = chainageNum;
     }
 }
+
+

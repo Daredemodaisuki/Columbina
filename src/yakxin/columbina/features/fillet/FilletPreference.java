@@ -3,6 +3,7 @@ package yakxin.columbina.features.fillet;
 import org.openstreetmap.josm.spi.preferences.Config;
 import org.openstreetmap.josm.tools.I18n;
 import yakxin.columbina.abstractClasses.AbstractPreference;
+import yakxin.columbina.data.dto.inputs.ColumbinaInput;
 import yakxin.columbina.utils.UtilsUI;
 
 public final class FilletPreference extends AbstractPreference<FilletParams>  {
@@ -13,7 +14,7 @@ public final class FilletPreference extends AbstractPreference<FilletParams>  {
     // static {readPreference();}
 
     private static double filletRadius;
-    private static double filletAngleStep;
+    private static double filletChainageLength;
     private static int filletMaxPointPerArc;
     private static double filletMinAngleDeg;
     private static double filletMaxAngleDeg;
@@ -23,7 +24,7 @@ public final class FilletPreference extends AbstractPreference<FilletParams>  {
 
     // 默认值
     public static final double DEFAULT_FILLET_RADIUS = 150.0;
-    public static final double DEFAULT_FILLET_ANGLE_STEP = 0.75;
+    public static final double DEFAULT_FILLET_CHAINAGE_LENGTH = 15.0;
     public static final int DEFAULT_FILLET_MAX_POINT_PER_ARC = 20;
     public static final double DEFAULT_FILLET_MIN_ANGLE_DEG = 2.5;
     public static final double DEFAULT_FILLET_MAX_ANGLE_DEG = 177.5;
@@ -31,7 +32,7 @@ public final class FilletPreference extends AbstractPreference<FilletParams>  {
     // 读取和储存
     public static void readPreference() {
         filletRadius = Config.getPref().getDouble("columbina.round-corner.surfaceRadius", DEFAULT_FILLET_RADIUS);
-        filletAngleStep = Config.getPref().getDouble("columbina.round-corner.angle-step", DEFAULT_FILLET_ANGLE_STEP);
+        filletChainageLength = Config.getPref().getDouble("columbina.round-corner.chainage-length", DEFAULT_FILLET_CHAINAGE_LENGTH);
         filletMaxPointPerArc = Config.getPref().getInt("columbina.round-corner.max-num-of-point", DEFAULT_FILLET_MAX_POINT_PER_ARC);
         filletMinAngleDeg = Config.getPref().getDouble("columbina.round-corner.min-angle-deg", DEFAULT_FILLET_MIN_ANGLE_DEG);
         filletMaxAngleDeg = Config.getPref().getDouble("columbina.round-corner.max-angle-deg", DEFAULT_FILLET_MAX_ANGLE_DEG);
@@ -42,7 +43,7 @@ public final class FilletPreference extends AbstractPreference<FilletParams>  {
 
     public static void setPreferenceFromDialog(FilletDialog dlg) {
         filletRadius = dlg.getFilletRadius();
-        filletAngleStep = dlg.getFilletAngleStep();
+        filletChainageLength = dlg.getFilletChainageLength();
         filletMaxPointPerArc = dlg.getFilletMaxPointNum();
         filletMinAngleDeg = dlg.getMinAngleDeg();
         filletMaxAngleDeg = dlg.getMaxAngleDeg();
@@ -53,7 +54,7 @@ public final class FilletPreference extends AbstractPreference<FilletParams>  {
 
     public static void savePreference() {
         Config.getPref().putDouble("columbina.round-corner.surfaceRadius", filletRadius);
-        Config.getPref().putDouble("columbina.round-corner.angle-step", filletAngleStep);
+        Config.getPref().putDouble("columbina.round-corner.chainage-length", filletChainageLength);
         Config.getPref().putInt("columbina.round-corner.max-num-of-point", filletMaxPointPerArc);
         Config.getPref().putDouble("columbina.round-corner.min-angle-deg", filletMinAngleDeg);
         Config.getPref().putDouble("columbina.round-corner.max-angle-deg", filletMaxAngleDeg);
@@ -119,34 +120,35 @@ public final class FilletPreference extends AbstractPreference<FilletParams>  {
         FilletPreference.filletMaxAngleDeg = filletMaxAngleDeg;
     }
 
-    public static double getFilletAngleStep() {
-        return filletAngleStep;
+    public static double getFilletChainageLength() {
+        return filletChainageLength;
     }
 
-    public static void setFilletAngleStep(double filletAngleStep) {
-        FilletPreference.filletAngleStep = filletAngleStep;
+    public static void setFilletChainageLength(double filletChainageLength) {
+        FilletPreference.filletChainageLength = filletChainageLength;
     }
 
     /**
-     * 弹窗并保存、返回参数
+     * 弹窗并校验、保存、返回参数
      * @return 输入的参数
      */
     @Override
-    public FilletParams getParams() {
-        FilletDialog filletDialog = new FilletDialog();  // 创建设置对话框
+    public FilletParams getParamsAndUpdatePreference(ColumbinaInput input) {
+        FilletDialog filletDialog = new FilletDialog(input);  // 创建设置对话框
 
         if (filletDialog.getValue() != 1) return null;  // 按ESC（0）或点击取消（2），退出；点击确定继续是1
 
         double radius = filletDialog.getFilletRadius();  // 圆角半径
         if (radius <= 0.0) throw new IllegalArgumentException(I18n.tr("Invalid round corner surfaceRadius, should be greater than 0m."));
 
-        double angleStep = filletDialog.getFilletAngleStep();  // 圆角步进
-        if (angleStep < 0.1) {
-            angleStep = 0.1;
-            filletDialog.setFilletAngleStep(0.1);
-            UtilsUI.warnInfo(I18n.tr("Minimum angle step for round corner should be at least 0.1°, set to 0.1°."));
+        double chainageLength = filletDialog.getFilletChainageLength();  // 桩距（节点距离）
+        if (chainageLength < 0.1) {
+            chainageLength = 0.1;
+            filletDialog.setFilletChainageLength(0.1);
+            UtilsUI.warnInfo(I18n.tr("Minimum chainage length (node spacing) for round corner should be at least 0.1m, set to 0.1m."));
         }
-        else if (angleStep > 10.0) UtilsUI.warnInfo(I18n.tr("Angle step is too large, the result may not be good."));
+        // else if (chainageLength < 10.0) UtilsUI.warnInfo(I18n.tr("Chainage length (node spacing) is too small, the nodes may be dense."));
+
         int maxPointNum = filletDialog.getFilletMaxPointNum();  // 曲线点数
         if (maxPointNum < 1) throw new IllegalArgumentException(I18n.tr("Invalid maximum number of points for round corner, should be at least 1."));
         else if (maxPointNum < 5) UtilsUI.warnInfo(I18n.tr("Maximum number of points for round corner is too low, the result may not be ideal."));
@@ -169,7 +171,7 @@ public final class FilletPreference extends AbstractPreference<FilletParams>  {
         FilletPreference.setPreferenceFromDialog(filletDialog);  // 更新自身
         FilletPreference.savePreference();
         return new FilletParams(
-                filletRadius, filletAngleStep, filletMaxPointPerArc,
+                filletRadius, filletChainageLength, filletMaxPointPerArc,
                 filletMinAngleDeg, filletMaxAngleDeg,
                 filletDeleteOldWays, filletSelectNewWays, filletCopyTag
         );

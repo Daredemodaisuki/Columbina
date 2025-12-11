@@ -18,7 +18,7 @@ import java.util.Locale;
 /**
  * 倒斜角对话框
  */
-public class ChamferDialog extends ExtendedDialog {
+public final class ChamferDialog extends ExtendedDialog {
     private static final String[] BUTTON_TEXTS = new String[] {I18n.tr("Confirm"), I18n.tr("Cancel")};
     private static final String[] BUTTON_ICONS = new String[] {"ok", "cancel"};
 

@@ -5,24 +5,28 @@ import org.openstreetmap.josm.data.osm.Node;
 import org.openstreetmap.josm.data.osm.Way;
 import yakxin.columbina.abstractClasses.AbstractGenerator;
 import yakxin.columbina.data.ColumbinaException;
-import yakxin.columbina.data.dto.DrawingNewNodeResult;
+import yakxin.columbina.data.dto.ColumbinaSingleOutput;
+import yakxin.columbina.data.dto.inputs.ColumbinaSingleInput;
 import yakxin.columbina.utils.UtilsMath;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class ChamferGenerator extends AbstractGenerator<ChamferParams> {
+public final class ChamferGenerator extends AbstractGenerator<ChamferParams> {
 
     public static final int USING_DISTANCE = 0;
     public static final int USING_ANGLE_A = 1;
 
     @Override
-    public DrawingNewNodeResult getNewNodeWay(Way way, ChamferParams params) {
-        return buildChamferPolyline(
-                way, params.mode,
-                params.surfaceDistanceA, params.surfaceDistanceC,
-                params.angleADeg
-        );
+    public ColumbinaSingleOutput getOutputForSingleInput(ColumbinaSingleInput input, ChamferParams params) {
+        if (input.ways != null && input.ways.size() == 1) {
+            return buildChamferPolyline(
+                    input.ways.getFirst(), params.mode,
+                    params.surfaceDistanceA, params.surfaceDistanceC,
+                    params.angleADeg
+            );
+        }
+        return null;
     }
 
     // 绘制一个斜角
@@ -100,7 +104,7 @@ public class ChamferGenerator extends AbstractGenerator<ChamferParams> {
         return cutNodes;
     }
 
-    public static DrawingNewNodeResult buildChamferPolyline(
+    public static ColumbinaSingleOutput buildChamferPolyline(
             Way way, int mode,
             double surfaceDistanceA, double surfaceDistanceC,
             double angleADeg
@@ -200,7 +204,7 @@ public class ChamferGenerator extends AbstractGenerator<ChamferParams> {
             finalNodes.add(way.getNode(way.getNodesCount() - 1));
         }
 
-        return new DrawingNewNodeResult(finalNodes, failedNodes);
+        return new ColumbinaSingleOutput(finalNodes, failedNodes);
         // 正式绘制前注意去重
     }
 }

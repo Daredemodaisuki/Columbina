@@ -2,7 +2,7 @@ package yakxin.columbina.data.dto;
 
 import javax.swing.*;
 
-public class PanelSectionResult {
+public final class PanelSectionResult {
     public JLabel label;
     public JSeparator sep;
 

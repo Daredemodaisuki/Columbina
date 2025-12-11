@@ -4,15 +4,16 @@ import org.openstreetmap.josm.data.osm.Way;
 import org.openstreetmap.josm.tools.I18n;
 import org.openstreetmap.josm.tools.Shortcut;
 import yakxin.columbina.abstractClasses.AbstractDrawingAction;
+import yakxin.columbina.abstractClasses.actionMiddle.ActionWithBatchWays;
+import yakxin.columbina.data.dto.inputs.ColumbinaInput;
 
 import java.awt.event.KeyEvent;
-import java.util.*;
 
 /**
  * 过渡曲线（缓和曲线）交互类
  */
-public class TransitionCurveAction extends AbstractDrawingAction
-    <TransitionCurveGenerator, TransitionCurvePreference, TransitionCurveParams>
+public final class TransitionCurveAction extends
+        ActionWithBatchWays<TransitionCurveGenerator, TransitionCurvePreference, TransitionCurveParams>
 {
     /**
      * 构造函数
@@ -25,7 +26,11 @@ public class TransitionCurveAction extends AbstractDrawingAction
      * @param preference  首选项实例
      */
     private TransitionCurveAction(String name, String iconName, String description, Shortcut shortcut, TransitionCurveGenerator generator, TransitionCurvePreference preference) {
-        super(name, iconName, description, shortcut, generator, preference);
+        super(
+                name, iconName, description, shortcut,
+                generator, preference,
+                AbstractDrawingAction.NO_LIMITATION_ON_INPUT_NUM, AbstractDrawingAction.NO_LIMITATION_ON_INPUT_NUM
+        );
     }
 
     /**
@@ -48,17 +53,17 @@ public class TransitionCurveAction extends AbstractDrawingAction
     }
 
     @Override
-    public String getUndoRedoInfo(List<Way> selectedWays, TransitionCurveParams params) {
+    public String getUndoRedoInfo(ColumbinaInput inputs, TransitionCurveParams params) {
         String undoRedoInfo;
-        if (selectedWays.size() == 1) {
+        if (inputs.getInputNum(Way.class) == 1) {
             undoRedoInfo = I18n.tr("Transition curve of way {0}: R={1}m, Ls={2}m",
-                    selectedWays.getFirst().getUniqueId(), params.surfaceRadius, params.surfaceTransArcLength);
-        } else if (selectedWays.size() <= 5) {
+                    inputs.getWays().getFirst().getUniqueId(), params.surfaceRadius, params.surfaceTransArcLength);
+        } else if (inputs.getInputNum(Way.class) <= 5) {
             undoRedoInfo = I18n.tr("Transition curve of way {0}: R={1}m, Ls={2}m",
-                    selectedWays.stream().map(Way::getId).toList(), params.surfaceRadius, params.surfaceTransArcLength);
+                    inputs.getWays().stream().map(Way::getUniqueId).toList(), params.surfaceRadius, params.surfaceTransArcLength);
         } else {
             undoRedoInfo = I18n.tr("Transition curve of {0} ways: R={1}m, Ls={2}m",
-                    selectedWays.size(), params.surfaceRadius, params.surfaceTransArcLength);
+                    inputs.getInputNum(Way.class), params.surfaceRadius, params.surfaceTransArcLength);
         }
         return undoRedoInfo;
     }
