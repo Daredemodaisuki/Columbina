@@ -17,9 +17,9 @@ import yakxin.columbina.abstractClasses.AbstractGenerator;
 import yakxin.columbina.abstractClasses.AbstractParams;
 import yakxin.columbina.abstractClasses.AbstractPreference;
 import yakxin.columbina.data.ColumbinaException;
-import yakxin.columbina.data.dto.DrawingNewNodeResult;
-import yakxin.columbina.data.dto.NewNodeWayCommands;
-import yakxin.columbina.data.inputs.ColumbinaInput;
+import yakxin.columbina.data.dto.ColumbinaSingleOutput;
+import yakxin.columbina.data.dto.inputs.ColumbinaInput;
+import yakxin.columbina.data.dto.inputs.ColumbinaSingleInput;
 import yakxin.columbina.utils.UtilsData;
 import yakxin.columbina.utils.UtilsUI;
 
@@ -66,7 +66,8 @@ public abstract class ActionWithBatchWays<
     public ActionWithBatchWays(
             String name, String iconName, String description, Shortcut shortcut,
             GeneratorType generator, PreferenceType preference,
-            int minSelection, int maxSelection) {
+            int minSelection, int maxSelection
+    ) {
         super(name, iconName, description, shortcut,
                 generator, preference
         );
@@ -115,23 +116,29 @@ public abstract class ActionWithBatchWays<
         inputOutputPairs = new HashMap<>();  // 输入节点/路径k与新绘制的路径v的打包对
         Map<Way, List<Long>> failedNodeIds = new HashMap<>();  // 处理输入节点/路径k与处理时k上失败的节点v的打包对
         List<Way> selectedWays = input.getWays();
+        // 批量输入分包
+        // TODO：把getAddCmd放到主抽象类去abstract
+        List<ColumbinaSingleInput> singleInputs = new ArrayList<>();
+        for (Way wayToBeProcessed : input.getWays()){
+            singleInputs.add(new ColumbinaSingleInput(new ArrayList<Node>(), new ArrayList<Way>(Collections.singleton(wayToBeProcessed))));
+        }
         // 处理路径
-        for (Way featureToBeProcessed : selectedWays) {  // 分别处理每个输入路径
+        for (ColumbinaSingleInput singleInput : singleInputs) {  // 分别处理每个输入路径
             try {  // 一条路径出错尽可能不影响其他的
-                NewNodeWayCommands newNWCmd = getAddCmd(ds, featureToBeProcessed, generator, params, copyTag);  // 获取路径
+                NewNodeWayCommands newNWCmd = getAddCmd(ds, singleInput, generator, params, copyTag);  // 获取路径
 
                 if (newNWCmd != null) {  // 应该不会和已提交但未执行（进入ds）的重复提交
                     commands.addAll(newNWCmd.addCommands);
-                    inputOutputPairs.put(featureToBeProcessed, newNWCmd.newWay);
-                    failedNodeIds.put(featureToBeProcessed, newNWCmd.failedNodeIds);
+                    inputOutputPairs.put(singleInput.ways.getFirst(), newNWCmd.newWay);
+                    failedNodeIds.put(singleInput.ways.getFirst(), newNWCmd.failedNodeIds);
                 }
                 else UtilsUI.warnInfo(I18n.tr(
                         "Algorithm did not return at least 2 nodes to form a way for way {0}, this way was not processed.",
-                        featureToBeProcessed.getUniqueId()
+                        singleInput.ways.getFirst().getUniqueId()
                 ));
             } catch (Exception exAdd) {
                 UtilsUI.errorInfo(I18n.tr("Unexpected error occurred while processing way {0}: {1}",
-                        featureToBeProcessed.getUniqueId(), exAdd.getMessage()
+                        singleInput.ways.getFirst().getUniqueId(), exAdd.getMessage()
                 ));
             }
         }
@@ -230,20 +237,18 @@ public abstract class ActionWithBatchWays<
      * @param copyTag 是否复制标签
      * @return 对于一组输入产生的、绘制单条路径所需的指令
      */
-    public NewNodeWayCommands getAddCmd (
-            DataSet ds, Object singleInput,
+    private NewNodeWayCommands getAddCmd (
+            DataSet ds, ColumbinaSingleInput singleInput,
             GeneratorType generator, ParamType params,
             boolean copyTag) {
         // 调用生成传入的函数计算路径
-        DrawingNewNodeResult singleOutput = generator.getNewNodeWayForSingleInput(singleInput, params);
-        if (singleOutput == null || singleOutput.newNodes == null || singleOutput.newNodes.size() < 2) {
-            return null;
-        }
+        ColumbinaSingleOutput singleOutput = generator.getNewNodeWayForSingleInput(singleInput, params);
+        if (!singleOutput.ifCanMakeAWay()) return null;
         List<Node> newNodes = singleOutput.newNodes;
         List<Long> failedNodeIds = singleOutput.failedNodes;
+
         // 画新线
-        Way newWay = new Way();
-        for (Node n : newNodes) newWay.addNode(n);  // 向新路径添加所有新节点
+        Way newWay = singleOutput.linkNodesToWay();
 
         // 复制原Way标签
         if (copyTag) {
@@ -263,13 +268,13 @@ public abstract class ActionWithBatchWays<
 
     /**
      * 移除/替换一条旧路径及无用节点的指令，删多条把这个函数放在for里面一个个删
-     * 移除/替换操作是ActionWithBatchWays里面3个功能统一的，所以统一这里实现
+     * <p>移除/替换操作是ActionWithBatchWays里面3个功能统一的，所以统一这里实现
      * @param ds 当前数据库
      * @param oldWay 希望移除的旧路径
      * @param newWay 用于替换的新路径
      * @return 指令列表
      */
-    public static List<Command> getRemoveCmd(DataSet ds, Way oldWay, Way newWay) {
+    private List<Command> getRemoveCmd(DataSet ds, Way oldWay, Way newWay) {
         List<Command> removeCommands = new ArrayList<>();
 
         // 既有路径替换
@@ -335,4 +340,19 @@ public abstract class ActionWithBatchWays<
             if (hasFailedNodes) UtilsUI.warnInfo(failedInfo);
         }
     }
+
+    /// 内部类
+    private static final class NewNodeWayCommands {
+        public final Way newWay;
+        public final List<Command> addCommands;
+        public final List<Long> failedNodeIds;
+
+        public NewNodeWayCommands(Way newWay, List<Command> addCommands, List<Long> failedNodeIds) {
+            this.newWay = newWay;
+            this.addCommands = addCommands;
+            this.failedNodeIds = failedNodeIds;
+        }
+    }
 }
+
+

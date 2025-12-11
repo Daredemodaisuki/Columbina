@@ -1,4 +1,4 @@
-package yakxin.columbina.data.inputs;
+package yakxin.columbina.data.dto.inputs;
 
 import org.openstreetmap.josm.data.osm.DataSet;
 import org.openstreetmap.josm.data.osm.Node;
@@ -12,6 +12,10 @@ import yakxin.columbina.data.ColumbinaException;
 import java.util.ArrayList;
 import java.util.List;
 
+
+/**
+ * 总输入类
+ */
 public class ColumbinaInput {
     private OsmDataLayer layer = null;
     private DataSet dataSet =null;
@@ -107,10 +111,10 @@ public class ColumbinaInput {
     }
 
     public String getDescription() {
-        if (nodes.isEmpty() && ways.isEmpty()) return ColumbinaInputEnum.EMPTY.name();
-        else if (!nodes.isEmpty() && ways.isEmpty()) return ColumbinaInputEnum.NODE.name();
-        else if (nodes.isEmpty()) return ColumbinaInputEnum.WAY.name();
-        else return ColumbinaInputEnum.NODE_WAY.name();
+        if (nodes.isEmpty() && ways.isEmpty()) return ColumbinaInputEnum.EMPTY.getDescriptionI18n();
+        else if (!nodes.isEmpty() && ways.isEmpty()) return ColumbinaInputEnum.NODE.getDescriptionI18n();
+        else if (nodes.isEmpty()) return ColumbinaInputEnum.WAY.getDescriptionI18n();
+        else return ColumbinaInputEnum.NODE_WAY.getDescriptionI18n();
     }
 
     private static class LayerDataSet {

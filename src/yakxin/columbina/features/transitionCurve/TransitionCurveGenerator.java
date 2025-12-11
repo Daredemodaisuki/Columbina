@@ -7,7 +7,8 @@ import org.openstreetmap.josm.data.osm.Way;
 import org.openstreetmap.josm.tools.I18n;
 import yakxin.columbina.abstractClasses.AbstractGenerator;
 import yakxin.columbina.data.ColumbinaException;
-import yakxin.columbina.data.dto.DrawingNewNodeResult;
+import yakxin.columbina.data.dto.ColumbinaSingleOutput;
+import yakxin.columbina.data.dto.inputs.ColumbinaSingleInput;
 import yakxin.columbina.utils.UtilsMath;
 
 import java.util.ArrayList;
@@ -28,10 +29,10 @@ public final class TransitionCurveGenerator extends AbstractGenerator<Transition
     public static final int TERM_MAX = 10;  // 前11项（n从0到10）
 
     @Override
-    public DrawingNewNodeResult getNewNodeWayForSingleInput(Object input, TransitionCurveParams params) {
-        if (input instanceof Way) {
+    public ColumbinaSingleOutput getNewNodeWayForSingleInput(ColumbinaSingleInput input, TransitionCurveParams params) {
+        if (input.ways != null && input.ways.size() == 1) {
             return buildTransitionCurvePolyline(
-                    (Way) input,
+                    input.ways.getFirst(),
                     params.surfaceRadius, params.surfaceTransArcLength, params.chainageNum
             );
         }
@@ -322,7 +323,7 @@ public final class TransitionCurveGenerator extends AbstractGenerator<Transition
      * @param surfaceChainage 桩距（节点间距，米）
      * @return 包含新节点列表和失败节点ID的DrawingNewNodeResult
      */
-    public static DrawingNewNodeResult buildTransitionCurvePolyline(
+    public static ColumbinaSingleOutput buildTransitionCurvePolyline(
             Way way,
             double surfaceRadius, double surfaceLength, double surfaceChainage
     ) {
@@ -392,7 +393,7 @@ public final class TransitionCurveGenerator extends AbstractGenerator<Transition
             }
         }
         if (transCurves.isEmpty()) {  // 没有曲线，返回原始路径
-            return new DrawingNewNodeResult(new ArrayList<>(nodes), failedNodes);
+            return new ColumbinaSingleOutput(new ArrayList<>(nodes), failedNodes);
         }
 
         // 最终的经纬度坐标序列
@@ -432,7 +433,7 @@ public final class TransitionCurveGenerator extends AbstractGenerator<Transition
             }
         }
 
-        return new DrawingNewNodeResult(finalNodes, failedNodes);
+        return new ColumbinaSingleOutput(finalNodes, failedNodes);
     }
 
     // 打包双螺旋曲线的起始点、起始偏角

@@ -3,7 +3,7 @@ package yakxin.columbina.features.angleLine;
 import org.openstreetmap.josm.tools.I18n;
 import org.openstreetmap.josm.tools.Shortcut;
 import yakxin.columbina.abstractClasses.actionMiddle.ActionWithNodeWay;
-import yakxin.columbina.data.inputs.ColumbinaInput;
+import yakxin.columbina.data.dto.inputs.ColumbinaInput;
 
 import java.awt.event.KeyEvent;
 import java.util.Map;
@@ -25,8 +25,7 @@ public final class AngleLineAction extends
     public AngleLineAction(String name, String iconName, String description, Shortcut shortcut, AngleLineGenerator generator, AngleLinePreference preference) {
         super(
                 name, iconName, description, shortcut,
-                generator, preference,
-                -1, 1
+                generator, preference
         );
     }
 

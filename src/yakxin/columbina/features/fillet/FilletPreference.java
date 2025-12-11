@@ -3,7 +3,7 @@ package yakxin.columbina.features.fillet;
 import org.openstreetmap.josm.spi.preferences.Config;
 import org.openstreetmap.josm.tools.I18n;
 import yakxin.columbina.abstractClasses.AbstractPreference;
-import yakxin.columbina.data.inputs.ColumbinaInput;
+import yakxin.columbina.data.dto.inputs.ColumbinaInput;
 import yakxin.columbina.utils.UtilsUI;
 
 public final class FilletPreference extends AbstractPreference<FilletParams>  {

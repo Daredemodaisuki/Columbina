@@ -5,7 +5,8 @@ import org.openstreetmap.josm.data.osm.Node;
 import org.openstreetmap.josm.data.osm.Way;
 import yakxin.columbina.abstractClasses.AbstractGenerator;
 import yakxin.columbina.data.ColumbinaException;
-import yakxin.columbina.data.dto.DrawingNewNodeResult;
+import yakxin.columbina.data.dto.ColumbinaSingleOutput;
+import yakxin.columbina.data.dto.inputs.ColumbinaSingleInput;
 import yakxin.columbina.utils.UtilsMath;
 
 import java.util.ArrayList;
@@ -16,10 +17,10 @@ import java.util.List;
 public final class FilletGenerator extends AbstractGenerator<FilletParams> {
 
     @Override
-    public DrawingNewNodeResult getNewNodeWayForSingleInput(Object input, FilletParams params) {
-        if (input instanceof Way) {
+    public ColumbinaSingleOutput getNewNodeWayForSingleInput(ColumbinaSingleInput input, FilletParams params) {
+        if (input.ways != null && input.ways.size() == 1) {
             return buildSmoothPolyline(
-                    (Way) input,
+                    input.ways.getFirst(),
                     params.surfaceRadius, params.surfaceChainageLength, params.maxPointNum,
                     params.minAngleDeg, params.maxAngleDeg
             );
@@ -38,44 +39,7 @@ public final class FilletGenerator extends AbstractGenerator<FilletParams> {
         double[] a = new double[]{A.getX(), A.getY()};  // A起点     B → C
         double[] b = new double[]{B.getX(), B.getY()};  // B拐点     ↑
         double[] c = new double[]{C.getX(), C.getY()};  // C终点     A
-//
-        // // 方向向量
-        // double[] v1 = UtilsMath.sub(a, b);  // BA向量
-        // double[] v2 = UtilsMath.sub(c, b);  // BC向量
-        // double n1 = UtilsMath.norm(v1);     // BA长度
-        // double n2 = UtilsMath.norm(v2);     // BC长度
-        // if (n1 < 1e-9 || n2 < 1e-9) return null;  // 检查向量有效性（不能太短近乎于点挤在一起）
-//
-        // double[] u1 = UtilsMath.mul(v1, 1.0 / n1);  // BA单位向量
-        // double[] u2 = UtilsMath.mul(v2, 1.0 / n2);  // BC单位向量
-//
-        // // 拐点夹角（方向向量点积取acos）
-        // double dp = Math.max(-1.0, Math.min(1.0, UtilsMath.dot(u1, u2)));  // 点积（限制在[-1,1]范围内）
-        // double theta = Math.acos(dp);  // 夹角（弧度[0,π]）
-//
-        // // 检查张角有效性
-        // double minAngleRad = Math.toRadians(minAngleDeg);
-        // double maxAngleRad = Math.toRadians(maxAngleDeg);
-        // if (theta < minAngleRad || theta > maxAngleRad) return null;  // 自定义角度控制
-        // if (theta < 1e-9 || theta > Math.PI - 1e-9) return null;  // θ为0说明成了发卡角，θ为π说明张角基本是直线
-//
-        // // 圆弧的起点和终点（切点）
-        // double t = enRadius / Math.tan(theta / 2.0);  // 从B到两侧切点的距离
-        // if (t > n1 - 1e-9 || t > n2 - 1e-9) return null;  // 检查半径是否过大
-        // double[] T1 = UtilsMath.add(b, UtilsMath.mul(u1, t));  // BA上的切点坐标T1
-        // double[] T2 = UtilsMath.add(b, UtilsMath.mul(u2, t));  // BC上的切点坐标T2
-//
-        // // 圆弧圆心坐标
-        // double d = enRadius / Math.sin(theta / 2.0);  // B到圆心的距离
-        // double[] bis = UtilsMath.add(u1, u2);  // 角平分线方向
-        // if (UtilsMath.norm(bis) < 1e-12) return null;  // 角平分线是否有效
-        // double[] center = UtilsMath.add(b, UtilsMath.mul(bis, d / UtilsMath.norm(bis))); // 圆心坐标
-//
-        // // 圆弧起始和结束角度
-        // double ang1 = UtilsMath.getBearingRadFromAtoB(center, T1);  // 圆心到T1的角度
-        // double ang2 = UtilsMath.getBearingRadFromAtoB(center, T2);  // 圆心到T2的角度
 
-        // 方向向量
         double[] BA = UtilsMath.sub(a, b);
         double[] BC = UtilsMath.sub(c, b);
         double[] AB = UtilsMath.mul(BA, -1.0);
@@ -141,14 +105,14 @@ public final class FilletGenerator extends AbstractGenerator<FilletParams> {
         // return arc;
     }
 
-    public static DrawingNewNodeResult buildSmoothPolyline(Way way, double surfaceRadius) {
+    public static ColumbinaSingleOutput buildSmoothPolyline(Way way, double surfaceRadius) {
         return buildSmoothPolyline(way, surfaceRadius, 20);
     }
-    public static DrawingNewNodeResult buildSmoothPolyline(Way way, double surfaceRadius, int maxPointNum) {
+    public static ColumbinaSingleOutput buildSmoothPolyline(Way way, double surfaceRadius, int maxPointNum) {
         return buildSmoothPolyline(way, surfaceRadius, 1.0, maxPointNum, 1e-9, 180 - 1e-9);
     }
     // 汇总所有的圆角
-    public static DrawingNewNodeResult buildSmoothPolyline(
+    public static ColumbinaSingleOutput buildSmoothPolyline(
             Way way,
             double surfaceRadius, double surfaceChainageLength, int maxPointNum,
             double minAngleDeg, double maxAngleDeg
@@ -258,7 +222,7 @@ public final class FilletGenerator extends AbstractGenerator<FilletParams> {
             finalNodes.add(way.getNode(way.getNodesCount() - 1));
         }
 
-        return new DrawingNewNodeResult(finalNodes, failedNodes);
+        return new ColumbinaSingleOutput(finalNodes, failedNodes);
         // 正式绘制前注意去重
     }
 }

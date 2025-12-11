@@ -16,8 +16,7 @@ import org.openstreetmap.josm.data.osm.Way;
 import org.openstreetmap.josm.gui.ExtendedDialog;
 import org.openstreetmap.josm.gui.MainApplication;
 import org.openstreetmap.josm.tools.I18n;
-import yakxin.columbina.data.dto.PanelSectionResult;
-import yakxin.columbina.data.inputs.ColumbinaInput;
+import yakxin.columbina.data.dto.inputs.ColumbinaInput;
 import yakxin.columbina.utils.UtilsMath;
 import yakxin.columbina.utils.UtilsUI;
 
@@ -28,15 +27,12 @@ public final class FilletDialog extends ExtendedDialog {
 
     // 窗体组件
     protected final JPanel panel = new JPanel(new GridBagLayout());
-    private final JPanel header;
-    private final PanelSectionResult sectionCurveInfo;
     private final JFormattedTextField filletR;
     private final JFormattedTextField filletChainageLength;
     private final JFormattedTextField filletMaxPointNum;
     private final JFormattedTextField minAngleDeg;
     private final JFormattedTextField maxAngleDeg;
 
-    private final PanelSectionResult sectionOptionInfo;
     private final JCheckBox deleteOldWays;
     private final JCheckBox selectNewWays;
     private final JCheckBox copyTag;
@@ -56,14 +52,14 @@ public final class FilletDialog extends ExtendedDialog {
         double maxRecommendedR = calculateMaximumRadius(input, 0, Math.PI);
 
         // 窗体
-        header = UtilsUI.addHeader(panel, I18n.tr("Round Corners"), "RoundCorners");
+        UtilsUI.addHeader(panel, I18n.tr("Round Corners"), "RoundCorners");
 
-        sectionCurveInfo = UtilsUI.addSection(panel, I18n.tr("Curve Information"));
+        UtilsUI.addSection(panel, I18n.tr("Curve Information"));
         filletR = UtilsUI.addInput(panel, I18n.tr("Fillet (round corner) radius (m): "), String.valueOf(FilletPreference.getFilletRadius()));
         UtilsUI.addLabel(
                 panel,
                 "<html><div style=\"width:275\">"
-                        + I18n.tr("The currently recommended radius should not exceed {0}m.", maxRecommendedR)
+                        + I18n.tr("※ Currently recommended maximum radius: {0}m.", maxRecommendedR)
                         + "</div></html>",
                 15
         );
@@ -72,8 +68,8 @@ public final class FilletDialog extends ExtendedDialog {
         UtilsUI.addLabel(
                 panel,
                 "<html><div style=\"width:275\">"
-                        + I18n.tr("※ Specifies the number of nodes along the curve. A shorter chainage length results in more nodes. ")
-                        + I18n.tr("Note that the chainage length is not the final distance between nodes. Instead, the required number of nodes is calculated based on the curve length and the chainage length, after which the nodes are evenly distributed according to this node count. ")
+                        + I18n.tr("※ The chainage length specifies the number of nodes along the curve. A shorter chainage length results in more nodes. ")
+                        + I18n.tr("Note that this length is not the final distance between nodes. Instead, the required number of nodes is calculated based on the curve length and the chainage length, after which the nodes are evenly distributed according to this node count. ")
                         + I18n.tr("Furthermore, if the calculated number of nodes exceeds the maximum node limit, the node spacing will be recalculated based on the maximum node count.")
                         + "</div></html>",
                 15
@@ -90,7 +86,7 @@ public final class FilletDialog extends ExtendedDialog {
                 15
         );
 
-        sectionOptionInfo = UtilsUI.addSection(panel, I18n.tr("Other Operations"));
+        UtilsUI.addSection(panel, I18n.tr("Other Operations"));
         copyTag = UtilsUI.addCheckbox(panel, I18n.tr("Copy original ways'' tags"), FilletPreference.isFilletCopyTag());
         deleteOldWays = UtilsUI.addCheckbox(panel, I18n.tr("Remove original ways after drawing"), FilletPreference.isFilletDeleteOldWays());
         selectNewWays = UtilsUI.addCheckbox(panel, I18n.tr("Select new ways after drawing"), FilletPreference.isFilletSelectNewWays());

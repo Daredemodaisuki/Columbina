@@ -1,4 +1,4 @@
-package yakxin.columbina.data.inputs;
+package yakxin.columbina.data.dto.inputs;
 
 import org.openstreetmap.josm.tools.I18n;
 

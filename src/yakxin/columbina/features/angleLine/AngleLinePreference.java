@@ -3,7 +3,7 @@ package yakxin.columbina.features.angleLine;
 import org.openstreetmap.josm.spi.preferences.Config;
 import org.openstreetmap.josm.tools.I18n;
 import yakxin.columbina.abstractClasses.AbstractPreference;
-import yakxin.columbina.data.inputs.ColumbinaInput;
+import yakxin.columbina.data.dto.inputs.ColumbinaInput;
 
 public final class AngleLinePreference extends AbstractPreference<AngleLineParams> {
     private static double angleLineAngleDeg;

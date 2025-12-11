@@ -6,7 +6,7 @@ import org.openstreetmap.josm.tools.Shortcut;
 
 import yakxin.columbina.abstractClasses.AbstractDrawingAction;
 import yakxin.columbina.abstractClasses.actionMiddle.ActionWithBatchWays;
-import yakxin.columbina.data.inputs.ColumbinaInput;
+import yakxin.columbina.data.dto.inputs.ColumbinaInput;
 
 import java.awt.event.KeyEvent;
 

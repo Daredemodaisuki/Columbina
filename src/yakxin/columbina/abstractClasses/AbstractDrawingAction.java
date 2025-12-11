@@ -11,7 +11,7 @@ import org.openstreetmap.josm.tools.I18n;
 import org.openstreetmap.josm.tools.Shortcut;
 import yakxin.columbina.data.ColumbinaException;
 import yakxin.columbina.data.ColumbinaSeqCommand;
-import yakxin.columbina.data.inputs.ColumbinaInput;
+import yakxin.columbina.data.dto.inputs.ColumbinaInput;
 import yakxin.columbina.utils.UtilsUI;
 
 import java.awt.event.ActionEvent;
