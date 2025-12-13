@@ -467,11 +467,10 @@ public final class TransitionCurveGenerator extends AbstractGenerator<Transition
             this.endTangentAngleRad = endTangentAngleRad;
         }
     }
-
-    /*TODO：边缘情况检查
+    /*
+    TODO：边缘情况检查
     注意极端几何：LS太长（导致圆曲线没了）、R太小、α太小
-    getUnrotatedEulerArc、getCircularArc会不会只返回1个点
-    处理各种null的情况
+    检查各种null的情况
      */
 }
 

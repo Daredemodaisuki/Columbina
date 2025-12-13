@@ -77,32 +77,6 @@ public final class FilletGenerator extends AbstractGenerator<FilletParams> {
                         arcSegments,
                         leftRight
                 );
-
-        // // 圆弧方向
-        // double crossz = u1[0] * u2[1] - u1[1] * u2[0];  // 向量叉积的Z分量
-        // if (crossz < 0) {
-        //     // 逆时针方向（BA到BC需要逆时针旋转），确保ang2 > ang1
-        //     if (ang2 < ang1) ang2 += 2*Math.PI;
-        // } else {
-        //     // 顺时针方向，确保ang2 < ang1
-        //     if (ang2 > ang1) ang2 -= 2*Math.PI;
-        // }
-//
-        // // 生成圆弧上的点
-        // int numAngleSteps = Math.max(  // 步进段数，不算开头结尾的点数=步进段数-2
-        //         Math.min((int) ((Math.PI - theta) / Math.toRadians(enChainageLength)), maxNumPoints + 1),  // 最大50点的话步进有51段
-        //         1  // 注意θ是张角，张角越小圆心角越大、弧长越长，点数越多
-        // );  // 至少1段0点（相当于切角），至多maxNumPoints+1段maxNumPoints点
-        // // TODO：切角可以快速实现了
-        // ArrayList<EastNorth> arc = new ArrayList<>();
-        // for (int i = 0; i <= numAngleSteps; i ++){
-        //     double tt = (double) i / numAngleSteps;    // 插值参数 [0,1]
-        //     double ang = ang1 + (ang2 - ang1) * tt;    // 当前角度
-        //     double x = center[0] + enRadius * Math.cos(ang);  // 圆弧点X坐标
-        //     double y = center[1] + enRadius * Math.sin(ang);  // 圆弧点Y坐标
-        //     arc.add(new EastNorth(x, y));
-        // }
-        // return arc;
     }
 
     public static ColumbinaSingleOutput buildSmoothPolyline(Way way, double surfaceRadius) {

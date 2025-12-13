@@ -26,13 +26,10 @@ public final class ChamferDialog extends ExtendedDialog {
     protected final JPanel panel = new JPanel(new GridBagLayout());
     private final UtilsUI.RadioButtonGroup modeGroup;
 
-    private final JPanel header;
-    private final PanelSectionResult sectionChamferInfo;
     private final JFormattedTextField chamferDistanceA;
     private final JFormattedTextField chamferDistanceC;
     private final JFormattedTextField chamferAngleADeg;
 
-    private final PanelSectionResult sectionOptionInfo;
     private final JCheckBox deleteOldWays;
     private final JCheckBox selectNewWays;
     private final JCheckBox copyTag;
@@ -54,16 +51,16 @@ public final class ChamferDialog extends ExtendedDialog {
         modeGroup = new UtilsUI.RadioButtonGroup(modeNames, ChamferPreference.getChamferMode());
 
         // 窗体
-        header = UtilsUI.addHeader(panel, I18n.tr("Chamfer Corners"), "ChamferCorners");  // 暂不设置图标
+        UtilsUI.addHeader(panel, I18n.tr("Chamfer Corners"), "ChamferCorners");
 
-        sectionChamferInfo = UtilsUI.addSection(panel, I18n.tr("Chamfer Information"));
+        UtilsUI.addSection(panel, I18n.tr("Chamfer Information"));
         modeGroup.addRadioButton(panel, ChamferGenerator.USING_DISTANCE);
         modeGroup.addRadioButton(panel, ChamferGenerator.USING_ANGLE_A);
         chamferDistanceA = UtilsUI.addInput(panel, I18n.tr("Chamfer distance A (m): "), String.valueOf(ChamferPreference.getChamferDistanceA()));
         chamferDistanceC = UtilsUI.addInput(panel, I18n.tr("Chamfer distance C (m): "), String.valueOf(ChamferPreference.getChamferDistanceC()));
         chamferAngleADeg = UtilsUI.addInput(panel, I18n.tr("Chamfer angle to A (degrees°): "), String.valueOf(ChamferPreference.getChamferAngleADeg()));
 
-        sectionOptionInfo = UtilsUI.addSection(panel, I18n.tr("Other Operations"));
+        UtilsUI.addSection(panel, I18n.tr("Other Operations"));
         copyTag = UtilsUI.addCheckbox(panel, I18n.tr("Copy original ways'' tags"), ChamferPreference.isChamferCopyTag());
         deleteOldWays = UtilsUI.addCheckbox(panel, I18n.tr("Remove original ways after drawing"), ChamferPreference.isChamferDeleteOldWays());
         selectNewWays = UtilsUI.addCheckbox(panel, I18n.tr("Select new ways after drawing"), ChamferPreference.isChamferSelectNewWays());

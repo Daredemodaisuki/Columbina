@@ -73,7 +73,7 @@ public class ColumbinaInput {
         for (OsmPrimitive p : layerDataSet.layer.data.getSelected()) {
             if (p instanceof Node) newNodes.add((Node) p);
             else if (p instanceof Way) newWays.add((Way) p);
-            else continue;
+            // else continue;
         }
 
         // 上述均没有问题后再统一刷新实体储存之内容

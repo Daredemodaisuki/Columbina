@@ -131,14 +131,6 @@ public abstract class ActionWithBatchWays<
         List<Command> commands = new ArrayList<>();
         inputOutputPairs = new HashMap<>();  // 输入节点/路径k与新绘制的路径v的打包对
         Map<Way, List<Long>> failedNodeIds = new HashMap<>();  // 处理输入节点/路径k与处理时k上失败的节点v的打包对
-        // List<Way> selectedWays = singleInputs.getWays();
-        // 批量输入分包
-        // TODO：把getAddCmd放到主抽象类去abstract
-        // List<ColumbinaSingleInput> singleInputs = new ArrayList<>();
-        // for (ColumbinaSingleInput singleInput : singleInputs){
-        //     Way wayToBeProcessed =
-        //     singleInputs.add(new ColumbinaSingleInput(new ArrayList<Node>(), new ArrayList<Way>(Collections.singleton(wayToBeProcessed))));
-        // }
         // 处理路径
         for (ColumbinaSingleInput singleInput : singleInputs) {  // 分别处理每个输入路径
             try {  // 一条路径出错尽可能不影响其他的

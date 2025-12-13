@@ -23,13 +23,10 @@ public final class TransitionCurveDialog extends ExtendedDialog {
 
     // 窗体组件
     protected final JPanel panel = new JPanel(new GridBagLayout());
-    private final JPanel header;
-    private final PanelSectionResult sectionCurveInfo;
     private final JFormattedTextField transitionRadius;
     private final JFormattedTextField transitionLength;
     private final JFormattedTextField chainageLength;
 
-    private final PanelSectionResult sectionOptionInfo;
     private final JCheckBox deleteOldWays;
     private final JCheckBox selectNewWays;
     private final JCheckBox copyTag;
@@ -46,9 +43,9 @@ public final class TransitionCurveDialog extends ExtendedDialog {
         setDefaultButton(1);  // ESC取消
 
         // 窗体
-        header = UtilsUI.addHeader(panel, I18n.tr("Transition Curve"), "TransitionCurve");
+        UtilsUI.addHeader(panel, I18n.tr("Transition Curve"), "TransitionCurve");
 
-        sectionCurveInfo = UtilsUI.addSection(panel, I18n.tr("Transition Curve Information"));
+        UtilsUI.addSection(panel, I18n.tr("Transition Curve Information"));
         transitionRadius = UtilsUI.addInput(
                 panel,
                 I18n.tr("Circular curve surfaceRadius (m): "),
@@ -88,7 +85,7 @@ public final class TransitionCurveDialog extends ExtendedDialog {
                 15
         );
 
-        sectionOptionInfo = UtilsUI.addSection(panel, I18n.tr("Other Operations"));
+        UtilsUI.addSection(panel, I18n.tr("Other Operations"));
         copyTag = UtilsUI.addCheckbox(
                 panel,
                 I18n.tr("Copy original ways'' tags"),
