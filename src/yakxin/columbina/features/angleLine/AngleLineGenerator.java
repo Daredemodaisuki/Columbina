@@ -47,22 +47,22 @@ public final class AngleLineGenerator extends AbstractGenerator<AngleLineParams>
             wayNodes.add(way.getNode(i));
         }
 
-        // 检查路径是否包含节点
-        if (count == 0)
-            throw new ColumbinaException(I18n.tr("The way selected doesn''t contain the node selected."));
-        // 检查路径是否多次包含该节点（自交路径的自交点）
-        if (count > 1)
-            throw new ColumbinaException(
-                    I18n.tr("The node is the self-intersection point of a self-intersecting way. ")
-                            + I18n.tr("The bearing angle into this node cannot be determined.")
-            );
-
-        // 检查路径是否是非闭合路径第一个点
-        if (node == wayNodes.getFirst() && !way.isClosed())
-            throw new ColumbinaException(
-                    I18n.tr("The selected node is the first node of the way. ")
-                            + I18n.tr("The bearing angle into this node cannot be determined.")
-            );
+        // // 检查路径是否包含节点
+        // if (count == 0)
+        //     throw new ColumbinaException(I18n.tr("The way selected doesn''t contain the node selected."));
+        // // 检查路径是否多次包含该节点（自交路径的自交点）
+        // if (count > 1)
+        //     throw new ColumbinaException(
+        //             I18n.tr("The node is the self-intersection point of a self-intersecting way. ")
+        //                     + I18n.tr("The bearing angle into this node cannot be determined.")
+        //     );
+//
+        // // 检查路径是否是非闭合路径第一个点
+        // if (node == wayNodes.getFirst() && !way.isClosed())
+        //     throw new ColumbinaException(
+        //             I18n.tr("The selected node is the first node of the way. ")
+        //                     + I18n.tr("The bearing angle into this node cannot be determined.")
+        //     );
 
         /// 正式计算
         EastNorth prevEN = wayNodes.get((nodeIndex + nodeNum - 1) % nodeNum).getEastNorth();

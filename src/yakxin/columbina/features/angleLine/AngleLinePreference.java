@@ -72,6 +72,8 @@ public final class AngleLinePreference extends AbstractPreference<AngleLineParam
         double LineLength = angleLineDialog.getAngleLineLength();
         if (LineLength <= 0) throw new IllegalArgumentException(I18n.tr("Invalid length, should be greater than 0m."));
 
+        //TODO：归一化角度
+
         // 保存设置
         AngleLinePreference.setPreferenceFromDialog(angleLineDialog);  // 更新自身
         AngleLinePreference.savePreference();

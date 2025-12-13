@@ -12,6 +12,7 @@ import yakxin.columbina.abstractClasses.AbstractDrawingAction;
 import yakxin.columbina.abstractClasses.AbstractGenerator;
 import yakxin.columbina.abstractClasses.AbstractParams;
 import yakxin.columbina.abstractClasses.AbstractPreference;
+import yakxin.columbina.data.ColumbinaException;
 import yakxin.columbina.data.dto.ColumbinaSingleOutput;
 import yakxin.columbina.data.dto.inputs.ColumbinaInput;
 import yakxin.columbina.data.dto.inputs.ColumbinaSingleInput;
@@ -53,26 +54,38 @@ public abstract class ActionWithNodeWay<
     }
 
     @Override
-    public int checkInputNum(ColumbinaInput inputs) {
+    public int checkInputNum(ColumbinaInput totalInput) {
         // 检查是否是输入一个节点+一条路径，不检查节点是否在路径上（由生成器内部判断）
-        if (inputs.getInputNum(Node.class) != 1)
+        if (totalInput.getInputNum(Node.class) != 1)
             throw new IllegalArgumentException(I18n.tr("No node or multiple nodes are selected."));
-        if (inputs.getInputNum(Way.class) != 1)
+        if (totalInput.getInputNum(Way.class) != 1)
             throw new IllegalArgumentException(I18n.tr("No way or multiple ways are selected."));
         // if (!inputs.getNodes().getFirst().getReferrers().contains(inputs.getWays().getFirst()))
         //     throw new IllegalArgumentException(I18n.tr("The way selected doesn''t contain the node selected."));
         return CHECK_OK;
     }
 
+    // 暂时交由具体动作类实现
+    public abstract int checkInputDetails(List<ColumbinaSingleInput> singleInputs);
+
+    @Override
+    public List<ColumbinaSingleInput> splitBatchInputs(ColumbinaInput inputs) {
+        // 批量输入分包（这个模板不支持批量，所以直接将全部输入扔进去）
+        return new ArrayList<>(Collections.singleton(new ColumbinaSingleInput(inputs)));
+    }
+
     @Override
     public List<Command> concludeAddCommands(
-            DataSet ds, ColumbinaInput input,
+            DataSet ds, List<ColumbinaSingleInput> input,
             boolean copyTag
     ) {
+        if (input == null || input.isEmpty())
+            throw new ColumbinaException(I18n.tr("Empty or null input for concludeAddCommands()."));
+
         List<Command> addCommands = new ArrayList<>();
 
         // 调用生成传入的函数计算路径
-        ColumbinaSingleInput singleInput = new ColumbinaSingleInput(input);  // 批量输入分包（这个模板不支持批量，所以直接将全部输入扔进去）
+        ColumbinaSingleInput singleInput = input.getFirst();  // 这个模板不支持批量，所以直接getFirst
         ColumbinaSingleOutput singleOutput = generator.getOutputForSingleInput(singleInput, params);
         if (singleOutput == null) return null;
         if (!singleOutput.ifCanMakeAWay()) return null;
