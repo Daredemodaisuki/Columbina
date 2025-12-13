@@ -17,8 +17,237 @@ msgstr ""
 "Language: en\n"
 
 
-#: ../src\yakxin\columbina\features\chamfer\ChamferAction.java:41
-#: ../src\yakxin\columbina\features\chamfer\ChamferDialog.java:58
+#: ../src\yakxin\columbina\abstractClasses\AbstractDrawingAction.java:202
+msgid "No input was successfully processed."
+msgstr "No input was successfully processed."
+
+#: ../src\yakxin\columbina\abstractClasses\AbstractDrawingAction.java:217
+msgid "Columbina: Remove original ways"
+msgstr "Columbina: Remove original ways"
+
+#: ../src\yakxin\columbina\abstractClasses\actionMiddle\ActionWithBatchWays.java:83
+msgid "No way is selected."
+msgstr "No way is selected."
+
+#: ../src\yakxin\columbina\abstractClasses\actionMiddle\ActionWithBatchWays.java:95
+msgid "Too few ways are selected, should be grater than {0}."
+msgstr "Too few ways are selected, should be grater than {0}."
+
+#: ../src\yakxin\columbina\abstractClasses\actionMiddle\ActionWithBatchWays.java:97
+msgid "Too many ways are selected, should be less than {0}."
+msgstr "Too many ways are selected, should be less than {0}."
+
+#: ../src\yakxin\columbina\abstractClasses\actionMiddle\ActionWithBatchWays.java:101
+msgid "Are you sure you want to process {0} ways at once? This may take a long time."
+msgstr "Are you sure you want to process {0} ways at once? This may take a long time."
+
+#: ../src\yakxin\columbina\abstractClasses\actionMiddle\ActionWithBatchWays.java:102
+#: ../src\yakxin\columbina\features\angleLine\AngleLineDialog.java:27
+#: ../src\yakxin\columbina\features\chamfer\ChamferDialog.java:41
+#: ../src\yakxin\columbina\features\fillet\FilletDialog.java:44
+#: ../src\yakxin\columbina\features\transitionCurve\TransitionCurveDialog.java:38
+msgid "Columbina"
+msgstr "Columbina"
+
+#: ../src\yakxin\columbina\abstractClasses\actionMiddle\ActionWithBatchWays.java:144
+msgid "Algorithm did not return at least 2 nodes to form a way for way {0}, this way was not processed."
+msgstr "Algorithm did not return at least 2 nodes to form a way for way {0}, this way was not processed."
+
+#: ../src\yakxin\columbina\abstractClasses\actionMiddle\ActionWithBatchWays.java:149
+msgid "Unexpected error occurred while processing way {0}: {1}"
+msgstr "Unexpected error occurred while processing way {0}: {1}"
+
+#: ../src\yakxin\columbina\abstractClasses\actionMiddle\ActionWithBatchWays.java:156
+msgid "Failed to generate any new way."
+msgstr "Failed to generate any new way."
+
+#: ../src\yakxin\columbina\abstractClasses\actionMiddle\ActionWithBatchWays.java:179
+msgid "Internal error occurred while removing an old way:\n\n"
+msgstr "Internal error occurred while removing an old way:\n\n"
+
+#: ../src\yakxin\columbina\abstractClasses\actionMiddle\ActionWithBatchWays.java:180
+msgid "Old way return value is abnormal (null), unable to get the old way.\n\n"
+msgstr "Old way return value is abnormal (null), unable to get the old way.\n\n"
+
+#: ../src\yakxin\columbina\abstractClasses\actionMiddle\ActionWithBatchWays.java:181
+msgid "This way may not have been properly rounded or removed."
+msgstr "This way may not have been properly rounded or removed."
+
+#: ../src\yakxin\columbina\abstractClasses\actionMiddle\ActionWithBatchWays.java:190
+msgid "Internal error occurred while removing old way {0}:\n\n"
+msgstr "Internal error occurred while removing old way {0}:\n\n"
+
+#: ../src\yakxin\columbina\abstractClasses\actionMiddle\ActionWithBatchWays.java:191
+msgid "New way return value is abnormal (null), unable to get the new way.\n\n"
+msgstr "New way return value is abnormal (null), unable to get the new way.\n\n"
+
+#: ../src\yakxin\columbina\abstractClasses\actionMiddle\ActionWithBatchWays.java:192
+msgid "Old way {0} may not have been properly rounded or removed."
+msgstr "Old way {0} may not have been properly rounded or removed."
+
+#: ../src\yakxin\columbina\abstractClasses\actionMiddle\ActionWithBatchWays.java:204
+#: ../src\yakxin\columbina\abstractClasses\actionMiddle\ActionWithBatchWays.java:300
+msgid "Columbina attempted to use Utilsplugin2''s ''Replace Geometry'' function to replace the old way, but failed.\n\n"
+msgstr "Columbina attempted to use Utilsplugin2''s ''Replace Geometry'' function to replace the old way, but failed.\n\n"
+
+#: ../src\yakxin\columbina\abstractClasses\actionMiddle\ActionWithBatchWays.java:205
+msgid "Message from Utilsplugin2:\n{0}\n\n"
+msgstr "Message from Utilsplugin2:\n{0}\n\n"
+
+#: ../src\yakxin\columbina\abstractClasses\actionMiddle\ActionWithBatchWays.java:206
+#: ../src\yakxin\columbina\abstractClasses\actionMiddle\ActionWithBatchWays.java:302
+msgid "Old way {0} was not removed."
+msgstr "Old way {0} was not removed."
+
+#: ../src\yakxin\columbina\abstractClasses\actionMiddle\ActionWithBatchWays.java:212
+msgid "Unexpected error occurred while removing way {0}: {1}"
+msgstr "Unexpected error occurred while removing way {0}: {1}"
+
+#: ../src\yakxin\columbina\abstractClasses\actionMiddle\ActionWithBatchWays.java:301
+msgid "The user canceled the replacement operation in the Utilsplugin2 window.\n\n"
+msgstr "The user canceled the replacement operation in the Utilsplugin2 window.\n\n"
+
+#: ../src\yakxin\columbina\abstractClasses\actionMiddle\ActionWithBatchWays.java:330
+msgid "Old way {0} is still referenced by relations, not removed."
+msgstr "Old way {0} is still referenced by relations, not removed."
+
+#: ../src\yakxin\columbina\abstractClasses\actionMiddle\ActionWithBatchWays.java:347
+msgid "The following corner nodes could not be rounded due to too short distance to adjacent nodes or not meeting the angle restrictions: "
+msgstr "The following corner nodes could not be rounded due to too short distance to adjacent nodes or not meeting the angle restrictions: "
+
+#: ../src\yakxin\columbina\abstractClasses\actionMiddle\ActionWithBatchWays.java:351
+msgid "\nWay"
+msgstr "\nWay"
+
+#: ../src\yakxin\columbina\abstractClasses\actionMiddle\ActionWithBatchWays.java:352
+msgid ": "
+msgstr ": "
+
+#: ../src\yakxin\columbina\abstractClasses\actionMiddle\ActionWithNodeWay.java:60
+msgid "No node or multiple nodes are selected."
+msgstr "No node or multiple nodes are selected."
+
+#: ../src\yakxin\columbina\abstractClasses\actionMiddle\ActionWithNodeWay.java:62
+msgid "No way or multiple ways are selected."
+msgstr "No way or multiple ways are selected."
+
+#: ../src\yakxin\columbina\abstractClasses\actionMiddle\ActionWithNodeWay.java:64
+#: ../src\yakxin\columbina\features\angleLine\AngleLineAction.java:83
+msgid "The way selected doesn''t contain the node selected."
+msgstr "The way selected doesn''t contain the node selected."
+
+#: ../src\yakxin\columbina\abstractClasses\actionMiddle\ActionWithNodeWay.java:83
+msgid "Empty or null input for concludeAddCommands()."
+msgstr "Empty or null input for concludeAddCommands()."
+
+#: ../src\yakxin\columbina\data\dto\inputs\ColumbinaInput.java:58
+msgid "Current layer is not available."
+msgstr "Current layer is not available."
+
+#: ../src\yakxin\columbina\data\dto\inputs\ColumbinaInput.java:60
+msgid "Current dataset is not available."
+msgstr "Current dataset is not available."
+
+#: ../src\yakxin\columbina\data\dto\inputs\ColumbinaInputEnum.java:6
+msgid "node"
+msgstr "node"
+
+#: ../src\yakxin\columbina\data\dto\inputs\ColumbinaInputEnum.java:7
+msgid "way"
+msgstr "way"
+
+#: ../src\yakxin\columbina\data\dto\inputs\ColumbinaInputEnum.java:8
+msgid "node and way"
+msgstr "node and way"
+
+#: ../src\yakxin\columbina\data\dto\inputs\ColumbinaInputEnum.java:9
+msgid "empty input"
+msgstr "empty input"
+
+#: ../src\yakxin\columbina\features\angleLine\AngleLineAction.java:43
+#: ../src\yakxin\columbina\features\angleLine\AngleLineDialog.java:35
+msgid "Oriented Line"
+msgstr "Oriented Line"
+
+#: ../src\yakxin\columbina\features\angleLine\AngleLineAction.java:44
+msgid "Make a line started on the selected node with a specified distance and deflection angle."
+msgstr "Make a line started on the selected node with a specified distance and deflection angle."
+
+#: ../src\yakxin\columbina\features\angleLine\AngleLineAction.java:58
+msgid "Make oriented line: from node {0}, {1} {2}°, {3}m"
+msgstr "Make oriented line: from node {0}, {1} {2}°, {3}m"
+
+#: ../src\yakxin\columbina\features\angleLine\AngleLineAction.java:60
+msgid "left"
+msgstr "left"
+
+#: ../src\yakxin\columbina\features\angleLine\AngleLineAction.java:60
+msgid "right"
+msgstr "right"
+
+#: ../src\yakxin\columbina\features\angleLine\AngleLineAction.java:87
+msgid "The node is the self-intersection point of a self-intersecting way. "
+msgstr "The node is the self-intersection point of a self-intersecting way. "
+
+#: ../src\yakxin\columbina\features\angleLine\AngleLineAction.java:88
+#: ../src\yakxin\columbina\features\angleLine\AngleLineAction.java:95
+msgid "The bearing angle into this node cannot be determined."
+msgstr "The bearing angle into this node cannot be determined."
+
+#: ../src\yakxin\columbina\features\angleLine\AngleLineAction.java:94
+msgid "The selected node is the first node of the way. "
+msgstr "The selected node is the first node of the way. "
+
+#: ../src\yakxin\columbina\features\angleLine\AngleLineDialog.java:15
+#: ../src\yakxin\columbina\features\chamfer\ChamferDialog.java:22
+#: ../src\yakxin\columbina\features\fillet\FilletDialog.java:25
+#: ../src\yakxin\columbina\features\transitionCurve\TransitionCurveDialog.java:20
+msgid "Confirm"
+msgstr "Confirm"
+
+#: ../src\yakxin\columbina\features\angleLine\AngleLineDialog.java:15
+#: ../src\yakxin\columbina\features\chamfer\ChamferDialog.java:22
+#: ../src\yakxin\columbina\features\fillet\FilletDialog.java:25
+#: ../src\yakxin\columbina\features\transitionCurve\TransitionCurveDialog.java:20
+msgid "Cancel"
+msgstr "Cancel"
+
+#: ../src\yakxin\columbina\features\angleLine\AngleLineDialog.java:37
+msgid "Line Information"
+msgstr "Line Information"
+
+#: ../src\yakxin\columbina\features\angleLine\AngleLineDialog.java:38
+msgid "Angle (degrees°): "
+msgstr "Angle (degrees°): "
+
+#: ../src\yakxin\columbina\features\angleLine\AngleLineDialog.java:39
+msgid "Length (m): "
+msgstr "Length (m): "
+
+#: ../src\yakxin\columbina\features\angleLine\AngleLineDialog.java:41
+#: ../src\yakxin\columbina\features\chamfer\ChamferDialog.java:63
+#: ../src\yakxin\columbina\features\fillet\FilletDialog.java:89
+#: ../src\yakxin\columbina\features\transitionCurve\TransitionCurveDialog.java:88
+msgid "Other Operations"
+msgstr "Other Operations"
+
+#: ../src\yakxin\columbina\features\angleLine\AngleLineDialog.java:42
+#: ../src\yakxin\columbina\features\chamfer\ChamferDialog.java:66
+#: ../src\yakxin\columbina\features\fillet\FilletDialog.java:92
+#: ../src\yakxin\columbina\features\transitionCurve\TransitionCurveDialog.java:101
+msgid "Select new ways after drawing"
+msgstr "Select new ways after drawing"
+
+#: ../src\yakxin\columbina\features\angleLine\AngleLinePreference.java:75
+msgid "Invalid length, should be greater than 0m."
+msgstr "Invalid length, should be greater than 0m."
+
+#: ../src\yakxin\columbina\features\angleLine\AngleLinePreference.java:82
+msgid "The angle should be with from -180° to +180°, normed to {0}°."
+msgstr "The angle should be with from -180° to +180°, normed to {0}°."
+
+#: ../src\yakxin\columbina\features\chamfer\ChamferAction.java:42
+#: ../src\yakxin\columbina\features\chamfer\ChamferDialog.java:54
 msgid "Chamfer Corners"
 msgstr "Chamfer Corners"
 
@@ -26,402 +255,234 @@ msgstr "Chamfer Corners"
 msgid "Chamfer corners of selected ways with specified distances or angle."
 msgstr "Chamfer corners of selected ways with specified distances or angle."
 
+#: ../src\yakxin\columbina\features\chamfer\ChamferAction.java:59
 #: ../src\yakxin\columbina\features\chamfer\ChamferAction.java:60
-msgid "Invalid round chamfer distance BA, should be greater than 0m."
-msgstr "Invalid round chamfer distance BA, should be greater than 0m."
-
-#: ../src\yakxin\columbina\features\chamfer\ChamferAction.java:64
-msgid "Invalid round chamfer distance BC, should be greater than 0m."
-msgstr "Invalid round chamfer distance BC, should be greater than 0m."
-
-#: ../src\yakxin\columbina\features\chamfer\ChamferAction.java:69
-msgid "Invalid round chamfer angle A, should be greater than 0m."
-msgstr "Invalid round chamfer angle A, should be greater than 0m."
-
-#: ../src\yakxin\columbina\features\chamfer\ChamferAction.java:119
-#: ../src\yakxin\columbina\features\fillet\FilletAction.java:124
-#: ../src\yakxin\columbina\features\transitionCurve\TransitionCurveAction.java:104
-msgid "Algorithm did not return at least 2 nodes to form a way for way {0}, this way was not processed."
-msgstr "Algorithm did not return at least 2 nodes to form a way for way {0}, this way was not processed."
-
-#: ../src\yakxin\columbina\features\chamfer\ChamferAction.java:124
-#: ../src\yakxin\columbina\features\fillet\FilletAction.java:129
-#: ../src\yakxin\columbina\features\transitionCurve\TransitionCurveAction.java:110
-msgid "Unexpected error occurred while processing way {0}: {1}"
-msgstr "Unexpected error occurred while processing way {0}: {1}"
-
-#: ../src\yakxin\columbina\features\chamfer\ChamferAction.java:130
-#: ../src\yakxin\columbina\features\fillet\FilletAction.java:136
-#: ../src\yakxin\columbina\features\transitionCurve\TransitionCurveAction.java:117
-msgid "Failed to generate any new way."
-msgstr "Failed to generate any new way."
-
-#: ../src\yakxin\columbina\features\chamfer\ChamferAction.java:146
-#: ../src\yakxin\columbina\features\fillet\FilletAction.java:152
-#: ../src\yakxin\columbina\features\transitionCurve\TransitionCurveAction.java:133
-msgid "Internal error occurred while removing an old way:\n\n"
-msgstr "Internal error occurred while removing an old way:\n\n"
-
-#: ../src\yakxin\columbina\features\chamfer\ChamferAction.java:147
-#: ../src\yakxin\columbina\features\fillet\FilletAction.java:153
-#: ../src\yakxin\columbina\features\transitionCurve\TransitionCurveAction.java:134
-msgid "Old way return value is abnormal (null), unable to get the old way.\n\n"
-msgstr "Old way return value is abnormal (null), unable to get the old way.\n\n"
-
-#: ../src\yakxin\columbina\features\chamfer\ChamferAction.java:148
-msgid "This way may not have been properly chamferred or removed."
-msgstr "This way may not have been properly chamferred or removed."
-
-#: ../src\yakxin\columbina\features\chamfer\ChamferAction.java:155
-#: ../src\yakxin\columbina\features\fillet\FilletAction.java:161
-#: ../src\yakxin\columbina\features\transitionCurve\TransitionCurveAction.java:141
-msgid "Internal error occurred while removing old way {0}:\n\n"
-msgstr "Internal error occurred while removing old way {0}:\n\n"
-
-#: ../src\yakxin\columbina\features\chamfer\ChamferAction.java:156
-#: ../src\yakxin\columbina\features\fillet\FilletAction.java:162
-#: ../src\yakxin\columbina\features\transitionCurve\TransitionCurveAction.java:142
-msgid "New way return value is abnormal (null), unable to get the new way.\n\n"
-msgstr "New way return value is abnormal (null), unable to get the new way.\n\n"
-
-#: ../src\yakxin\columbina\features\chamfer\ChamferAction.java:157
-msgid "Old way {0} may not have been properly chamferred or removed."
-msgstr "Old way {0} may not have been properly chamferred or removed."
-
-#: ../src\yakxin\columbina\features\chamfer\ChamferAction.java:170
-#: ../src\yakxin\columbina\features\fillet\FilletAction.java:176
-#: ../src\yakxin\columbina\features\transitionCurve\TransitionCurveAction.java:153
-#: ../src\yakxin\columbina\utils\UtilsData.java:89
-msgid "Columbina attempted to use Utilsplugin2''s ''Replace Geometry'' function to replace the old way, but failed.\n\n"
-msgstr "Columbina attempted to use Utilsplugin2''s ''Replace Geometry'' function to replace the old way, but failed.\n\n"
-
-#: ../src\yakxin\columbina\features\chamfer\ChamferAction.java:171
-#: ../src\yakxin\columbina\features\fillet\FilletAction.java:177
-#: ../src\yakxin\columbina\features\transitionCurve\TransitionCurveAction.java:154
-msgid "Message from Utilsplugin2:\n{0}\n\n"
-msgstr "Message from Utilsplugin2:\n{0}\n\n"
-
-#: ../src\yakxin\columbina\features\chamfer\ChamferAction.java:172
-#: ../src\yakxin\columbina\features\fillet\FilletAction.java:178
-#: ../src\yakxin\columbina\features\transitionCurve\TransitionCurveAction.java:155
-#: ../src\yakxin\columbina\utils\UtilsData.java:91
-msgid "Old way {0} was not removed."
-msgstr "Old way {0} was not removed."
-
-#: ../src\yakxin\columbina\features\chamfer\ChamferAction.java:178
-#: ../src\yakxin\columbina\features\fillet\FilletAction.java:184
-#: ../src\yakxin\columbina\features\transitionCurve\TransitionCurveAction.java:157
-msgid "Unexpected error occurred while removing way {0}: {1}"
-msgstr "Unexpected error occurred while removing way {0}: {1}"
-
-#: ../src\yakxin\columbina\features\chamfer\ChamferAction.java:244
-#: ../src\yakxin\columbina\features\chamfer\ChamferAction.java:245
 msgid "Chamfer of way {0}: {1}m, {2}m"
 msgstr "Chamfer of way {0}: {1}m, {2}m"
 
-#: ../src\yakxin\columbina\features\chamfer\ChamferAction.java:246
+#: ../src\yakxin\columbina\features\chamfer\ChamferAction.java:61
 msgid "Chamfer of {0} ways: {1}m, {2}m"
 msgstr "Chamfer of {0} ways: {1}m, {2}m"
 
-#: ../src\yakxin\columbina\features\chamfer\ChamferAction.java:248
-#: ../src\yakxin\columbina\features\chamfer\ChamferAction.java:249
+#: ../src\yakxin\columbina\features\chamfer\ChamferAction.java:63
+#: ../src\yakxin\columbina\features\chamfer\ChamferAction.java:64
 msgid "Chamfer of way {0}: {1}m, {2}°"
 msgstr "Chamfer of way {0}: {1}m, {2}°"
 
-#: ../src\yakxin\columbina\features\chamfer\ChamferAction.java:250
+#: ../src\yakxin\columbina\features\chamfer\ChamferAction.java:65
 msgid "Chamfer of {0} ways: {1}m, {2}°"
 msgstr "Chamfer of {0} ways: {1}m, {2}°"
 
-#: ../src\yakxin\columbina\features\chamfer\ChamferAction.java:261
-msgid "The following corner nodes could not be chamferred due to too short distance to adjacent nodes or not meeting the angle restrictions: "
-msgstr "The following corner nodes could not be chamferred due to too short distance to adjacent nodes or not meeting the angle restrictions: "
-
-#: ../src\yakxin\columbina\features\chamfer\ChamferAction.java:265
-#: ../src\yakxin\columbina\features\fillet\FilletAction.java:267
-#: ../src\yakxin\columbina\features\transitionCurve\TransitionCurveAction.java:247
-msgid "\nWay"
-msgstr "\nWay"
-
-#: ../src\yakxin\columbina\features\chamfer\ChamferAction.java:266
-#: ../src\yakxin\columbina\features\fillet\FilletAction.java:268
-#: ../src\yakxin\columbina\features\transitionCurve\TransitionCurveAction.java:249
-msgid ": "
-msgstr ": "
-
-#: ../src\yakxin\columbina\features\chamfer\ChamferAction.java:277
-#: ../src\yakxin\columbina\features\fillet\FilletAction.java:279
-#: ../src\yakxin\columbina\features\transitionCurve\TransitionCurveAction.java:264
-msgid "Columbina: Remove original ways"
-msgstr "Columbina: Remove original ways"
-
-#: ../src\yakxin\columbina\features\chamfer\ChamferDialog.java:23
-#: ../src\yakxin\columbina\features\fillet\FilletDialog.java:19
-#: ../src\yakxin\columbina\features\transitionCurve\TransitionCurveDialog.java:21
-msgid "Confirm"
-msgstr "Confirm"
-
-#: ../src\yakxin\columbina\features\chamfer\ChamferDialog.java:23
-#: ../src\yakxin\columbina\features\fillet\FilletDialog.java:19
-#: ../src\yakxin\columbina\features\transitionCurve\TransitionCurveDialog.java:21
-msgid "Cancel"
-msgstr "Cancel"
-
-#: ../src\yakxin\columbina\features\chamfer\ChamferDialog.java:45
-#: ../src\yakxin\columbina\features\fillet\FilletDialog.java:41
-#: ../src\yakxin\columbina\features\transitionCurve\TransitionCurveDialog.java:42
-#: ../src\yakxin\columbina\utils\UtilsData.java:63
-msgid "Columbina"
-msgstr "Columbina"
-
-#: ../src\yakxin\columbina\features\chamfer\ChamferDialog.java:53
+#: ../src\yakxin\columbina\features\chamfer\ChamferDialog.java:49
 msgid "Distance Mode"
 msgstr "Distance Mode"
 
-#: ../src\yakxin\columbina\features\chamfer\ChamferDialog.java:54
+#: ../src\yakxin\columbina\features\chamfer\ChamferDialog.java:50
 msgid "Angle A Mode"
 msgstr "Angle A Mode"
 
-#: ../src\yakxin\columbina\features\chamfer\ChamferDialog.java:60
+#: ../src\yakxin\columbina\features\chamfer\ChamferDialog.java:56
 msgid "Chamfer Information"
 msgstr "Chamfer Information"
 
-#: ../src\yakxin\columbina\features\chamfer\ChamferDialog.java:63
+#: ../src\yakxin\columbina\features\chamfer\ChamferDialog.java:59
 msgid "Chamfer distance A (m): "
 msgstr "Chamfer distance A (m): "
 
-#: ../src\yakxin\columbina\features\chamfer\ChamferDialog.java:64
+#: ../src\yakxin\columbina\features\chamfer\ChamferDialog.java:60
 msgid "Chamfer distance C (m): "
 msgstr "Chamfer distance C (m): "
 
-#: ../src\yakxin\columbina\features\chamfer\ChamferDialog.java:65
+#: ../src\yakxin\columbina\features\chamfer\ChamferDialog.java:61
 msgid "Chamfer angle to A (degrees°): "
 msgstr "Chamfer angle to A (degrees°): "
 
-#: ../src\yakxin\columbina\features\chamfer\ChamferDialog.java:67
-#: ../src\yakxin\columbina\features\fillet\FilletDialog.java:74
-#: ../src\yakxin\columbina\features\transitionCurve\TransitionCurveDialog.java:92
-msgid "Other Operations"
-msgstr "Other Operations"
-
-#: ../src\yakxin\columbina\features\chamfer\ChamferDialog.java:68
-#: ../src\yakxin\columbina\features\fillet\FilletDialog.java:75
-#: ../src\yakxin\columbina\features\transitionCurve\TransitionCurveDialog.java:95
+#: ../src\yakxin\columbina\features\chamfer\ChamferDialog.java:64
+#: ../src\yakxin\columbina\features\fillet\FilletDialog.java:90
+#: ../src\yakxin\columbina\features\transitionCurve\TransitionCurveDialog.java:91
 msgid "Copy original ways'' tags"
 msgstr "Copy original ways'' tags"
 
-#: ../src\yakxin\columbina\features\chamfer\ChamferDialog.java:69
-#: ../src\yakxin\columbina\features\fillet\FilletDialog.java:76
-#: ../src\yakxin\columbina\features\transitionCurve\TransitionCurveDialog.java:100
+#: ../src\yakxin\columbina\features\chamfer\ChamferDialog.java:65
+#: ../src\yakxin\columbina\features\fillet\FilletDialog.java:91
+#: ../src\yakxin\columbina\features\transitionCurve\TransitionCurveDialog.java:96
 msgid "Remove original ways after drawing"
 msgstr "Remove original ways after drawing"
 
-#: ../src\yakxin\columbina\features\chamfer\ChamferDialog.java:70
-#: ../src\yakxin\columbina\features\fillet\FilletDialog.java:77
-#: ../src\yakxin\columbina\features\transitionCurve\TransitionCurveDialog.java:105
-msgid "Select new ways after drawing"
-msgstr "Select new ways after drawing"
+#: ../src\yakxin\columbina\features\chamfer\ChamferPreference.java:127
+msgid "Invalid round chamfer distance BA, should be greater than 0m."
+msgstr "Invalid round chamfer distance BA, should be greater than 0m."
 
-#: ../src\yakxin\columbina\features\fillet\FilletAction.java:46
-#: ../src\yakxin\columbina\features\fillet\FilletDialog.java:49
+#: ../src\yakxin\columbina\features\chamfer\ChamferPreference.java:131
+msgid "Invalid round chamfer distance BC, should be greater than 0m."
+msgstr "Invalid round chamfer distance BC, should be greater than 0m."
+
+#: ../src\yakxin\columbina\features\chamfer\ChamferPreference.java:136
+msgid "Invalid round chamfer angle A, should be greater than 0m."
+msgstr "Invalid round chamfer angle A, should be greater than 0m."
+
+#: ../src\yakxin\columbina\features\fillet\FilletAction.java:39
+#: ../src\yakxin\columbina\features\fillet\FilletDialog.java:55
 msgid "Round Corners"
 msgstr "Round Corners"
 
-#: ../src\yakxin\columbina\features\fillet\FilletAction.java:48
+#: ../src\yakxin\columbina\features\fillet\FilletAction.java:40
 msgid "Round corners of selected ways with specified surfaceRadius."
 msgstr "Round corners of selected ways with specified surfaceRadius."
 
-#: ../src\yakxin\columbina\features\fillet\FilletAction.java:61
-msgid "Invalid round corner surfaceRadius, should be greater than 0m."
-msgstr "Invalid round corner surfaceRadius, should be greater than 0m."
-
-#: ../src\yakxin\columbina\features\fillet\FilletAction.java:67
-msgid "Minimum angle step for round corner should be at least 0.1°, set to 0.1°."
-msgstr "Minimum angle step for round corner should be at least 0.1°, set to 0.1°."
-
-#: ../src\yakxin\columbina\features\fillet\FilletAction.java:69
-msgid "Angle step is too large, the result may not be good."
-msgstr "Angle step is too large, the result may not be good."
-
-#: ../src\yakxin\columbina\features\fillet\FilletAction.java:71
-msgid "Invalid maximum number of points for round corner, should be at least 1."
-msgstr "Invalid maximum number of points for round corner, should be at least 1."
-
-#: ../src\yakxin\columbina\features\fillet\FilletAction.java:72
-msgid "Maximum number of points for round corner is too low, the result may not be ideal."
-msgstr "Maximum number of points for round corner is too low, the result may not be ideal."
-
-#: ../src\yakxin\columbina\features\fillet\FilletAction.java:78
-msgid "Minimum angle should be at least 0°, set to 0°."
-msgstr "Minimum angle should be at least 0°, set to 0°."
-
-#: ../src\yakxin\columbina\features\fillet\FilletAction.java:85
-msgid "Maximum angle should be at most 180°, set to 180°."
-msgstr "Maximum angle should be at most 180°, set to 180°."
-
-#: ../src\yakxin\columbina\features\fillet\FilletAction.java:154
-msgid "This way may not have been properly rounded or removed."
-msgstr "This way may not have been properly rounded or removed."
-
-#: ../src\yakxin\columbina\features\fillet\FilletAction.java:163
-msgid "Old way {0} may not have been properly rounded or removed."
-msgstr "Old way {0} may not have been properly rounded or removed."
-
-#: ../src\yakxin\columbina\features\fillet\FilletAction.java:252
-#: ../src\yakxin\columbina\features\fillet\FilletAction.java:253
+#: ../src\yakxin\columbina\features\fillet\FilletAction.java:55
+#: ../src\yakxin\columbina\features\fillet\FilletAction.java:56
 msgid "Round corners of way {0}: {1}m"
 msgstr "Round corners of way {0}: {1}m"
 
-#: ../src\yakxin\columbina\features\fillet\FilletAction.java:254
+#: ../src\yakxin\columbina\features\fillet\FilletAction.java:57
 msgid "Round corners of {0} ways: {1}m"
 msgstr "Round corners of {0} ways: {1}m"
 
-#: ../src\yakxin\columbina\features\fillet\FilletAction.java:263
-msgid "The following corner nodes could not be rounded due to too short distance to adjacent nodes or not meeting the angle restrictions: "
-msgstr "The following corner nodes could not be rounded due to too short distance to adjacent nodes or not meeting the angle restrictions: "
-
-#: ../src\yakxin\columbina\features\fillet\FilletDialog.java:51
+#: ../src\yakxin\columbina\features\fillet\FilletDialog.java:57
 msgid "Curve Information"
 msgstr "Curve Information"
 
-#: ../src\yakxin\columbina\features\fillet\FilletDialog.java:52
-msgid "Fillet (round corner) surfaceRadius (m): "
-msgstr "Fillet (round corner) surfaceRadius (m): "
+#: ../src\yakxin\columbina\features\fillet\FilletDialog.java:58
+msgid "Fillet (round corner) radius (m): "
+msgstr "Fillet (round corner) radius (m): "
 
-#: ../src\yakxin\columbina\features\fillet\FilletDialog.java:53
-msgid "Angle step for new curve (degrees°): "
-msgstr "Angle step for new curve (degrees°): "
+#: ../src\yakxin\columbina\features\fillet\FilletDialog.java:62
+msgid "※ Currently recommended maximum radius: {0}m."
+msgstr "※ Currently recommended maximum radius: {0}m."
 
-#: ../src\yakxin\columbina\features\fillet\FilletDialog.java:57
-msgid "※ Specifies the smoothness of the curve. The smaller the step, the denser the points and the smoother the curve."
-msgstr "※ Specifies the smoothness of the curve. The smaller the step, the denser the points and the smoother the curve."
-
-#: ../src\yakxin\columbina\features\fillet\FilletDialog.java:61
-msgid "Maximum nodes per curve segment (excluding start and end): "
-msgstr "Maximum nodes per curve segment (excluding start and end): "
-
-#: ../src\yakxin\columbina\features\fillet\FilletDialog.java:63
-msgid "Minimum angle allowed for drawing curves (degrees°): "
-msgstr "Minimum angle allowed for drawing curves (degrees°): "
-
-#: ../src\yakxin\columbina\features\fillet\FilletDialog.java:64
-msgid "Maximum angle allowed for drawing curves (degrees°): "
-msgstr "Maximum angle allowed for drawing curves (degrees°): "
-
-#: ../src\yakxin\columbina\features\fillet\FilletDialog.java:68
-msgid "※ When the angle approaches 0°, it forms a hairpin turn; when it approaches 180°, it indicates the lines near the corner are already relatively smooth. "
-msgstr "※ When the angle approaches 0°, it forms a hairpin turn; when it approaches 180°, it indicates the lines near the corner are already relatively smooth. "
-
-#: ../src\yakxin\columbina\features\fillet\FilletDialog.java:69
-msgid "In both cases, rounding is usually unnecessary."
-msgstr "In both cases, rounding is usually unnecessary."
-
-#: ../src\yakxin\columbina\features\transitionCurve\TransitionCurveAction.java:42
-#: ../src\yakxin\columbina\features\transitionCurve\TransitionCurveDialog.java:50
-msgid "Transition Curve"
-msgstr "Transition Curve"
-
-#: ../src\yakxin\columbina\features\transitionCurve\TransitionCurveAction.java:44
-msgid "Create Euler spiral transition curves between straight segments."
-msgstr "Create Euler spiral transition curves between straight segments."
-
-#: ../src\yakxin\columbina\features\transitionCurve\TransitionCurveAction.java:58
-msgid "Invalid curve surfaceRadius, should be greater than 0m."
-msgstr "Invalid curve surfaceRadius, should be greater than 0m."
-
-#: ../src\yakxin\columbina\features\transitionCurve\TransitionCurveAction.java:62
-msgid "Invalid transition curve length, should be greater than 0m."
-msgstr "Invalid transition curve length, should be greater than 0m."
-
-#: ../src\yakxin\columbina\features\transitionCurve\TransitionCurveAction.java:66
-msgid "Invalid chainage length, should be greater than 0m."
-msgstr "Invalid chainage length, should be greater than 0m."
-
-#: ../src\yakxin\columbina\features\transitionCurve\TransitionCurveAction.java:69
-msgid "Invalid transition curve length and chainage length. The curve length should be grater chainage length."
-msgstr "Invalid transition curve length and chainage length. The curve length should be grater chainage length."
-
-#: ../src\yakxin\columbina\features\transitionCurve\TransitionCurveAction.java:135
-msgid "This way may not have been properly processed or removed."
-msgstr "This way may not have been properly processed or removed."
-
-#: ../src\yakxin\columbina\features\transitionCurve\TransitionCurveAction.java:143
-msgid "Old way {0} may not have been properly processed or removed."
-msgstr "Old way {0} may not have been properly processed or removed."
-
-#: ../src\yakxin\columbina\features\transitionCurve\TransitionCurveAction.java:223
-#: ../src\yakxin\columbina\features\transitionCurve\TransitionCurveAction.java:226
-msgid "Transition curve of way {0}: R={1}m, Ls={2}m"
-msgstr "Transition curve of way {0}: R={1}m, Ls={2}m"
-
-#: ../src\yakxin\columbina\features\transitionCurve\TransitionCurveAction.java:229
-msgid "Transition curve of {0} ways: R={1}m, Ls={2}m"
-msgstr "Transition curve of {0} ways: R={1}m, Ls={2}m"
-
-#: ../src\yakxin\columbina\features\transitionCurve\TransitionCurveAction.java:242
-msgid "The following corner nodes could not be processed due to due to insufficient distance from adjacent nodes, excessively long specified transition curves, or angular issues: "
-msgstr "The following corner nodes could not be processed due to due to insufficient distance from adjacent nodes, excessively long specified transition curves, or angular issues: "
-
-#: ../src\yakxin\columbina\features\transitionCurve\TransitionCurveDialog.java:52
-msgid "Transition Curve Information"
-msgstr "Transition Curve Information"
-
-#: ../src\yakxin\columbina\features\transitionCurve\TransitionCurveDialog.java:55
-msgid "Circular curve surfaceRadius (m): "
-msgstr "Circular curve surfaceRadius (m): "
-
-#: ../src\yakxin\columbina\features\transitionCurve\TransitionCurveDialog.java:61
-msgid "※ Radius of the circular arc section. Must be positive."
-msgstr "※ Radius of the circular arc section. Must be positive."
-
-#: ../src\yakxin\columbina\features\transitionCurve\TransitionCurveDialog.java:68
-msgid "Transition curve length (m): "
-msgstr "Transition curve length (m): "
-
-#: ../src\yakxin\columbina\features\transitionCurve\TransitionCurveDialog.java:74
-msgid "※ Length of each Euler spiral (transition curve) segment."
-msgstr "※ Length of each Euler spiral (transition curve) segment."
-
-#: ../src\yakxin\columbina\features\transitionCurve\TransitionCurveDialog.java:81
+#: ../src\yakxin\columbina\features\fillet\FilletDialog.java:66
+#: ../src\yakxin\columbina\features\transitionCurve\TransitionCurveDialog.java:77
 msgid "Chainage length (node spacing, m): "
 msgstr "Chainage length (node spacing, m): "
 
-#: ../src\yakxin\columbina\features\transitionCurve\TransitionCurveDialog.java:87
+#: ../src\yakxin\columbina\features\fillet\FilletDialog.java:67
+msgid "Maximum nodes per curve segment (excluding start and end): "
+msgstr "Maximum nodes per curve segment (excluding start and end): "
+
+#: ../src\yakxin\columbina\features\fillet\FilletDialog.java:71
+msgid "※ The chainage length specifies the number of nodes along the curve. A shorter chainage length results in more nodes. "
+msgstr "※ The chainage length specifies the number of nodes along the curve. A shorter chainage length results in more nodes. "
+
+#: ../src\yakxin\columbina\features\fillet\FilletDialog.java:72
+msgid "Note that this length is not the final distance between nodes. Instead, the required number of nodes is calculated based on the curve length and the chainage length, after which the nodes are evenly distributed according to this node count. "
+msgstr "Note that this length is not the final distance between nodes. Instead, the required number of nodes is calculated based on the curve length and the chainage length, after which the nodes are evenly distributed according to this node count. "
+
+#: ../src\yakxin\columbina\features\fillet\FilletDialog.java:73
+msgid "Furthermore, if the calculated number of nodes exceeds the maximum node limit, the node spacing will be recalculated based on the maximum node count."
+msgstr "Furthermore, if the calculated number of nodes exceeds the maximum node limit, the node spacing will be recalculated based on the maximum node count."
+
+#: ../src\yakxin\columbina\features\fillet\FilletDialog.java:78
+msgid "Minimum angle allowed for drawing curves (degrees°): "
+msgstr "Minimum angle allowed for drawing curves (degrees°): "
+
+#: ../src\yakxin\columbina\features\fillet\FilletDialog.java:79
+msgid "Maximum angle allowed for drawing curves (degrees°): "
+msgstr "Maximum angle allowed for drawing curves (degrees°): "
+
+#: ../src\yakxin\columbina\features\fillet\FilletDialog.java:83
+msgid "※ When the angle approaches 0°, it forms a hairpin turn; when it approaches 180°, it indicates the lines near the corner are already relatively smooth. "
+msgstr "※ When the angle approaches 0°, it forms a hairpin turn; when it approaches 180°, it indicates the lines near the corner are already relatively smooth. "
+
+#: ../src\yakxin\columbina\features\fillet\FilletDialog.java:84
+msgid "In both cases, rounding is usually unnecessary."
+msgstr "In both cases, rounding is usually unnecessary."
+
+#: ../src\yakxin\columbina\features\fillet\FilletPreference.java:142
+msgid "Invalid round corner surfaceRadius, should be greater than 0m."
+msgstr "Invalid round corner surfaceRadius, should be greater than 0m."
+
+#: ../src\yakxin\columbina\features\fillet\FilletPreference.java:148
+msgid "Minimum chainage length (node spacing) for round corner should be at least 0.1m, set to 0.1m."
+msgstr "Minimum chainage length (node spacing) for round corner should be at least 0.1m, set to 0.1m."
+
+#: ../src\yakxin\columbina\features\fillet\FilletPreference.java:150
+msgid "Chainage length (node spacing) is too small, the nodes may be dense."
+msgstr "Chainage length (node spacing) is too small, the nodes may be dense."
+
+#: ../src\yakxin\columbina\features\fillet\FilletPreference.java:153
+msgid "Invalid maximum number of points for round corner, should be at least 1."
+msgstr "Invalid maximum number of points for round corner, should be at least 1."
+
+#: ../src\yakxin\columbina\features\fillet\FilletPreference.java:154
+msgid "Maximum number of points for round corner is too low, the result may not be ideal."
+msgstr "Maximum number of points for round corner is too low, the result may not be ideal."
+
+#: ../src\yakxin\columbina\features\fillet\FilletPreference.java:160
+msgid "Minimum angle should be at least 0°, set to 0°."
+msgstr "Minimum angle should be at least 0°, set to 0°."
+
+#: ../src\yakxin\columbina\features\fillet\FilletPreference.java:167
+msgid "Maximum angle should be at most 180°, set to 180°."
+msgstr "Maximum angle should be at most 180°, set to 180°."
+
+#: ../src\yakxin\columbina\features\transitionCurve\TransitionCurveAction.java:42
+#: ../src\yakxin\columbina\features\transitionCurve\TransitionCurveDialog.java:46
+msgid "Transition Curve"
+msgstr "Transition Curve"
+
+#: ../src\yakxin\columbina\features\transitionCurve\TransitionCurveAction.java:43
+msgid "Create Euler spiral transition curves between straight segments."
+msgstr "Create Euler spiral transition curves between straight segments."
+
+#: ../src\yakxin\columbina\features\transitionCurve\TransitionCurveAction.java:59
+#: ../src\yakxin\columbina\features\transitionCurve\TransitionCurveAction.java:62
+msgid "Transition curve of way {0}: R={1}m, Ls={2}m"
+msgstr "Transition curve of way {0}: R={1}m, Ls={2}m"
+
+#: ../src\yakxin\columbina\features\transitionCurve\TransitionCurveAction.java:65
+msgid "Transition curve of {0} ways: R={1}m, Ls={2}m"
+msgstr "Transition curve of {0} ways: R={1}m, Ls={2}m"
+
+#: ../src\yakxin\columbina\features\transitionCurve\TransitionCurveDialog.java:48
+msgid "Transition Curve Information"
+msgstr "Transition Curve Information"
+
+#: ../src\yakxin\columbina\features\transitionCurve\TransitionCurveDialog.java:51
+msgid "Circular curve surfaceRadius (m): "
+msgstr "Circular curve surfaceRadius (m): "
+
+#: ../src\yakxin\columbina\features\transitionCurve\TransitionCurveDialog.java:57
+msgid "※ Radius of the circular arc section. Must be positive."
+msgstr "※ Radius of the circular arc section. Must be positive."
+
+#: ../src\yakxin\columbina\features\transitionCurve\TransitionCurveDialog.java:64
+msgid "Transition curve length (m): "
+msgstr "Transition curve length (m): "
+
+#: ../src\yakxin\columbina\features\transitionCurve\TransitionCurveDialog.java:70
+msgid "※ Length of each Euler spiral (transition curve) segment."
+msgstr "※ Length of each Euler spiral (transition curve) segment."
+
+#: ../src\yakxin\columbina\features\transitionCurve\TransitionCurveDialog.java:83
 msgid "※ Distance between nodes along the curve. Smaller values create smoother curves but more nodes."
 msgstr "※ Distance between nodes along the curve. Smaller values create smoother curves but more nodes."
 
-#: ../src\yakxin\columbina\features\transitionCurve\TransitionCurveGenerator.java:156
+#: ../src\yakxin\columbina\features\transitionCurve\TransitionCurveGenerator.java:149
 msgid "getUnrotatedTransitionArc: Unexpected leftRight arg."
 msgstr "getUnrotatedTransitionArc: Unexpected leftRight arg."
 
-#: ../src\yakxin\columbina\features\transitionCurve\TransitionCurveGenerator.java:158
+#: ../src\yakxin\columbina\features\transitionCurve\TransitionCurveGenerator.java:151
 msgid "getUnrotatedTransitionArc: enChainageLength > enTransArcLength."
 msgstr "getUnrotatedTransitionArc: enChainageLength > enTransArcLength."
 
-#: ../src\yakxin\columbina\utils\UtilsData.java:48
-msgid "Current layer is not available."
-msgstr "Current layer is not available."
+#: ../src\yakxin\columbina\features\transitionCurve\TransitionCurvePreference.java:132
+msgid "Invalid curve surfaceRadius, should be greater than 0m."
+msgstr "Invalid curve surfaceRadius, should be greater than 0m."
 
-#: ../src\yakxin\columbina\utils\UtilsData.java:51
-msgid "Current dataset is not available."
-msgstr "Current dataset is not available."
+#: ../src\yakxin\columbina\features\transitionCurve\TransitionCurvePreference.java:136
+msgid "Invalid transition curve length, should be greater than 0m."
+msgstr "Invalid transition curve length, should be greater than 0m."
 
-#: ../src\yakxin\columbina\utils\UtilsData.java:58
-msgid "No way is selected."
-msgstr "No way is selected."
+#: ../src\yakxin\columbina\features\transitionCurve\TransitionCurvePreference.java:140
+msgid "Invalid chainage length, should be greater than 0m."
+msgstr "Invalid chainage length, should be greater than 0m."
 
-#: ../src\yakxin\columbina\utils\UtilsData.java:62
-msgid "Are you sure you want to process {0} ways at once? This may take a long time."
-msgstr "Are you sure you want to process {0} ways at once? This may take a long time."
+#: ../src\yakxin\columbina\features\transitionCurve\TransitionCurvePreference.java:143
+msgid "Invalid transition curve length and chainage length. The curve length should be grater chainage length."
+msgstr "Invalid transition curve length and chainage length. The curve length should be grater chainage length."
 
-#: ../src\yakxin\columbina\utils\UtilsData.java:90
-msgid "The user canceled the replacement operation in the Utilsplugin2 window.\n\n"
-msgstr "The user canceled the replacement operation in the Utilsplugin2 window.\n\n"
-
-#: ../src\yakxin\columbina\utils\UtilsData.java:119
-msgid "Old way {0} is still referenced by relations, not removed."
-msgstr "Old way {0} is still referenced by relations, not removed."
-
-#: ../src\yakxin\columbina\utils\UtilsMath.java:23
+#: ../src\yakxin\columbina\utils\UtilsMath.java:30
 msgid "Too near the pole, failed to calculate EN distance."
 msgstr "Too near the pole, failed to calculate EN distance."
 
