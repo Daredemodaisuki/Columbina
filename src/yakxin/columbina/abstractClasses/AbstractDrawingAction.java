@@ -5,7 +5,6 @@ import org.openstreetmap.josm.command.Command;
 import org.openstreetmap.josm.data.UndoRedoHandler;
 import org.openstreetmap.josm.data.osm.DataSet;
 import org.openstreetmap.josm.data.osm.OsmPrimitive;
-import org.openstreetmap.josm.gui.layer.OsmDataLayer;
 import org.openstreetmap.josm.plugins.utilsplugin2.replacegeometry.ReplaceGeometryException;
 import org.openstreetmap.josm.tools.I18n;
 import org.openstreetmap.josm.tools.Shortcut;
@@ -43,7 +42,7 @@ public abstract class AbstractDrawingAction <
     protected final PreferenceType preference;  // preference是final但是不影响它内部自己变
     protected ParamType params;  // params将在执行点击事件时具体获取，每次获取可能不一致
 
-    /// 所有需要由具体action类定义的东西
+    /// 所有需要由中间层或具体action类定义的东西
     /**
      * 获取撤销重做栈的说明
      * @param inputs 输入要素
@@ -51,6 +50,13 @@ public abstract class AbstractDrawingAction <
      * @return 说明文本（I18n后）
      */
     public abstract String getUndoRedoInfo(ColumbinaInput inputs, ParamType params);
+
+    /**
+     * 拆分批量输入为单组输入
+     * @param inputs 输入要素
+     * @return 单组输入列表
+     */
+    public abstract List<ColumbinaSingleInput> splitBatchInputs(ColumbinaInput inputs);
 
     /**
      * 将输入要素传入generator获取并汇总全部添加指令
@@ -66,7 +72,7 @@ public abstract class AbstractDrawingAction <
      * @return 对于全部输入产生的添加指令列表
      */
     public abstract List<Command> concludeAddCommands(
-            DataSet ds, ColumbinaInput input,
+            DataSet ds, List<ColumbinaSingleInput> input,
             boolean copyTag
     );
 
@@ -83,10 +89,18 @@ public abstract class AbstractDrawingAction <
     /**
      * 检查输入要素的数量是否合法
      * <p>具体的数量要求应在中间层或具体操作类中定义。
-     * @param inputs 输入要素
+     * @param totalInput 全部输入要素
      * @return 检查结果状态
      */
-    public abstract int checkInputNum(ColumbinaInput inputs);
+    public abstract int checkInputNum(ColumbinaInput totalInput);
+
+    /**
+     * 检查输入要素内部具体的内容是否符合要求
+     *
+     * @param singleInputs 单组输入要素构成的列表
+     * @return 检查结果状态
+     */
+    public abstract int checkInputDetails(List<ColumbinaSingleInput> singleInputs);
 
     /**
      * 获取需要选中的新路径
@@ -146,22 +160,27 @@ public abstract class AbstractDrawingAction <
      */
     @Override
     public void actionPerformed(ActionEvent e) {
-        OsmDataLayer layer; DataSet dataSet; ColumbinaInput input;
+        // OsmDataLayer layer;
+        DataSet dataSet; ColumbinaInput totalInput; List<ColumbinaSingleInput> singleInputs;
         boolean deleteOld; boolean selectNew; boolean copyTag;
 
         // 检查
         try {
-            input = new ColumbinaInput();
-            layer = input.getLayer();
-            dataSet = input.getDataSet();
+            totalInput = new ColumbinaInput();
+            // layer = totalInput.getLayer();
+            dataSet = totalInput.getDataSet();
 
             // 数量检查（不可接受的数量将在checkInputNum抛IllegalArgumentException）
-            if (checkInputNum(input) == USER_CANCEL) return;  // 用户取消时直接退出
+            if (checkInputNum(totalInput) == USER_CANCEL) return;  // 用户取消时直接退出
+            // 批量输入拆分为单组输入
+            singleInputs = splitBatchInputs(totalInput);
+            // 具体输入检查（有问题将在checkInputDetails抛ColumbinaException）
+            if (checkInputDetails(singleInputs) == USER_CANCEL) return;
 
             // 弹出参数设置窗口，获取参数
             // 重构后preference负责弹窗，本来也就是设置preference的窗口
             // 把input也给到getParamsAndUpdatePreference，以便窗口可以实时计算一些内容并反馈给用户
-            final ParamType params = preference.getParamsAndUpdatePreference(input);
+            final ParamType params = preference.getParamsAndUpdatePreference(totalInput);
             if (params == null) return;  // 用户取消操作
             // 存入类成员以便concludeAddCommands之UtilsData.getAddCmd(…, params, …)
             // 和下面的ColumbinaSeqCommand(getUndoRedoInfo(…, params), …);使用
@@ -178,8 +197,8 @@ public abstract class AbstractDrawingAction <
         // 绘制新路径
         List<Command> cmdsAdd;
         try {
-            cmdsAdd = concludeAddCommands(dataSet, input, copyTag);
-            if (cmdsAdd == null)
+            cmdsAdd = concludeAddCommands(dataSet, singleInputs, copyTag);
+            if (cmdsAdd == null || cmdsAdd.isEmpty())
                 throw new ColumbinaException(I18n.tr("No input was successfully processed."));
         } catch (ColumbinaException | IllegalArgumentException exAdd) {
             UtilsUI.errorInfo(exAdd.getMessage());
@@ -187,16 +206,14 @@ public abstract class AbstractDrawingAction <
         }
 
         // 绘制部分的撤销重做栈处理并正式提交执行
-        if (!cmdsAdd.isEmpty()) {
-            Command cmdAdd = new ColumbinaSeqCommand(getUndoRedoInfo(input, params), cmdsAdd, "RoundCorners");
-            UndoRedoHandler.getInstance().add(cmdAdd);
-        }
+        Command cmdAdd = new ColumbinaSeqCommand(getUndoRedoInfo(totalInput, params), cmdsAdd, "RoundCorners");
+        UndoRedoHandler.getInstance().add(cmdAdd);
 
         // 移除旧路径（如果需要的话）
         if (deleteOld) {
             try {
                 List<Command> cmdsRmv = concludeRemoveCommands(dataSet);
-                if (!cmdsRmv.isEmpty()) {  // 如果全部都没有删除/替换，cmdsRmv为空会错错爆;
+                if (cmdsRmv == null || !cmdsRmv.isEmpty()) {  // 如果全部都没有删除/替换，cmdsRmv为空会错错爆;
                     Command cmdRmv = new ColumbinaSeqCommand(I18n.tr("Columbina: Remove original ways"), cmdsRmv, "RemoveOldWays");
                     UndoRedoHandler.getInstance().add(cmdRmv);
                 }

@@ -76,13 +76,13 @@ public abstract class ActionWithBatchWays<
     }
 
     @Override
-    public int checkInputNum(ColumbinaInput inputs) {
+    public int checkInputNum(ColumbinaInput totalInput) {
         boolean ifOnlyContain2NodeWays = true;
         // 没有选定路径、（有限制时）选择太少或太多中止流程
-        if (inputs.isEmpty(Way.class))
+        if (totalInput.isEmpty(Way.class))
             throw new IllegalArgumentException(I18n.tr("No way is selected."));
         // 检查是否只包含2点路径
-        for (Way way : inputs.getWays()) {
+        for (Way way : totalInput.getWays()) {
             if ((!way.isClosed() && way.getNodes().size() >= 3) || (way.isClosed() && way.getNodes().size() >= 4)) {
                 ifOnlyContain2NodeWays = false;
                 break;
@@ -91,14 +91,14 @@ public abstract class ActionWithBatchWays<
         if (ifOnlyContain2NodeWays) throw new IllegalArgumentException("All selected ways only contain 2 nodes, and cannot find corners.");
 
         // 参数检查
-        if (minSelection != NO_LIMITATION_ON_INPUT_NUM && inputs.getInputNum(Way.class) < minSelection)
+        if (minSelection != NO_LIMITATION_ON_INPUT_NUM && totalInput.getInputNum(Way.class) < minSelection)
             throw new IllegalArgumentException(I18n.tr("Too few ways are selected, should be grater than {0}.", minSelection));
-        if (maxSelection != NO_LIMITATION_ON_INPUT_NUM && inputs.getInputNum(Way.class) > maxSelection)
+        if (maxSelection != NO_LIMITATION_ON_INPUT_NUM && totalInput.getInputNum(Way.class) > maxSelection)
             throw new IllegalArgumentException(I18n.tr("Too many ways are selected, should be less than {0}.", maxSelection));
-        if (inputs.getInputNum(Way.class) > 5) {
+        if (totalInput.getInputNum(Way.class) > 5) {
                 int confirmTooMany = JOptionPane.showConfirmDialog(
                         null,
-                        I18n.tr("Are you sure you want to process {0} ways at once? This may take a long time.", inputs.getInputNum(Way.class)),
+                        I18n.tr("Are you sure you want to process {0} ways at once? This may take a long time.", totalInput.getInputNum(Way.class)),
                         I18n.tr("Columbina"),
                         JOptionPane.YES_NO_OPTION
                 );
@@ -108,20 +108,29 @@ public abstract class ActionWithBatchWays<
     }
 
     @Override
+    public int checkInputDetails(List<ColumbinaSingleInput> singleInputs) {return CHECK_OK;}  // 这个模板下暂时没有需要具体检查的
+
+    @Override
+    public List<ColumbinaSingleInput> splitBatchInputs(ColumbinaInput inputs) {
+        // 对于这一类，单组输入都是一条路径
+        List<ColumbinaSingleInput> singleInputs = new ArrayList<>();
+        for (Way wayToBeProcessed : inputs.getWays()) {
+            singleInputs.add(new ColumbinaSingleInput(
+                    new ArrayList<Node>(),
+                    new ArrayList<Way>(Collections.singleton(wayToBeProcessed))
+            ));
+        }
+        return singleInputs;
+    }
+
+    @Override
     public List<Command> concludeAddCommands(
-            DataSet ds, ColumbinaInput input,
+            DataSet ds, List<ColumbinaSingleInput> singleInputs,
             boolean copyTag
     ) {
         List<Command> commands = new ArrayList<>();
         inputOutputPairs = new HashMap<>();  // 输入节点/路径k与新绘制的路径v的打包对
         Map<Way, List<Long>> failedNodeIds = new HashMap<>();  // 处理输入节点/路径k与处理时k上失败的节点v的打包对
-        // List<Way> selectedWays = input.getWays();
-        // 批量输入分包
-        // TODO：把getAddCmd放到主抽象类去abstract
-        List<ColumbinaSingleInput> singleInputs = new ArrayList<>();
-        for (Way wayToBeProcessed : input.getWays()){
-            singleInputs.add(new ColumbinaSingleInput(new ArrayList<Node>(), new ArrayList<Way>(Collections.singleton(wayToBeProcessed))));
-        }
         // 处理路径
         for (ColumbinaSingleInput singleInput : singleInputs) {  // 分别处理每个输入路径
             try {  // 一条路径出错尽可能不影响其他的
@@ -230,7 +239,7 @@ public abstract class ActionWithBatchWays<
     /// 特有方法
     /**
      * 调用Generator获得绘制单条新路径所需指令
-     * <p>将会调用具体生成器的getNewNodeWayForSingleInput方法，由于输入要素未Object类型，具体生成器类需要自行判断、转换为需要的类型
+     * <p>将会调用具体生成器的getNewNodeWayForSingleInput方法，由于输入要素为ColumbinaSingleInput类型，具体生成器类需要自行判断、转换为需要的类型
      * @param ds 数据集
      * @param singleInput 选定输入要素
      * @param generator 生成器

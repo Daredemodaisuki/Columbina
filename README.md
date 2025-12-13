@@ -3,6 +3,8 @@
 A Java OpenStreetMap (JOSM) pulgin providing convenient Fillet (round corner), Chamfer, Transition Curve drawing, and … <br> might provide more features in the future.
 <br> 一个提供倒圆角、倒斜角、缓和曲线工具的Java OpenStreetMap（JOSM）插件，未来计划开发更多功能。
 
+![Downloads](https://img.shields.io/github/downloads/Daredemodaisuki/Columbina/total)
+
 <p align="right">
   <img src="ColumbinaRC.png" alt="Round Corner Menu" width="60%">
 </p>
@@ -10,7 +12,6 @@ A Java OpenStreetMap (JOSM) pulgin providing convenient Fillet (round corner), C
   <small><sub><s>The name of this plugin has absolutely no relationship with Kuutar or Columbina Hyposelenia, and it's definitely not an attempt to fit the meme. xd
 <br> 本插件的名称绝对与库塔尔或哥伦比娅·希珀塞莱尼娅无关，绝对不是凑的名字。（逃</s></sub></small>
 </p>
-
 
 ## Quick Start · 快速开始
 
@@ -36,9 +37,9 @@ Also known as Fillet.
 Allows users to fillet each corner node of the selected ways with a specified surfaceRadius.
 <br> 允许用户对选定路径的每个拐角节点按指定半径倒圆角。
 
-The plugin supports specifying the arc surfaceRadius for fillets. Node density can be controlled via central angle increments, and a maximum number of nodes per curve segment is also provided for control.
+The plugin supports specifying the arc radius for fillets. Node density can be controlled via chainage length, and a maximum number of nodes per curve segment is also provided for control.
 Additionally, the plugin offers options to copy tags from the original way, remove the original way after drawing, and toggle selection to the new way after drawing.
-<br> 插件支持指定圆角的圆弧半径，可以通过圆心角步进控制节点密度并提供每段曲线最大点数控制。插件亦提供复制原有路径标签、绘制后移除原有路径、绘制后切换选择新路径的选项。
+<br> 插件支持指定圆角的圆弧半径，可以通过桩距控制节点密度并提供每段曲线最大节点数控制。插件亦提供复制原有路径标签、绘制后移除原有路径、绘制后切换选择新路径的选项。
 
 The plugin automatically and uniformly interpolates nodes along the curve, adding them at even intervals.
 For longer curves (when the surfaceRadius remains constant, curves with smaller deflection angles become longer), a greater number of nodes will be generated.
@@ -53,7 +54,7 @@ Assuming a corner is formed by points A → B → C, where B is the vertex, the 
 second, specifying the chamfer distance on side A and the chamfer angle on side A. The plugin also provides options to copy tags from the original way, remove the original way after drawing, and toggle selection to the new way after drawing.
 <br> 假定一个拐角是A→B→C，其中B是拐点，插件支持2种模式：一是指定拐点A和C两侧的切距；二是指定A侧的切距和A侧的切角。插件亦提供复制原有路径标签、绘制后移除原有路径、绘制后切换选择新路径的选项。
 
-### <img src="/images/TransitionCurve.png" alt="Chamfer Corner Menu" width="25px"> Transition Curve · 按路径绘制缓和曲线 〔Alt+Ctrl+Shift+T〕
+### <img src="/images/TransitionCurve.png" alt="Transition Curve Menu" width="25px"> Transition Curve · 按路径绘制缓和曲线 〔Alt+Ctrl+Shift+T〕
 
 Allows users to draw transition curves (using the clothoid method) with specified circular curve surfaceRadius and transition curve length for each corner node of the selected way.
 <br> 允许用户对选定路径的每个拐角节点按指定圆曲线半径、缓和曲线长度绘制缓和曲线（回旋线画法）。
@@ -62,7 +63,7 @@ The plugin will draw two segments of Euler spiral and a circular curve for each 
 It supports specifying chainage length (node spacing) and provides options to copy tags from the original way, remove the original way after drawing, and toggle selection to the new way after drawing.
 <br> 插件将为每个拐角绘制两段回旋线（Euler回旋线）和圆曲线。插件支持指定桩距（节点距离），亦提供复制原有路径标签、绘制后移除原有路径、绘制后切换选择新路径的选项。
 
-### <img src="/images/OrientedLine.png" alt="Chamfer Corner Menu" width="25px"> Oriented Line · 绘制导向直线 〔Alt+Ctrl+Shift+F〕
+### <img src="/images/OrientedLine.png" alt="Oriented Line Menu" width="25px"> Oriented Line · 绘制导向直线 〔Alt+Ctrl+Shift+F〕
 
 Allows the user to draw a straight line starting from the selected node, based on a specified deflection angle and length relative to the selected way.
 <br> 允许用户在选定的路径和节点的基础上指定偏角和长度绘制从该节点出发的直线。
@@ -72,8 +73,8 @@ A positive deflection angle indicates a turn to the left, and a negative angle i
 
 ### Note · 注意
 
-When " <img src="/images/RemoveOldWays.png" alt="Chamfer Corner Menu" width="10px"> Remove original way after drawing" is enabled:
-<br> 启用「 <img src="/images/RemoveOldWays.png" alt="Chamfer Corner Menu" width="10px"> 绘制后移除原有路径」时：
+When " <img src="/images/RemoveOldWays.png" alt="Remove Old Ways" width="10px"> Remove original way after drawing" is enabled:
+<br> 启用「 <img src="/images/RemoveOldWays.png" alt="Remove Old Ways" width="10px"> 绘制后移除原有路径」时：
 
 * For old ways that have already been uploaded, the plugin will invoke the "Replace Geometry" function of the Utilsplugin2 to replace the old way in order to preserve its data history. Therefore, if the old way does not meet the requirements for the Replace Geometry function (e.g., it is not entirely within the downloaded area), the replacement will fail and the old way will be retained; <br> 对于已上传的旧路径，插件将调用Utilsplgin2之「替换几何图形」功能替换旧路径以保留数据历史版本，故当旧路径不满足替换几何图形功能的要求时（如未完全在下载区域中），替换将失败，旧路径将保留；
 * For newly drawn, unuploaded old ways, the plugin will delete them directly; <br> 对于新绘制、未上传的旧路径，插件将会直接删除；

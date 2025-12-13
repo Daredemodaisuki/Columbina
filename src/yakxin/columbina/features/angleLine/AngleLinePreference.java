@@ -4,6 +4,8 @@ import org.openstreetmap.josm.spi.preferences.Config;
 import org.openstreetmap.josm.tools.I18n;
 import yakxin.columbina.abstractClasses.AbstractPreference;
 import yakxin.columbina.data.dto.inputs.ColumbinaInput;
+import yakxin.columbina.utils.UtilsMath;
+import yakxin.columbina.utils.UtilsUI;
 
 public final class AngleLinePreference extends AbstractPreference<AngleLineParams> {
     public AngleLinePreference() {
@@ -69,8 +71,16 @@ public final class AngleLinePreference extends AbstractPreference<AngleLineParam
         if (angleLineDialog.getValue() != 1) return null;  // 按ESC（0）或点击取消（2），退出；点击确定继续是1
 
         // 数值检查
-        double LineLength = angleLineDialog.getAngleLineLength();
-        if (LineLength <= 0) throw new IllegalArgumentException(I18n.tr("Invalid length, should be greater than 0m."));
+        double lineLength = angleLineDialog.getAngleLineLength();
+        if (lineLength <= 0) throw new IllegalArgumentException(I18n.tr("Invalid length, should be greater than 0m."));
+
+        // 归一化角度
+        double angleDeg = angleLineDialog.getAngleLineAngleDeg();
+        if (angleDeg != UtilsMath.normAngleDeg(angleDeg)) {
+            angleDeg = UtilsMath.normAngleDeg(angleDeg);
+            angleLineDialog.setAngleLineAngleDeg(angleDeg);
+            UtilsUI.warnInfo(I18n.tr("The angle should be with from -180° to +180°, normed to {0}°.", angleDeg));
+        }
 
         // 保存设置
         AngleLinePreference.setPreferenceFromDialog(angleLineDialog);  // 更新自身

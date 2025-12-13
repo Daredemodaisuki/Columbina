@@ -179,7 +179,7 @@ public final class TransitionCurveGenerator extends AbstractGenerator<Transition
         // 计算终点处的切角
         double endTangentAngleRad = leftRight * (curvatureChangeRate * enTransArcLength * enTransArcLength / 2.0);
 
-        return new SingleEulerArcResult(result, 0.0, UtilsMath.normAngle(endTangentAngleRad));
+        return new SingleEulerArcResult(result, 0.0, UtilsMath.normAngleRad(endTangentAngleRad));
     }
 
     // 将未旋转、移动的螺旋曲线（起点在原点）绕原点旋转，然后移动到曲线的开始处
@@ -203,7 +203,7 @@ public final class TransitionCurveGenerator extends AbstractGenerator<Transition
         }
 
         // 计算终点处的切角（原角+旋转度数）
-        double endTangentAngleRad = UtilsMath.normAngle(transArc.endTangentAngleRad + startAngleRad);
+        double endTangentAngleRad = UtilsMath.normAngleRad(transArc.endTangentAngleRad + startAngleRad);
 
         return new SingleEulerArcResult(result, startAngleRad, endTangentAngleRad);
     }
@@ -218,18 +218,18 @@ public final class TransitionCurveGenerator extends AbstractGenerator<Transition
         List<EastNorth> result = new ArrayList<>();
 
         // 圆心（从起点沿法线方向移动半径距离得到圆心）
-        double normalAngleStartRed = UtilsMath.normAngle(startAngleRad + leftRight * Math.PI / 2);  // 起点法线方向，左转+90°右转-90°（坐标角度）
+        double normalAngleStartRed = UtilsMath.normAngleRad(startAngleRad + leftRight * Math.PI / 2);  // 起点法线方向，左转+90°右转-90°（坐标角度）
         double[] center = {
                 start.getX() + enRadius * Math.cos(normalAngleStartRed),
                 start.getY() + enRadius * Math.sin(normalAngleStartRed)
         };
         // 起止点相对于圆心的角度（通过起点法向角度取反获得，是坐标角度）和圆心角
-        double ang1 = UtilsMath.normAngle(startAngleRad + leftRight * Math.PI / 2 + Math.PI);
-        double ang2 = UtilsMath.normAngle(endAngleRad + leftRight * Math.PI / 2 + Math.PI);
-        double centralAngleRad = UtilsMath.normAngle(ang2 - ang1);  // 防止AB、BC跨±180°线时画优弧（「<」这种情况）
+        double ang1 = UtilsMath.normAngleRad(startAngleRad + leftRight * Math.PI / 2 + Math.PI);
+        double ang2 = UtilsMath.normAngleRad(endAngleRad + leftRight * Math.PI / 2 + Math.PI);
+        double centralAngleRad = UtilsMath.normAngleRad(ang2 - ang1);  // 防止AB、BC跨±180°线时画优弧（「<」这种情况）
         // UtilsUI.testMsgWindow("函数原始输入：" + Math.toDegrees(startAngleRad) + " " + Math.toDegrees(endAngleRad) + "\n"
         //         + "起止点相对于圆心的角度" + Math.toDegrees(ang1) + " " + Math.toDegrees(ang2) + "\n"
-        //         + "没归一化的角度差" + Math.toDegrees(ang2 - ang1) + " 归一化的角度差" + Math.toDegrees(UtilsMath.normAngle(ang2 - ang1))
+        //         + "没归一化的角度差" + Math.toDegrees(ang2 - ang1) + " 归一化的角度差" + Math.toDegrees(UtilsMath.normAngleRad(ang2 - ang1))
         // );
         if (centralAngleRad * leftRight < 0) {  // 发现左右拐不符（因为缓和曲线太长错开导致圆曲线需要反着画），返回空列表
             return result;
@@ -292,7 +292,7 @@ public final class TransitionCurveGenerator extends AbstractGenerator<Transition
         List<EastNorth> circularArc = getCircularArc(
                 rotatedTransArcA.arcNodes.getLast(),
                 rotatedTransArcA.endTangentAngleRad,  // A侧出曲线的方向
-                UtilsMath.normAngle(rotatedTransArcC.endTangentAngleRad + Math.PI),  // C侧双螺旋是倒过来画的，所以它绘制意义上的（终点）出曲线方向取反向才是行进方向A→B→C的角度
+                UtilsMath.normAngleRad(rotatedTransArcC.endTangentAngleRad + Math.PI),  // C侧双螺旋是倒过来画的，所以它绘制意义上的（终点）出曲线方向取反向才是行进方向A→B→C的角度
                 enCurveRadius, transArcStarts.leftRight,
                 enChainageLength
         );
@@ -467,11 +467,10 @@ public final class TransitionCurveGenerator extends AbstractGenerator<Transition
             this.endTangentAngleRad = endTangentAngleRad;
         }
     }
-
-    /*TODO：边缘情况检查
+    /*
+    TODO：边缘情况检查
     注意极端几何：LS太长（导致圆曲线没了）、R太小、α太小
-    getUnrotatedEulerArc、getCircularArc会不会只返回1个点
-    处理各种null的情况
+    检查各种null的情况
      */
 }
 

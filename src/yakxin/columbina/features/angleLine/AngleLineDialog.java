@@ -66,6 +66,8 @@ public final class AngleLineDialog extends ExtendedDialog {
         }
     }
     public boolean getIfSelectNew() {return selectNewWays.isSelected();}
+
+    public void setAngleLineAngleDeg(double angleDeg) {angleLineAngleDeg.setText(String.valueOf(angleDeg));}
 }
 
 

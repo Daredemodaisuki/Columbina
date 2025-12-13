@@ -51,10 +51,16 @@ public class UtilsMath {
 
     public static double[] getUnitVec(double[] vec) { return mul(vec, 1 / norm(vec)); }  // 取单位向量
 
-    public static double normAngle(double angle) {
-        while (angle > Math.PI) angle -= 2 * Math.PI;
-        while (angle < -Math.PI) angle += 2 * Math.PI;
-        return angle;
+    public static double normAngleRad(double angleRad) {
+        while (angleRad >= Math.PI) angleRad -= 2 * Math.PI;
+        while (angleRad < -Math.PI) angleRad += 2 * Math.PI;
+        return angleRad;
+    }
+
+    public static double normAngleDeg(double angleDeg) {
+        while (angleDeg >= 180.0) angleDeg -= 360.0;
+        while (angleDeg < -180.0) angleDeg += 360.0;
+        return angleDeg;
     }
 
     // 获取向量坐标角度：以东为0，（逆时针）北正（顺时针）南负，区间在[-pi, pi]，±pi等同处理
@@ -134,7 +140,7 @@ public class UtilsMath {
         List<EastNorth> points = new ArrayList<>();
 
         // 计算圆弧总角度（根据转弯方向确定旋转方向）
-        startBearingRad = normAngle(startBearingRad); endBearingRad = normAngle(endBearingRad);  // 确保角度在[-π, π]范围内
+        startBearingRad = normAngleRad(startBearingRad); endBearingRad = normAngleRad(endBearingRad);  // 确保角度在[-π, π]范围内
         double totalAngle;
         if (leftRight == LEFT) {
             // 左拐：逆时针，endAngle应该大于startAngle
@@ -150,7 +156,7 @@ public class UtilsMath {
         double arcLength = radius * totalAngle;  // 计算圆弧长度
         // int segments = Math.max(2, (int) Math.ceil(arcLength / segments));  // 计算需要的节点数量（桩之间的段数）
 
-        double centerToStartBearingRad = normAngle(startBearingRad - leftRight * 0.5 * Math.PI);  // 圆心到起始点的角度（左拐-90°）
+        double centerToStartBearingRad = normAngleRad(startBearingRad - leftRight * 0.5 * Math.PI);  // 圆心到起始点的角度（左拐-90°）
         double angleStep = totalAngle / segments;  // 计算角度步长
         if (leftRight == RIGHT) angleStep = -angleStep;  // 如果是右拐，角度步长为负
         for (int i = 0; i <= segments; i ++) {  // 生成圆弧上的点
