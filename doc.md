@@ -42,7 +42,7 @@
 
 ##### 抽象模板大致流程
 
-模板的大致流程是：当注册的JOSM菜单被触发，执行`actionPerformed`方法（在`AbstractDrawingAction`中）；
+模板的大致流程是：当注册的JOSM菜单被触发，执行`actionPerformed`方法（在`AbstractDrawingAction`中）：
 1. 调用`checkInputNum`方法（在中间层或具体动作类中实现），检查*当前选中的要素数量是否符合要求*；
 2. 调用`splitBatchInputs`方法（在中间层或具体动作类中实现），将总输入拆包为单组输入：
    * 对于支持批量操作的功能，将整个传入的`ColumbinaInput`拆分为单组输入构成的列表`List<ColumbinaSingleInput>`；
@@ -69,7 +69,7 @@
 
 ##### 泛型
 
-抽象绘图操作类因为是插件操作的最底层，有相当多泛型：
+抽象绘图操作类因为是插件操作的最底层，为了具体实现时的类型安全，设置了几个泛型：
 * `GeneratorType extends AbstractGenerator<ParamType, InputFeatureType>`：生成器泛型
 * `PreferenceType extends AbstractPreference<ParamType>`：首选项泛型
 * `ParamType extends AbstractParams`：输入参数泛型
@@ -91,7 +91,8 @@
 
 > [!NOTE]
 > 
-> 正在考虑调整定义为「批量输入模板」
+> 正在考虑调整这个模板为「批量输入模板」
+
 * 面向一条路径 + 一个节点输入的抽象绘图操作类（`yakxin.columbina.abstractClasses.ActionWithNodeWay`）
 
     导向直线（相对角度模式）、路径切圆功能由此派生，这些操作有下面的共同性：
@@ -101,7 +102,7 @@
 
 > [!NOTE]
 >
-> 正在考虑调整定义为「非批量输入模板」
+> 正在考虑调整这个模板为「非批量输入模板」
 
 > [!NOTE]
 > 
@@ -142,32 +143,44 @@
 
 总流程负责捕获会导致整个流程中止的异常：
 * 【关键】最关键的错误、需要立即中止的，如输入了完全不能接受的参数、运行时出错等，由总流程捕获；
-* 【部分】批量处理中处理单个输入时出错的，如单条路径整个没有产生结果，由总流程下的for内部捕获continue处理，尽可能不影响其他输入。
+* 【部分】批量处理中处理单个输入时出错的，如单条路径整个没有产生结果，由总流程下的for内部捕获并continue处理，尽可能不影响其他输入。
+* 【警告】运行时产生的警告、只是起提醒告知作用的（如单条路径内某个点没有圆角），由运行的地方直接弹消息发出，不算异常、不影响全流程。
 
 对于不支持批量的操作，由于只有一组输入和输出，部分异常即整个的关键异常。
 
-运行时产生的警告、只是起提醒告知作用的（如单条路径内某个点没有圆角），由运行的地方直接弹消息发出，不算异常、不影响全流程。
+### 对无效返回值的约定
 
-抛出异常的地方：
-* 【关键】动作类中的checkInputNum：这里只检查数量，当输入的选择数量有问题时，抛出IllegalArgumentException；
-* 【部分】生成器类正式开始计算前：具体检查输入是否符合某些要求（如节点是否在路径上），如果有问题，抛出ColumbinaException；
-* 【部分】生成器类计算时：如果有内部错误，抛出抛出ColumbinaException；
+插件中因计算失败等需要返回无效值，为了方便，在此记下一些比较重要的地方的无效返回值是什么，以方便统一管理和调用者的异常处理：
+* 各个生成器类中，如果因为内部问题导致的输入类型不正确、或几何限制无法产生计算结果，向调用`getOutputForSingleInput`的动作类返回`null`；
+* 倒角等需要对单组输入内每个子部分（拐角）单独计算的生成器类中，如果因为几何限制无法产生计算子结果，向子结果列表中添加`null`；
+* 各个动作类的`concludeAddCommands`、`concludeRemoveCommands`中：如果不需要产生添加或移除指令，或计划内没有产生添加或移除指令的，返回空`ArrayList<Command>`；
+
+### 抛出异常的地方
+
+* 【关键】动作类中的`checkInputNum`：这里只检查数量，当输入的选择数量有问题时，抛出`IllegalArgumentException`；
+* 【关键】动作类中的`checkInputDetails`：具体检查输入是否符合某些要求（如节点是否在路径上），如果有问题，抛出`ColumbinaException`；
+* 【警告】支持批量输入的动作类的`concludeAddCommands`：如果调用`getOutputForSingleInput`得到了`null`，在for内部警告（考虑改为「部分」级别）；
+* 【警告】支持批量输入的动作类的`concludeRemoveCommands`：如果调用Utilsplugin2时它抛出了异常，在for内部警告（考虑改为「部分」级别）；
+* 【关键】动作类的`concludeAddCommands`：如果最终发现生成器没有产生任何需要添加的结果，抛出`ColumbinaException`；
+* 【关键】`AbstractDrawingAction`的总流程中：如果发现`concludeAddCommands`返回了`null`或空列表，抛出`ColumbinaException`（考虑与上一条合并）；
+* 【警告】`AbstractDrawingAction`的总流程中：对于需要`deleteOld`的功能，如果发现`concludeRemoveCommands`返回了null或空列表，抛出`ColumbinaException`，警告没有移除的路径；
+* 【部分】生成器类计算时：如果有内部意料之外的错误（如不知道怎么的就除以0了），由相关函数抛出`Exception`，由调用者`concludeAddCommands`在for内捕获；
 
 ## 增加功能简明流程清单
 
-如果未来需要增加一个新功能，且功能可以适应已有的中间层，可以遵循下面的流程：
+如果未来需要增加一个新功能（假如名为`xx`），且功能可以适应已有的中间层，可以遵循下面的流程：
 1. 创建5个核心类（`xxAction`、`xxDialog`、`xxGenerator`、`xxParams`、`xxPreference`）
 2. 根据调用和泛型使用的顺序，从后往前，先完成`xxParams`：
    * 继承`AbstractParams`
    * 添加功能特定的参数字段
-3. 完成`xxDialog`：
-   * 继承`ExtendedDialog`
-   * 创建参数输入界面 
-   * 实现获取参数的方法（getter）
-4. 完成`xxPreference`：
+3. 完成`xxPreference`（与4直接有相互调用，应当同步进行）：
    * 继承`AbstractPreference<xxParams>`
    * 实现`getParamsAndUpdatePreference`方法（调用`xxDialog`并检查数值）
    * 管理用户首选项的读写
+4. 完成`xxDialog`：
+   * 继承`ExtendedDialog`
+   * 创建参数输入界面
+   * 实现获取参数的方法（getter）
 5. 完成`xxGenerator`：
    * 继承`AbstractGenerator<xxParams>`
    * 实现数学上的具体算法（输入应为地面长度，实现数学计算时应在生成器内部转为东北坐标下的长度）

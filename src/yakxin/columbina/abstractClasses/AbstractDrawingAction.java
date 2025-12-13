@@ -198,24 +198,22 @@ public abstract class AbstractDrawingAction <
         List<Command> cmdsAdd;
         try {
             cmdsAdd = concludeAddCommands(dataSet, singleInputs, copyTag);
-            if (cmdsAdd == null)
-                throw new ColumbinaException(I18n.tr("No totalInput was successfully processed."));
+            if (cmdsAdd == null || cmdsAdd.isEmpty())
+                throw new ColumbinaException(I18n.tr("No input was successfully processed."));
         } catch (ColumbinaException | IllegalArgumentException exAdd) {
             UtilsUI.errorInfo(exAdd.getMessage());
             return;
         }
 
         // 绘制部分的撤销重做栈处理并正式提交执行
-        if (!cmdsAdd.isEmpty()) {
-            Command cmdAdd = new ColumbinaSeqCommand(getUndoRedoInfo(totalInput, params), cmdsAdd, "RoundCorners");
-            UndoRedoHandler.getInstance().add(cmdAdd);
-        }
+        Command cmdAdd = new ColumbinaSeqCommand(getUndoRedoInfo(totalInput, params), cmdsAdd, "RoundCorners");
+        UndoRedoHandler.getInstance().add(cmdAdd);
 
         // 移除旧路径（如果需要的话）
         if (deleteOld) {
             try {
                 List<Command> cmdsRmv = concludeRemoveCommands(dataSet);
-                if (!cmdsRmv.isEmpty()) {  // 如果全部都没有删除/替换，cmdsRmv为空会错错爆;
+                if (cmdsRmv == null || !cmdsRmv.isEmpty()) {  // 如果全部都没有删除/替换，cmdsRmv为空会错错爆;
                     Command cmdRmv = new ColumbinaSeqCommand(I18n.tr("Columbina: Remove original ways"), cmdsRmv, "RemoveOldWays");
                     UndoRedoHandler.getInstance().add(cmdRmv);
                 }

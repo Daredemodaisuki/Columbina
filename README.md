@@ -36,9 +36,9 @@ Also known as Fillet.
 Allows users to fillet each corner node of the selected ways with a specified surfaceRadius.
 <br> 允许用户对选定路径的每个拐角节点按指定半径倒圆角。
 
-The plugin supports specifying the arc surfaceRadius for fillets. Node density can be controlled via central angle increments, and a maximum number of nodes per curve segment is also provided for control.
+The plugin supports specifying the arc radius for fillets. Node density can be controlled via chainage length, and a maximum number of nodes per curve segment is also provided for control.
 Additionally, the plugin offers options to copy tags from the original way, remove the original way after drawing, and toggle selection to the new way after drawing.
-<br> 插件支持指定圆角的圆弧半径，可以通过圆心角步进控制节点密度并提供每段曲线最大点数控制。插件亦提供复制原有路径标签、绘制后移除原有路径、绘制后切换选择新路径的选项。
+<br> 插件支持指定圆角的圆弧半径，可以通过桩距控制节点密度并提供每段曲线最大节点数控制。插件亦提供复制原有路径标签、绘制后移除原有路径、绘制后切换选择新路径的选项。
 
 The plugin automatically and uniformly interpolates nodes along the curve, adding them at even intervals.
 For longer curves (when the surfaceRadius remains constant, curves with smaller deflection angles become longer), a greater number of nodes will be generated.

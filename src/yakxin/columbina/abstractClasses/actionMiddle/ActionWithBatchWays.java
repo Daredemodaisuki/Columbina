@@ -239,7 +239,7 @@ public abstract class ActionWithBatchWays<
     /// 特有方法
     /**
      * 调用Generator获得绘制单条新路径所需指令
-     * <p>将会调用具体生成器的getNewNodeWayForSingleInput方法，由于输入要素未Object类型，具体生成器类需要自行判断、转换为需要的类型
+     * <p>将会调用具体生成器的getNewNodeWayForSingleInput方法，由于输入要素为ColumbinaSingleInput类型，具体生成器类需要自行判断、转换为需要的类型
      * @param ds 数据集
      * @param singleInput 选定输入要素
      * @param generator 生成器
