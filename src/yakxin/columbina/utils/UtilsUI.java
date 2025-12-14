@@ -49,6 +49,12 @@ public class UtilsUI {
     public static JFormattedTextField addInput(JPanel panel, String labelText) {
         return addInput(panel, labelText, "");
     }
+    public static JFormattedTextField addInput(JPanel panel, String labelText, int intInput) {
+        return addInput(panel, labelText, String.valueOf(intInput));
+    }
+    public static JFormattedTextField addInput(JPanel panel, String labelText, double doubleInput) {
+        return addInput(panel, labelText, String.valueOf(doubleInput));
+    }
     public static JFormattedTextField addInput(JPanel panel, String labelText, String initInput) {
         JFormattedTextField input = new JFormattedTextField(NumberFormat.getInstance(Locale.US));  // 强制美式数码格式，「.」为小数点
         JLabel label = new JLabel(labelText);

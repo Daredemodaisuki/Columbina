@@ -154,6 +154,7 @@
 * 各个生成器类中，如果因为内部问题导致的输入类型不正确、或几何限制无法产生计算结果，向调用`getOutputForSingleInput`的动作类返回`null`；
 * 倒角等需要对单组输入内每个子部分（拐角）单独计算的生成器类中，如果因为几何限制无法产生计算子结果，向子结果列表中添加`null`；
 * 各个动作类的`concludeAddCommands`、`concludeRemoveCommands`中：如果不需要产生添加或移除指令，或计划内没有产生添加或移除指令的，返回空`ArrayList<Command>`；
+* 首选项类的`getParamsAndUpdatePreference`中：如果用户在输入参数窗口取消操作，返回`null`。
 
 ### 抛出异常的地方
 
@@ -164,7 +165,7 @@
 * 【关键】动作类的`concludeAddCommands`：如果最终发现生成器没有产生任何需要添加的结果，抛出`ColumbinaException`；
 * 【关键】`AbstractDrawingAction`的总流程中：如果发现`concludeAddCommands`返回了`null`或空列表，抛出`ColumbinaException`（考虑与上一条合并）；
 * 【警告】`AbstractDrawingAction`的总流程中：对于需要`deleteOld`的功能，如果发现`concludeRemoveCommands`返回了null或空列表，抛出`ColumbinaException`，警告没有移除的路径；
-* 【部分】生成器类计算时：如果有内部意料之外的错误（如不知道怎么的就除以0了），由相关函数抛出`Exception`，由调用者`concludeAddCommands`在for内捕获；
+* 【部分】生成器类计算时：如果有内部意料之外的错误（如不知道怎么的就除以0了），由相关函数抛出`Exception`，由调用者`concludeAddCommands`在for内捕获。
 
 ## 增加功能简明流程清单
 
