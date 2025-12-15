@@ -24,7 +24,7 @@ public class ColumbinaCorner {
     public final int leftRight;  // A→B→C是左拐（AB到BC是逆时针）还是右拐（AB到BC是顺时针）
     public final double angleRad;  // 夹角（张角）
     public final double deflectionRad;  // 偏转角（[-π, π]）
-    // 拐点维度（en和surface转换用）
+    // 拐点纬度（en和surface转换用）
     public final double latB;
 
     /**
@@ -69,7 +69,7 @@ public class ColumbinaCorner {
             b = way.getNode((indexA + 1) % numNode);
             c = way.getNode((indexA + 2) % numNode);
         } catch (Exception exWay) {  // 以防万一，捕获如访问超界等异常并包装成ColumbinaException抛出
-            throw new ColumbinaException(exWay.getMessage());
+            throw new ColumbinaException("Failed to create ColumbinaCorner: " + exWay.getMessage());
         }
         if (a == null || b == null || c == null)
             throw new ColumbinaException("Get null Node when creating ColumbinaCorner from Way.");

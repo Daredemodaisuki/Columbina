@@ -1,12 +1,10 @@
 package yakxin.columbina.features.transitionCurve;
 
 import org.openstreetmap.josm.data.coor.EastNorth;
-import org.openstreetmap.josm.data.coor.LatLon;
 import org.openstreetmap.josm.data.osm.Node;
 import org.openstreetmap.josm.data.osm.Way;
 import yakxin.columbina.abstractClasses.AbstractGenerator;
 import yakxin.columbina.data.ColumbinaCorner;
-import yakxin.columbina.data.ColumbinaEN;
 import yakxin.columbina.data.ColumbinaException;
 import yakxin.columbina.data.dto.ColumbinaSingleOutput;
 import yakxin.columbina.data.dto.inputs.ColumbinaSingleInput;
@@ -23,8 +21,6 @@ import java.util.List;
  *     <li>用户角度：以路径行进方向为0°，（逆时针）左正（顺时针）右负，区间在[-180°，180°]，±180°等同处理</li>
  * </ul>
  */
-
-
 public final class TransitionCurveGenerator extends AbstractGenerator<TransitionCurveParams> {
 
     @Override
@@ -54,70 +50,39 @@ public final class TransitionCurveGenerator extends AbstractGenerator<Transition
     ) {
         List<Long> failedNodes = new ArrayList<>();
         // 获取路径的所有节点
-        List<Node> nodes = new ArrayList<>(way.getNodes());
-        int nPts = nodes.size();
-        if (nPts < 3) return null;  // 路径至少需要3个点
-
-        // 将所有节点转换为平面坐标
-        List<EastNorth> nodesEN = new ArrayList<>();
-        for (Node n : nodes) nodesEN.add(UtilsMath.toEastNorth(n.getCoor()));
+        List<Node> nodes = new ArrayList<>(way.getNodes());  // 获取节点（包含重复的首末点）
+        int numNode = way.isClosed() ? way.getNodesCount() - 1 : way.getNodesCount();  // 实际节点数（去除闭合点）
+        if (numNode < 3) return null;  // 路径至少需要3个点
+        int numCorner = way.isClosed() ? numNode : numNode - 2;
 
         // 存储每个拐角的过渡曲线结果
         List<List<EastNorth>> transCurves = new ArrayList<>();
 
         // 为非闭合路径计算所有拐角
-        for (int i = 0; i < nPts - 2; i++) {
-            EastNorth A = nodesEN.get(i);      // 起点    B → C
-            EastNorth B = nodesEN.get(i + 1);  // 拐点    ↑
-            EastNorth C = nodesEN.get(i + 2);  // 终点    A
-            ColumbinaCorner corner = ColumbinaCorner.create(way, i);
-            // TODO：将输入之间换为corner，for改一下不要后面单独if (way.isClosed())
-            //  改成i<拐角数-1，拐角数=way.isClosed()?去重后的实际节点数-2（nPts-2）:去重后的实际节点数（nPts-1，nPts没去重，所以-）
-
+        for (int i = 0; i < numCorner; i ++) {
             try {
                 // JOSM用Mercator投影的NorthEast坐标等角不等距，需要重算距离，以拐点B取维度计算
-                double latB = nodes.get(i + 1).getCoor().lat();
-                double enRadius = UtilsMath.surfaceDistanceToEastNorth(surfaceRadius, latB);
-                double enLength = UtilsMath.surfaceDistanceToEastNorth(surfaceLength, latB);
-                double enChainage = UtilsMath.surfaceDistanceToEastNorth(surfaceChainage, latB);
+                ColumbinaCorner corner = ColumbinaCorner.create(way, i);
+                double enRadius = UtilsMath.surfaceDistanceToEastNorth(surfaceRadius, corner.latB);
+                double enLength = UtilsMath.surfaceDistanceToEastNorth(surfaceLength, corner.latB);
+                double enChainage = UtilsMath.surfaceDistanceToEastNorth(surfaceChainage, corner.latB);
+
                 // 有EN长度之后继续算圆弧
                 ArrayList<EastNorth> transCurve = UtilsArc.getTransCurve(  // 为每个拐角计算缓和曲线
-                        new ColumbinaCorner(A, B, C),
+                        corner,
                         enRadius, enLength, enChainage
                 );
 
                 if (transCurve == null || transCurve.isEmpty()) {  // 该拐角没有生成缓和曲线
                     transCurves.add(null);
-                    failedNodes.add(nodes.get(i + 1).getUniqueId());  // 添加拐角
+                    failedNodes.add(nodes.get(i + 1).getUniqueId());  // 记录失败拐角
                 } else {
                     transCurves.add(transCurve);
                 }
             } catch (ColumbinaException | IllegalArgumentException e) {
+                // 如果纬度接近90度，使用一个很小的正数，避免除0，但这样不准确，所以直接失败跳过这个圆弧吧
                 transCurves.add(null);
                 failedNodes.add(nodes.get(i + 1).getUniqueId());
-            }
-        }
-        if (way.isClosed()) {  // 闭合曲线首尾相连的首末点曲线
-            try {
-                double latB = nodes.getFirst().getCoor().lat();
-                double enRadius = UtilsMath.surfaceDistanceToEastNorth(surfaceRadius, latB);
-                double enLength = UtilsMath.surfaceDistanceToEastNorth(surfaceLength, latB);
-                double enChainage = UtilsMath.surfaceDistanceToEastNorth(surfaceChainage, latB);
-
-                ArrayList<EastNorth> transCurve = UtilsArc.getTransCurve(
-                        new ColumbinaCorner(nodesEN.get(nPts - 2), nodesEN.get(0), nodesEN.get(1)),  // nodesEN.get(0) = getFirst() == nodesEN.get(-1)
-                        enRadius, enLength, enChainage
-                );
-
-                if (transCurve == null || transCurve.isEmpty()) {
-                    transCurves.add(null);
-                    failedNodes.add(nodes.getFirst().getUniqueId());
-                } else {
-                    transCurves.add(transCurve);
-                }
-            } catch (ColumbinaException | IllegalArgumentException e) {
-                transCurves.add(null);
-                failedNodes.add(nodes.getFirst().getUniqueId());
             }
         }
         if (transCurves.isEmpty()) {  // 没有曲线，返回原始路径
@@ -126,40 +91,21 @@ public final class TransitionCurveGenerator extends AbstractGenerator<Transition
 
         // 最终的经纬度坐标序列
         List<Node> finalNodes = new ArrayList<>();
-        if (!way.isClosed()) {  // 对于非闭合路径，从第一个节点开始
+        // 对于非闭合路径（或闭合点没有曲线的闭合路径），从第一个节点开始；
+        // 对于闭合路径且闭合点有曲线，从第一条曲线第一个点开始（下面for中添加）
+        if (!way.isClosed() || (way.isClosed() && transCurves.getLast() == null))
             finalNodes.add(nodes.getFirst());
-            // 遍历所有拐角
-            for (int i = 0; i < nPts - 2; i++) {
-                if (transCurves.get(i) != null) {  // 有过渡曲线就添加曲线上的所有点
-                    List<EastNorth> curve = transCurves.get(i);
-                    for (int j = 0; j < curve.size(); j++) {
-                        finalNodes.add(new Node(UtilsMath.toLatLon(curve.get(j))));
-                    }
-                } else finalNodes.add(nodes.get(i + 1));  // 没有过渡曲线，添加原始拐点
-            }
-            // 添加最后一个节点
-            finalNodes.add(nodes.getLast());
-        } else {  // 闭合路径处理
-            // 检查最后一个拐角（闭合点）是否有曲线
-            List<EastNorth> lastCurve = transCurves.getLast();
-            if (lastCurve != null && !lastCurve.isEmpty()) {  // 有则使用最后一条曲线（闭合点）的最后一个点作为起点
-                EastNorth startEN = lastCurve.getLast();
-                LatLon startLL = UtilsMath.toLatLon(startEN);
-                finalNodes.add(new Node(startLL));
-            } else finalNodes.add(nodes.getFirst());  // 否则使用原始起点
-            // 遍历所有拐角（包括闭合点那个）
-            // nPts点的路径（索引0~nPts-1），去除重复的首尾实际只有nPts-1个点（索引0~nPts-2）
-            // 曲线一共nPts-1条，则索引nPts-3为除了闭合点那条曲线的最后一条，nPts-2为闭合点那条
-            // 对于闭合点那条，如果无法生成，则使用闭合点
-            for (int i = 0; i < nPts - 1; i++) {
-                if (i < transCurves.size() && transCurves.get(i) != null) {  // 有过渡曲线就添加曲线上的所有点
-                    List<EastNorth> curve = transCurves.get(i);
-                    for (int j = 0; j < curve.size(); j++) {
-                        finalNodes.add(new Node(UtilsMath.toLatLon(curve.get(j))));
-                    }
-                } else finalNodes.add(nodes.get(i + 1));
-            }
+        // 遍历所有拐角
+        for (int i = 0; i < numCorner; i ++) {
+            if (transCurves.get(i) != null) {  // 有过渡曲线就添加曲线上的所有点
+                List<EastNorth> curve = transCurves.get(i);
+                for (EastNorth eastNorth : curve)
+                    finalNodes.add(new Node(UtilsMath.toLatLon(eastNorth)));
+            } else finalNodes.add(nodes.get(i + 1));  // 没有过渡曲线，添加原始拐点
         }
+        // 添加最后一个节点
+        if (way.isClosed()) finalNodes.add(finalNodes.getFirst());
+        else finalNodes.add(nodes.getLast());
 
         return new ColumbinaSingleOutput(finalNodes, failedNodes);
     }

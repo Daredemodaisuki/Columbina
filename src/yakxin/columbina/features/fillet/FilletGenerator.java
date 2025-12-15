@@ -71,6 +71,7 @@ public final class FilletGenerator extends AbstractGenerator<FilletParams> {
         int leftRight = UtilsMath.getLeftRight(AB, BC);
 
         // 计算、返回
+        // TODO:判断切距是否为负数了
         return (ArrayList<EastNorth>)
                 UtilsMath.getCircleArcPointsWithBearingRad(
                         enCenter, enRadius,
@@ -189,8 +190,8 @@ public final class FilletGenerator extends AbstractGenerator<FilletParams> {
         if (way.isClosed()) {
             if (arcs.getLast() != null) {  // 如果原路径闭合，且首末点有曲线，拼上最后一条曲线并连上起点
                 List<EastNorth> arcClosedEnd = arcs.getLast();  // 对于闭合路径nPts-2倒数第2个点，nPts-1最后一个点=0起点，1表示第2个点
-                for (int k = 0; k < arcClosedEnd.size(); k ++)
-                    finalNodes.add(new Node(UtilsMath.toLatLon(arcClosedEnd.get(k))));
+                for (EastNorth eastNorth : arcClosedEnd)
+                    finalNodes.add(new Node(UtilsMath.toLatLon(eastNorth)));
                 finalNodes.add(finalNodes.getFirst());
             } else finalNodes.add(way.getNode(0));
         } else {
