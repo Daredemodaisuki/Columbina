@@ -84,14 +84,6 @@ public class ColumbinaCorner {
      * @return 角平分线方向角
      */
     public double getBisectorBearingRad() {
-        // double bearingBA = BA.bearingRad();
-        // double bearingBC = BC.bearingRad();
-        // return UtilsMath.normAngleRad(  // 最后再归一化回来
-        //         (
-        //                 (bearingBA < 0 ? bearingBA + 2 * Math.PI: bearingBA)  // 防止跨±180°，对小于0的先+360°
-        //                 + (bearingBC < 0 ? bearingBC + 2 * Math.PI: bearingBC)
-        //         ) / 2.0  // 除以2
-        // );
         return BA.normVec().add(BC.normVec()).bearingRad();
     }
 }

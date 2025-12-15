@@ -1,6 +1,5 @@
 package yakxin.columbina.features.angleLine;
 
-import org.openstreetmap.josm.data.coor.EastNorth;
 import org.openstreetmap.josm.data.osm.Node;
 import org.openstreetmap.josm.data.osm.Way;
 import yakxin.columbina.abstractClasses.AbstractGenerator;
@@ -35,32 +34,29 @@ public final class AngleLineGenerator extends AbstractGenerator<AngleLineParams>
             Node node, Way way,
             double angleDeg, double surfaceLength  // 左拐角度为正，右拐为负
     ) {
-        /// 具体检查
-        // 闭合曲线过滤闭合点，顺便查重
-        int count = 0, nodeIndex = 0, nodeNum = way.isClosed() ? way.getNodes().size() - 1 : way.getNodes().size();
+        // 查找是第几个（不用查重了，action具体检查中已经做了）
+        int nodeIndex = 0, nodeNum = way.isClosed() ? way.getNodes().size() - 1 : way.getNodes().size();
         List<Node> wayNodes = new ArrayList<>();
         for (int i = 0; i < nodeNum; i ++) {
             if (way.getNode(i) == node) {
-                count ++; nodeIndex = i;
+                nodeIndex = i;
             }
             wayNodes.add(way.getNode(i));
         }
 
         /// 正式计算
-        EastNorth prevEN = wayNodes.get((nodeIndex + nodeNum - 1) % nodeNum).getEastNorth();
-        EastNorth startEN = wayNodes.get(nodeIndex).getEastNorth();
-        double[] prev = new double[]{prevEN.getX(), prevEN.getY()};
-        double[] start = new double[]{startEN.getX(), startEN.getY()};
+        ColumbinaEN prevEN = new ColumbinaEN(wayNodes.get((nodeIndex + nodeNum - 1) % nodeNum).getEastNorth());
+        ColumbinaEN startEN = new ColumbinaEN(wayNodes.get(nodeIndex).getEastNorth());
 
-        double enterAngleRad = UtilsMath.getBearingRadFromAtoB(prev, start);
+        double enterAngleRad = prevEN.deflectionRadTo(startEN);
         double turningAngleRad = Math.toRadians(angleDeg);
         double enLength = UtilsMath.surfaceDistanceToEastNorth(surfaceLength, node.lat());
 
-        double[] destination = ColumbinaEN.walk(start, enterAngleRad + turningAngleRad, enLength);
+        ColumbinaEN destination = startEN.walk(enterAngleRad + turningAngleRad, enLength);
 
         List<Node> newNodes = new ArrayList<>();
         newNodes.add(node);
-        newNodes.add(new Node(new EastNorth(destination[0], destination[1])));
+        newNodes.add(new Node(destination));
 
         return new ColumbinaSingleOutput(newNodes, new ArrayList<Long>());  // 无failed部分
     }

@@ -36,18 +36,6 @@ public class UtilsMath {
 
 
     /// 向量数学
-    public static double norm(double[] v) { return Math.hypot(v[0], v[1]); }  // 模长
-
-    public static double dot(double[] a, double[] b) { return a[0]*b[0] + a[1]*b[1]; }  // 点积
-
-    public static double[] sub(double[] a, double[] b) { return new double[]{a[0]-b[0], a[1]-b[1]}; }  // 减法
-
-    public static double[] add(double[] a, double[] b) { return new double[]{a[0]+b[0], a[1]+b[1]}; }  // 加法
-
-    public static double[] mul(double[] a, double s) { return new double[]{a[0]*s, a[1]*s}; }  // 缩放
-
-    public static double[] getUnitVec(double[] vec) { return mul(vec, 1 / norm(vec)); }  // 取单位向量
-
     public static double normAngleRad(double angleRad) {
         while (angleRad >= Math.PI) angleRad -= 2 * Math.PI;
         while (angleRad < -Math.PI) angleRad += 2 * Math.PI;
@@ -62,32 +50,6 @@ public class UtilsMath {
 
     public static double reverseAngleRad(double angleRad) {
         return normAngleRad(angleRad + Math.PI);
-    }
-
-    // 获取向量坐标角度：以东为0，（逆时针）北正（顺时针）南负，区间在[-pi, pi]，±pi等同处理
-    public static double getVecBearingRad(double[] vec) {
-        return Math.atan2(vec[1], vec[0]);  // atan2(y, x) 返回的是从x轴正方向逆时针到向量的角度
-    }
-
-    // 获取从A到B的方向角
-    public static double getBearingRadFromAtoB(double[] a, double[] b) {
-        return Math.atan2(b[1] - a[1], b[0] - a[0]);
-    }
-
-    // 向量a到b是左拐还是右拐（向量叉积的Z分量判断法）
-    // 正数表示左拐（逆时针），负数表示右拐（顺时针），0表示共线
-    public static int getLeftRight(double[] a, double[] b) {
-        double cross = a[0]*b[1] - a[1]*b[0];
-        if (Math.abs(cross) < 1e-10) return 0;  // 共线
-        return cross > 0 ? LEFT : RIGHT;
-    }
-
-    // 计算两个向量之间的夹角（0到π之间）
-    public static double getAngleRadBetweenVec(double[] a, double[] b) {
-        double cosTheta = dot(a, b) / (norm(a) * norm(b));
-        // 防止浮点数误差导致cosTheta超出[-1,1]
-        cosTheta = Math.max(-1.0, Math.min(1.0, cosTheta));
-        return Math.acos(cosTheta);
     }
 
 

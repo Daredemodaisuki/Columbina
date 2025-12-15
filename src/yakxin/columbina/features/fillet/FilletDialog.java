@@ -10,12 +10,14 @@ import java.util.Locale;
 
 import javax.swing.*;
 
-import org.openstreetmap.josm.data.coor.EastNorth;
 import org.openstreetmap.josm.data.osm.Node;
 import org.openstreetmap.josm.data.osm.Way;
 import org.openstreetmap.josm.gui.ExtendedDialog;
 import org.openstreetmap.josm.gui.MainApplication;
 import org.openstreetmap.josm.tools.I18n;
+import yakxin.columbina.data.ColumbinaCorner;
+import yakxin.columbina.data.ColumbinaEN;
+import yakxin.columbina.data.ColumbinaException;
 import yakxin.columbina.data.dto.inputs.ColumbinaInput;
 import yakxin.columbina.utils.UtilsMath;
 import yakxin.columbina.utils.UtilsUI;
@@ -111,44 +113,49 @@ public final class FilletDialog extends ExtendedDialog {
 
         for (Way way : input.getWays()) {
             List<Node> nodes = way.getNodes();
-            List<double[]> nodeXY = new ArrayList<>();
+            List<ColumbinaEN> nodeENs = new ArrayList<>();
             List<Double> secLength = new ArrayList<>();
             boolean isClosed = way.isClosed();  // 路径是否闭合
             int numNode = isClosed ? nodes.size() - 1 : nodes.size();  // 实际节点数（去除闭合点）
             int numSec = isClosed ? numNode : numNode - 1;
             if (numNode < 3) continue;  // 至少需要3个节点才能形成拐角
 
-            // 储存所有的节点
-            for (int i = 0; i < numNode; i ++) {
-                EastNorth nodeEN = nodes.get(i).getEastNorth();
-                nodeXY.add(new double[] {nodeEN.getX(), nodeEN.getY()});
-            }
+            // 储存所有的节点坐标
+            for (int i = 0; i < numNode; i++) nodeENs.add(new ColumbinaEN(nodes.get(i).getEastNorth()));
             // 储存每段长度
-            for (int i = 0; i < numSec; i ++) {
-                double[] section = UtilsMath.sub(nodeXY.get((i + 1) % numNode), nodeXY.get(i));
-                secLength.add(UtilsMath.norm(section));
+            for (int i = 0; i < numSec; i++) {
+                ColumbinaEN section = new ColumbinaEN(nodeENs.get(i), nodeENs.get((i + 1) % numNode));
+                secLength.add(section.length());
             }
 
-            // 对于每段折线Li，找最小半径Ri = Li / (cot(αi/2)+cot(βi/2))，αi是Li第一端拐角大小，βi是Li第二端拐角大小
-            for (int i = 0; i < numSec; i ++) {
-                double ang1 = UtilsMath.getAngleRadBetweenVec(
-                        UtilsMath.sub(nodeXY.get((i + numNode + 1) % numNode), nodeXY.get(i)),
-                        UtilsMath.sub(nodeXY.get((i + numNode - 1) % numNode), nodeXY.get(i))  // +numNode防超下界
-                );
-                double cotAng1 = (!isClosed && i == 0 || ang1 < Math.max(minAngleRad, 10e-6) || ang1 > Math.min(maxAngleRad, Math.PI - 10e-6)) ?
-                        0 : 1 / Math.tan(ang1 / 2);  // 非闭合曲线端点记为0、发卡弯或直线记为0
-                double ang2 = UtilsMath.getAngleRadBetweenVec(
-                        UtilsMath.sub(nodeXY.get((i + 2) % numNode), nodeXY.get((i + 1) % numNode)),
-                        UtilsMath.sub(nodeXY.get((i + 0) % numNode), nodeXY.get((i + 1) % numNode))
-                );
-                double cotAng2 = (!isClosed && i == numSec - 1  || ang2 < Math.max(minAngleRad, 10e-6) || ang2 > Math.min(maxAngleRad, Math.PI - 10e-6)) ?
-                        0 : 1 / Math.tan(ang2 / 2);  // 非闭合曲线端点记为0、发卡弯或直线记为0
+            // 对于每段折线Li，找最小半径Ri = Li / (cot(αi/2)+cot(βi/2))
+            // αi是Li第一端拐角大小，βi是Li第二端拐角大小
+            for (int i = 0; i < numSec; i++) {
+                double cotAng1 = 0, cotAng2 = 0;
+                if (isClosed || i > 0)  // 非闭合曲线起点第一端拐角记保持0
+                    try {  // 第一端拐角：节点i-1, i, i+1
+                        double ang1 = ColumbinaCorner.create(way, i + numNode - 1).angleRad;  // +numNode防止读取-1
+                        // 检查角度是否在有效范围内
+                        if (ang1 >= Math.max(minAngleRad, 10e-6) && ang1 <= Math.min(maxAngleRad, Math.PI - 10e-6)) {
+                            cotAng1 = 1 / Math.tan(ang1 / 2);
+                        } else cotAng1 = 0;  // 计算第一端拐角（节点i处的拐角）
+                    } catch (ColumbinaException ignored) {}  // 如果无法创建拐角，拐角记为0
+                if (isClosed || i < numSec - 1)  // 非闭合曲线终点第二端拐角记保持0
+                    try {  // 第二端拐角：节点i, i+1, i+2
+                        double ang2 = ColumbinaCorner.create(way, i).angleRad;
+                        // 检查角度是否在有效范围内
+                        if (ang2 >= Math.max(minAngleRad, 10e-6) && ang2 <= Math.min(maxAngleRad, Math.PI - 10e-6)) {
+                            cotAng2 = 1 / Math.tan(ang2 / 2);
+                        } else cotAng2 = 0;  // 计算第二端拐角（节点i+1处的拐角）
+                    } catch (ColumbinaException ignored) {}  // 如果无法创建拐角，拐角记为0
+
+                // 计算最大允许半径
                 double maxRForCorner;
                 if (cotAng1 + cotAng2 == 0) maxRForCorner = Double.POSITIVE_INFINITY;
                 else maxRForCorner = UtilsMath.eastNorthDistanceToSurface(
                         secLength.get(i) / (cotAng1 + cotAng2),
                         nodes.get(i).lat()
-                );
+                    );
                 if (maxRForCorner < minMaxR) minMaxR = maxRForCorner;  // 更新最小最大值
             }
         }

@@ -29,6 +29,7 @@ public class ColumbinaEN extends EastNorth {
 
     /**
      * 从两个ColumbinaEN构造ColumbinaEN，获取从A到B的向量
+     * <p>等同于 b.sub(a)
      * @param a 点A坐标
      * @param b 点B坐标
      */
@@ -137,12 +138,12 @@ public class ColumbinaEN extends EastNorth {
     }
 
     /**
-     * 获取从this（A）到other（B）的方向角
+     * 获取从this（A）到other（B）的偏转角
      * <p>不使用EastNorth的heading计算，因为它的角度系统和这个插件不一样
      * @param other 点B坐标
-     * @return 从this到B的方向角，坐标角度（以东为0，（逆时针）北正（顺时针）南负，区间在[-pi, pi]，±pi等同处理）
+     * @return 从this到B的偏转角，坐标角度（以东为0，（逆时针）北正（顺时针）南负，区间在[-pi, pi]，±pi等同处理）
      */
-    public double bearingRadTo(ColumbinaEN other) {
+    public double deflectionRadTo(ColumbinaEN other) {
         return Math.atan2(other.getY() - this.y, other.getX() - this.x);
     }
 
