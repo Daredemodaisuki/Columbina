@@ -22,7 +22,7 @@ public class ColumbinaCorner {
     public final double lenBC;
     // 储存角度
     public final int leftRight;  // A→B→C是左拐（AB到BC是逆时针）还是右拐（AB到BC是顺时针）
-    public final double angleRad;  // 夹角（张角）
+    public final double angleRad;  // 夹角（张角，[0, π]）
     public final double deflectionRad;  // 偏转角（[-π, π]）
     // 拐点纬度（en和surface转换用）
     public final double latB;
@@ -84,11 +84,14 @@ public class ColumbinaCorner {
      * @return 角平分线方向角
      */
     public double getBisectorBearingRad() {
-        double bearingBA = BA.bearingRad();
-        double bearingBC = BC.bearingRad();
-        return (UtilsMath.normAngleRad(  // 最后再归一化回来
-                bearingBA < 0 ? bearingBA + 2 * Math.PI: bearingBA)  // 防止跨±180°，对小于0的先+360°
-                + (bearingBC < 0 ? bearingBC + 2 * Math.PI: bearingBC)
-        ) / 2.0;  // 除以2
+        // double bearingBA = BA.bearingRad();
+        // double bearingBC = BC.bearingRad();
+        // return UtilsMath.normAngleRad(  // 最后再归一化回来
+        //         (
+        //                 (bearingBA < 0 ? bearingBA + 2 * Math.PI: bearingBA)  // 防止跨±180°，对小于0的先+360°
+        //                 + (bearingBC < 0 ? bearingBC + 2 * Math.PI: bearingBC)
+        //         ) / 2.0  // 除以2
+        // );
+        return BA.normVec().add(BC.normVec()).bearingRad();
     }
 }

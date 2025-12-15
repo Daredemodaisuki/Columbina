@@ -93,6 +93,7 @@ public class UtilsArc {
 
         return new TransArcStartResult(
                 zhA, zhC,
+                enShiftDistance,
                 startAngleARad, startAngleCRad,
                 corner.leftRight
         );
@@ -118,6 +119,7 @@ public class UtilsArc {
 
         List<EastNorth> result = new ArrayList<>();
         int totalChainage = (int) Math.ceil(enTransArcLength / enChainageLength);  // 总桩数（向上取整）
+        enChainageLength = enTransArcLength / totalChainage;  // 按照桩数重算桩距
         double curvatureChangeRate = 1 / (enCurveRadius * enTransArcLength);  // 曲率变化率
         // 曲线坐标（回旋线）
         for (int chainage = 0; chainage <= totalChainage; chainage ++) {
@@ -182,54 +184,47 @@ public class UtilsArc {
 
     /**
      * 画圆曲线段
-     * @param start 起点坐标
+     * <p>指定圆心、半径、入曲线方向角、出曲线方向角绘制这段圆弧
+     * @param center 圆心坐标
+     * @param radius 半径
      * @param startBearingRad 入曲线方向角，坐标角度：以东为0，北正南负
      * @param endBearingRad 出曲线方向角，坐标角度：以东为0，北正南负
-     * @param enRadius 圆曲线半径
-     * @param leftRight 左右转
-     * @param enChainageLength 桩距
+     * @param segments 段数（平滑度）
+     * @param leftRight 左转（1）还是右转（-1）
      * @return 节点列表（包含首尾）
      */
-    private static List<EastNorth> getCircularArc(
-            EastNorth start,
-            double startBearingRad, double endBearingRad,  // 入、出曲线角度，坐标角度：以东为0，北正南负
-            double enRadius, int leftRight,
-            double enChainageLength
+    public static List<EastNorth> getCircleArc(
+            EastNorth center, double radius,
+            double startBearingRad, double endBearingRad,
+            int segments,  // 曲线有多少桩段，也就是不计首尾的节点数+1
+            int leftRight  // 进入方向1左拐，2右拐
     ) {
-        List<EastNorth> result = new ArrayList<>();
+        List<EastNorth> points = new ArrayList<>();
 
-        // 圆心（从起点沿法线方向移动半径距离得到圆心）
-        double normalAngleStartRed = UtilsMath.normAngleRad(startBearingRad + leftRight * Math.PI / 2);  // 起点法线方向，左转+90°右转-90°（坐标角度）
-        double[] center = {
-                start.getX() + enRadius * Math.cos(normalAngleStartRed),
-                start.getY() + enRadius * Math.sin(normalAngleStartRed)
-        };
-        // 起止点相对于圆心的角度（通过起点法向角度取反获得，是坐标角度）和圆心角
-        double ang1 = UtilsMath.normAngleRad(startBearingRad + leftRight * Math.PI / 2 + Math.PI);
-        double ang2 = UtilsMath.normAngleRad(endBearingRad + leftRight * Math.PI / 2 + Math.PI);
-        double centralAngleRad = UtilsMath.normAngleRad(ang2 - ang1);  // 防止AB、BC跨±180°线时画优弧（「<」这种情况）
-        // UtilsUI.testMsgWindow("函数原始输入：" + Math.toDegrees(startBearingRad) + " " + Math.toDegrees(endBearingRad) + "\n"
-        //         + "起止点相对于圆心的角度" + Math.toDegrees(ang1) + " " + Math.toDegrees(ang2) + "\n"
-        //         + "没归一化的角度差" + Math.toDegrees(ang2 - ang1) + " 归一化的角度差" + Math.toDegrees(UtilsMath.normAngleRad(ang2 - ang1))
-        // );
-        if (centralAngleRad * leftRight < 0) {  // 发现左右拐不符（因为缓和曲线太长错开导致圆曲线需要反着画），返回空列表
-            return result;
+        // 计算圆弧总角度（根据转弯方向确定旋转方向）
+        startBearingRad = UtilsMath.normAngleRad(startBearingRad); endBearingRad = UtilsMath.normAngleRad(endBearingRad);  // 确保角度在[-π, π]范围内
+        double totalAngle;
+        if (leftRight == UtilsMath.LEFT) {
+            // 左拐：逆时针，endAngle应该大于startAngle
+            if (endBearingRad <= startBearingRad) endBearingRad += 2 * Math.PI;
+            totalAngle = endBearingRad - startBearingRad;
+        } else {
+            // 右拐：顺时针，endAngle应该小于startAngle
+            if (endBearingRad >= startBearingRad) endBearingRad -= 2 * Math.PI;
+            totalAngle = startBearingRad - endBearingRad;
         }
 
-
-        // 计算点数
-        int numAngleSteps = Math.abs((int) (enRadius * centralAngleRad / enChainageLength));
-
-        // 画圆弧
-        for (int i = 0; i <= numAngleSteps; i ++){
-            double tt = (double) i / numAngleSteps;    // 插值参数 [0,1]
-            double ang = ang1 + centralAngleRad * tt;    // 当前角度
-            double x = center[0] + enRadius * Math.cos(ang);  // 圆弧点X坐标
-            double y = center[1] + enRadius * Math.sin(ang);  // 圆弧点Y坐标
-            result.add(new EastNorth(x, y));
+        double centerToStartBearingRad = UtilsMath.normAngleRad(startBearingRad - leftRight * 0.5 * Math.PI);  // 圆心到起始点的角度（左拐-90°）
+        double angleStep = totalAngle / segments;  // 计算角度步长
+        if (leftRight == UtilsMath.RIGHT) angleStep = -angleStep;  // 如果是右拐，角度步长为负
+        for (int i = 0; i <= segments; i ++) {  // 生成圆弧上的点
+            double currentAngle = centerToStartBearingRad + i * angleStep;
+            // 计算圆弧上的点坐标
+            double east = center.east() + radius * Math.cos(currentAngle);
+            double north = center.north() + radius * Math.sin(currentAngle);
+            points.add(new EastNorth(east, north));
         }
-
-        return result;
+        return points;
     }
 
     // 绘制一个拐角的完整的缓和曲线（汇总3段子曲线，返回null表示失败）
@@ -270,12 +265,19 @@ public class UtilsArc {
                 unrotatedTransArcC
         );
         /// 圆曲线
-        List<EastNorth> circularArc = getCircularArc(
-                rotatedTransArcA.arcNodes.getLast(),
-                rotatedTransArcA.endTangentAngleRad,  // A侧出曲线的方向
-                UtilsMath.normAngleRad(rotatedTransArcC.endTangentAngleRad + Math.PI),  // C侧双螺旋是倒过来画的，所以它绘制意义上的（终点）出曲线方向取反向才是行进方向A→B→C的角度
-                enCurveRadius, transArcStarts.leftRight,
-                enChainageLength
+        // 计算圆心（从B向角平分线方向走(圆曲线半径R + 内移距离p) / sin(张角θ / 2)这个长度）
+        double enCenterToB = (enCurveRadius + transArcStarts.enShiftDistance) / Math.sin(corner.angleRad / 2);
+        ColumbinaEN center = corner.B.walk(corner.getBisectorBearingRad(), enCenterToB);
+        // 计算段数（圆心角）
+        double tangentABearingRad = rotatedTransArcA.endTangentAngleRad;
+        double tangentCBearingRad = UtilsMath.normAngleRad(rotatedTransArcC.endTangentAngleRad + Math.PI);  // C侧双螺旋是倒过来画的，所以它绘制意义上的（终点）出曲线方向取反向才是行进方向A→B→C的角度
+        double centralAngleRad = UtilsMath.normAngleRad(tangentCBearingRad - tangentABearingRad);  // 防止AB、BC跨±180°线时画优弧（「<」这种情况）
+        int numAngleSteps = Math.abs((int) (enCurveRadius * centralAngleRad / enChainageLength));
+        // 画曲线
+        List<EastNorth> circularArc = getCircleArc(
+                center, enCurveRadius,
+                tangentABearingRad, tangentCBearingRad,
+                numAngleSteps, transArcStarts.leftRight
         );
         /// 拼接
         // 整理用于拼接的点
@@ -300,16 +302,19 @@ public class UtilsArc {
     public static final class TransArcStartResult {
         public final EastNorth startA;
         public final EastNorth startC;
+        public final double enShiftDistance;  // 内移距离p（用于算圆心）
         public final double startAngleARad;  // AB方向，坐标角度：以东为0，北正南负
         public final double startAngleCRad;  // CB方向，坐标角度：以东为0，北正南负
         public final int leftRight;
 
         public TransArcStartResult(
                 EastNorth startA, EastNorth startC,
+                double enShiftDistance,
                 double startAngleARad, double startAngleCRad,
                 int leftRight) {
             this.startA = startA;
             this.startC = startC;
+            this.enShiftDistance = enShiftDistance;
             this.startAngleARad = startAngleARad;
             this.startAngleCRad = startAngleCRad;
             this.leftRight = leftRight;
@@ -331,3 +336,5 @@ public class UtilsArc {
         }
     }
 }
+
+

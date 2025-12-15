@@ -6,9 +6,6 @@ import org.openstreetmap.josm.data.projection.ProjectionRegistry;
 import org.openstreetmap.josm.tools.I18n;
 import yakxin.columbina.data.ColumbinaException;
 
-import java.util.ArrayList;
-import java.util.List;
-
 public class UtilsMath {
     public static final int LEFT = 1;
     public static final int RIGHT = -LEFT;  // -1
@@ -128,44 +125,6 @@ public class UtilsMath {
         return Math.min(lenA, lenC) * Math.tan(thetaRad / 2);
     }
 
-    // 指定圆心、半径、入曲线方向角、出曲线方向角绘制这段圆弧
-    public static List<EastNorth> getCircleArcPointsWithBearingRad(
-            EastNorth center, double radius,
-            double startBearingRad, double endBearingRad,
-            int segments,  // 曲线有多少桩段，也就是不计首尾的节点数+1
-            int leftRight  // 进入方向1左拐，2右拐
-    ) {
-        List<EastNorth> points = new ArrayList<>();
-
-        // 计算圆弧总角度（根据转弯方向确定旋转方向）
-        startBearingRad = normAngleRad(startBearingRad); endBearingRad = normAngleRad(endBearingRad);  // 确保角度在[-π, π]范围内
-        double totalAngle;
-        if (leftRight == LEFT) {
-            // 左拐：逆时针，endAngle应该大于startAngle
-            if (endBearingRad <= startBearingRad) endBearingRad += 2 * Math.PI;
-            totalAngle = endBearingRad - startBearingRad;
-        } else {
-            // 右拐：顺时针，endAngle应该小于startAngle
-            if (endBearingRad >= startBearingRad) endBearingRad -= 2 * Math.PI;
-            totalAngle = startBearingRad - endBearingRad;
-        }
-
-        // 计算圆弧
-        // double arcLength = radius * totalAngle;  // 计算圆弧长度
-        // int segments = Math.max(2, (int) Math.ceil(arcLength / segments));  // 计算需要的节点数量（桩之间的段数）
-
-        double centerToStartBearingRad = normAngleRad(startBearingRad - leftRight * 0.5 * Math.PI);  // 圆心到起始点的角度（左拐-90°）
-        double angleStep = totalAngle / segments;  // 计算角度步长
-        if (leftRight == RIGHT) angleStep = -angleStep;  // 如果是右拐，角度步长为负
-        for (int i = 0; i <= segments; i ++) {  // 生成圆弧上的点
-            double currentAngle = centerToStartBearingRad + i * angleStep;
-            // 计算圆弧上的点坐标
-            double east = center.east() + radius * Math.cos(currentAngle);
-            double north = center.north() + radius * Math.sin(currentAngle);
-            points.add(new EastNorth(east, north));
-        }
-        return points;
-    }
 }
 
 

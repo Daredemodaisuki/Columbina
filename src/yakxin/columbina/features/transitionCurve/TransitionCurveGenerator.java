@@ -41,12 +41,12 @@ public final class TransitionCurveGenerator extends AbstractGenerator<Transition
      * @param way 输入的路径
      * @param surfaceRadius 圆曲线地表半径（米）
      * @param surfaceLength 缓和曲线地表长度（米）
-     * @param surfaceChainage 桩距（节点间距，米）
+     * @param surfaceChainageLength 桩距（节点间距，米）
      * @return 包含新节点列表和失败节点ID的DrawingNewNodeResult
      */
     public static ColumbinaSingleOutput buildTransitionCurvePolyline(
             Way way,
-            double surfaceRadius, double surfaceLength, double surfaceChainage
+            double surfaceRadius, double surfaceLength, double surfaceChainageLength
     ) {
         List<Long> failedNodes = new ArrayList<>();
         // 获取路径的所有节点
@@ -58,14 +58,14 @@ public final class TransitionCurveGenerator extends AbstractGenerator<Transition
         // 存储每个拐角的过渡曲线结果
         List<List<EastNorth>> transCurves = new ArrayList<>();
 
-        // 为非闭合路径计算所有拐角
+        // 为路径计算所有拐角
         for (int i = 0; i < numCorner; i ++) {
             try {
                 // JOSM用Mercator投影的NorthEast坐标等角不等距，需要重算距离，以拐点B取维度计算
                 ColumbinaCorner corner = ColumbinaCorner.create(way, i);
                 double enRadius = UtilsMath.surfaceDistanceToEastNorth(surfaceRadius, corner.latB);
                 double enLength = UtilsMath.surfaceDistanceToEastNorth(surfaceLength, corner.latB);
-                double enChainage = UtilsMath.surfaceDistanceToEastNorth(surfaceChainage, corner.latB);
+                double enChainage = UtilsMath.surfaceDistanceToEastNorth(surfaceChainageLength, corner.latB);
 
                 // 有EN长度之后继续算圆弧
                 ArrayList<EastNorth> transCurve = UtilsArc.getTransCurve(  // 为每个拐角计算缓和曲线

@@ -8,6 +8,7 @@ import yakxin.columbina.data.ColumbinaException;
 import yakxin.columbina.data.dto.ColumbinaSingleOutput;
 import yakxin.columbina.data.dto.inputs.ColumbinaSingleInput;
 import yakxin.columbina.data.ColumbinaEN;
+import yakxin.columbina.utils.UtilsArc;
 import yakxin.columbina.utils.UtilsMath;
 
 import java.util.ArrayList;
@@ -73,7 +74,7 @@ public final class FilletGenerator extends AbstractGenerator<FilletParams> {
         // 计算、返回
         // TODO:判断切距是否为负数了
         return (ArrayList<EastNorth>)
-                UtilsMath.getCircleArcPointsWithBearingRad(
+                UtilsArc.getCircleArc(
                         enCenter, enRadius,
                         startBearingRad, endBearingRad,
                         arcSegments,
@@ -96,8 +97,17 @@ public final class FilletGenerator extends AbstractGenerator<FilletParams> {
         List<Long> failedNodes = new ArrayList<>();
         // 获取路径的所有节点
         List<Node> nodes = new ArrayList<>(way.getNodes());
-        int nPts = nodes.size();
-        if (nPts < 3) return null;  // 路径至少需要3个点
+        int numNode = way.isClosed() ? way.getNodesCount() - 1 : way.getNodesCount();  // 实际节点数（去除闭合点）
+        if (numNode < 3) return null;  // 路径至少需要3个点
+        int numCorner = way.isClosed() ? numNode : numNode - 2;
+
+        // 存储每个拐角的过渡曲线结果
+        List<List<EastNorth>> filletCurves = new ArrayList<>();
+
+        // TODO:为路径计算所有拐角
+
+
+
 
         // 将所有节点转换为平面坐标
         List<EastNorth> nodesEN = new ArrayList<>();
@@ -106,7 +116,7 @@ public final class FilletGenerator extends AbstractGenerator<FilletParams> {
         // 为每个拐角预计算圆角
         List<double[]> T1s = new ArrayList<>();  // 存储每个拐角的第一个切点
         List<List<EastNorth>> arcs = new ArrayList<>();  // 存储每个拐角的圆弧
-        for (int i = 0; i < nPts - 2; i ++) {
+        for (int i = 0; i < numNode - 2; i ++) {
             EastNorth A = nodesEN.get(i);      // 起点    B → C
             EastNorth B = nodesEN.get(i + 1);  // 拐点    ↑
             EastNorth C = nodesEN.get(i + 2);  // 终点    A
@@ -145,7 +155,7 @@ public final class FilletGenerator extends AbstractGenerator<FilletParams> {
                 double enRadius = UtilsMath.surfaceDistanceToEastNorth(surfaceRadius, latB);
                 double enChainageLength = UtilsMath.surfaceDistanceToEastNorth(surfaceChainageLength, latB);
                 List<EastNorth> arcEnd = getFilletArc(
-                        nodesEN.get(nPts - 2), nodesEN.get(0), nodesEN.get(1),  // nodesEN.get(0) = getFirst() == nodesEN.get(-1)
+                        nodesEN.get(numNode - 2), nodesEN.get(0), nodesEN.get(1),  // nodesEN.get(0) = getFirst() == nodesEN.get(-1)
                         enRadius, enChainageLength, maxPointNum,
                         minAngleDeg, maxAngleDeg
                 );
@@ -172,7 +182,7 @@ public final class FilletGenerator extends AbstractGenerator<FilletParams> {
         if (useLastArcLastNode) finalNodes.add(new Node(UtilsMath.toLatLon(arcs.getLast().getLast())));
         else finalNodes.add(way.getNode(0));
         // 遍历除最后一个节点以外所有路径节点，用圆弧替换拐角
-        for (int i = 0; i < nPts - 2; i ++) {
+        for (int i = 0; i < numNode - 2; i ++) {
             if (arcs.get(i) != null) {  // 检查本次的拐角B（i+1）是否有有效圆角（圆角编号=A编号=i），圆弧存在则使用圆角路径
                 double[] T1 = T1s.get(i);
                 // 添加圆弧上第一个切点（如果与上个点不同）
@@ -189,7 +199,7 @@ public final class FilletGenerator extends AbstractGenerator<FilletParams> {
         // 终点处理
         if (way.isClosed()) {
             if (arcs.getLast() != null) {  // 如果原路径闭合，且首末点有曲线，拼上最后一条曲线并连上起点
-                List<EastNorth> arcClosedEnd = arcs.getLast();  // 对于闭合路径nPts-2倒数第2个点，nPts-1最后一个点=0起点，1表示第2个点
+                List<EastNorth> arcClosedEnd = arcs.getLast();  // 对于闭合路径nPts-2倒数第2个点，numNode-1最后一个点=0起点，1表示第2个点
                 for (EastNorth eastNorth : arcClosedEnd)
                     finalNodes.add(new Node(UtilsMath.toLatLon(eastNorth)));
                 finalNodes.add(finalNodes.getFirst());
