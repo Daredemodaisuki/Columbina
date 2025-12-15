@@ -63,6 +63,10 @@ public class UtilsMath {
         return angleDeg;
     }
 
+    public static double reverseAngleRad(double angleRad) {
+        return normAngleRad(angleRad + Math.PI);
+    }
+
     // 获取向量坐标角度：以东为0，（逆时针）北正（顺时针）南负，区间在[-pi, pi]，±pi等同处理
     public static double getVecBearingRad(double[] vec) {
         return Math.atan2(vec[1], vec[0]);  // atan2(y, x) 返回的是从x轴正方向逆时针到向量的角度
@@ -88,6 +92,7 @@ public class UtilsMath {
         cosTheta = Math.max(-1.0, Math.min(1.0, cosTheta));
         return Math.acos(cosTheta);
     }
+
 
 
     /// 复杂符号
@@ -123,13 +128,6 @@ public class UtilsMath {
         return Math.min(lenA, lenC) * Math.tan(thetaRad / 2);
     }
 
-    // 从起点出发，沿指定角度行走指定距离，得到新的点
-    public static double[] walkAlongAngleDistance(double[] startPoint, double angleRad, double enDistance) {
-        double deltaE = enDistance * Math.cos(angleRad);  // 东方向增量
-        double deltaN = enDistance * Math.sin(angleRad);  // 北方向增量
-        return new double[]{startPoint[0] + deltaE, startPoint[1] + deltaN};
-    }
-
     // 指定圆心、半径、入曲线方向角、出曲线方向角绘制这段圆弧
     public static List<EastNorth> getCircleArcPointsWithBearingRad(
             EastNorth center, double radius,
@@ -153,7 +151,7 @@ public class UtilsMath {
         }
 
         // 计算圆弧
-        double arcLength = radius * totalAngle;  // 计算圆弧长度
+        // double arcLength = radius * totalAngle;  // 计算圆弧长度
         // int segments = Math.max(2, (int) Math.ceil(arcLength / segments));  // 计算需要的节点数量（桩之间的段数）
 
         double centerToStartBearingRad = normAngleRad(startBearingRad - leftRight * 0.5 * Math.PI);  // 圆心到起始点的角度（左拐-90°）

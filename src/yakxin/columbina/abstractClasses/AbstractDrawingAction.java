@@ -160,14 +160,12 @@ public abstract class AbstractDrawingAction <
      */
     @Override
     public void actionPerformed(ActionEvent e) {
-        // OsmDataLayer layer;
         DataSet dataSet; ColumbinaInput totalInput; List<ColumbinaSingleInput> singleInputs;
         boolean deleteOld; boolean selectNew; boolean copyTag;
 
-        // 检查
+        /// 检查
         try {
             totalInput = new ColumbinaInput();
-            // layer = totalInput.getLayer();
             dataSet = totalInput.getDataSet();
 
             // 数量检查（不可接受的数量将在checkInputNum抛IllegalArgumentException）
@@ -194,7 +192,7 @@ public abstract class AbstractDrawingAction <
             return;
         }
 
-        // 绘制新路径
+        /// 绘制新路径
         List<Command> cmdsAdd;
         try {
             cmdsAdd = concludeAddCommands(dataSet, singleInputs, copyTag);
@@ -209,7 +207,7 @@ public abstract class AbstractDrawingAction <
         Command cmdAdd = new ColumbinaSeqCommand(getUndoRedoInfo(totalInput, params), cmdsAdd, "RoundCorners");
         UndoRedoHandler.getInstance().add(cmdAdd);
 
-        // 移除旧路径（如果需要的话）
+        /// 移除旧路径（如果需要的话）
         if (deleteOld) {
             try {
                 List<Command> cmdsRmv = concludeRemoveCommands(dataSet);
@@ -223,7 +221,7 @@ public abstract class AbstractDrawingAction <
             }
         }
 
-        // 选中新路径
+        /// 选中新路径
         if (selectNew) {
             List<OsmPrimitive> whatToSelectAfterDraw = getWhatToSelectAfterDraw();
             if (whatToSelectAfterDraw != null && !whatToSelectAfterDraw.isEmpty()) dataSet.setSelected(whatToSelectAfterDraw);

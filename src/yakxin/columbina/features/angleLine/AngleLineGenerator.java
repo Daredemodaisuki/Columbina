@@ -6,6 +6,7 @@ import org.openstreetmap.josm.data.osm.Way;
 import yakxin.columbina.abstractClasses.AbstractGenerator;
 import yakxin.columbina.data.dto.ColumbinaSingleOutput;
 import yakxin.columbina.data.dto.inputs.ColumbinaSingleInput;
+import yakxin.columbina.data.ColumbinaEN;
 import yakxin.columbina.utils.UtilsMath;
 
 import java.util.ArrayList;
@@ -55,7 +56,7 @@ public final class AngleLineGenerator extends AbstractGenerator<AngleLineParams>
         double turningAngleRad = Math.toRadians(angleDeg);
         double enLength = UtilsMath.surfaceDistanceToEastNorth(surfaceLength, node.lat());
 
-        double[] destination = UtilsMath.walkAlongAngleDistance(start, enterAngleRad + turningAngleRad, enLength);
+        double[] destination = ColumbinaEN.walk(start, enterAngleRad + turningAngleRad, enLength);
 
         List<Node> newNodes = new ArrayList<>();
         newNodes.add(node);

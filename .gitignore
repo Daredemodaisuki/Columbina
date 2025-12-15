@@ -27,5 +27,6 @@ replay_pid*
 .idea/
 Ant/
 design/
-i18n/.idea
-i18n/example
+i18n/.idea/
+i18n/__pycache__/
+i18n/example/

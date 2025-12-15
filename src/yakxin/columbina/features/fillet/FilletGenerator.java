@@ -7,6 +7,7 @@ import yakxin.columbina.abstractClasses.AbstractGenerator;
 import yakxin.columbina.data.ColumbinaException;
 import yakxin.columbina.data.dto.ColumbinaSingleOutput;
 import yakxin.columbina.data.dto.inputs.ColumbinaSingleInput;
+import yakxin.columbina.data.ColumbinaEN;
 import yakxin.columbina.utils.UtilsMath;
 
 import java.util.ArrayList;
@@ -57,7 +58,7 @@ public final class FilletGenerator extends AbstractGenerator<FilletParams> {
         ));
         // 圆心
         double centerToB = enRadius / Math.sin(theta / 2.0);  // B到圆心的距离
-        double[] center = UtilsMath.walkAlongAngleDistance(  // 沿着ABC角平分线方向走B到圆心的距离
+        double[] center = ColumbinaEN.walk(  // 沿着ABC角平分线方向走B到圆心的距离
                 b, UtilsMath.getVecBearingRad(UtilsMath.add(
                         UtilsMath.getUnitVec(BA),
                         UtilsMath.getUnitVec(BC)

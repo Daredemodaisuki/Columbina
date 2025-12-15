@@ -41,3 +41,5 @@ public final class PanelLabelInputResult {
         return textField.getText();
     }
 }
+
+
