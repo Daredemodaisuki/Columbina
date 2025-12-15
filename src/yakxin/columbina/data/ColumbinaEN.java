@@ -58,7 +58,7 @@ public class ColumbinaEN extends EastNorth {
 
     /**
      * 从this出发，沿指定角度行进指定距离，得到新的点
-     * @param bearingRad 偏转角
+     * @param bearingRad 方向角
      * @param enDistance 东北坐标行进距离
      * @return 新坐标
      */
@@ -66,12 +66,6 @@ public class ColumbinaEN extends EastNorth {
         double deltaE = enDistance * Math.cos(bearingRad);
         double deltaN = enDistance * Math.sin(bearingRad);
         return new ColumbinaEN(this.x + deltaE, this.y + deltaN);
-    }
-    // TODO:旧UtilsMath方法临时移动至此，替换完成后弃用
-    public static double[] walk(double[] startPoint, double angleRad, double enDistance) {
-        double deltaE = enDistance * Math.cos(angleRad);  // 东方向增量
-        double deltaN = enDistance * Math.sin(angleRad);  // 北方向增量
-        return new double[]{startPoint[0] + deltaE, startPoint[1] + deltaN};
     }
 
     /**
@@ -103,10 +97,12 @@ public class ColumbinaEN extends EastNorth {
 
     /**
      * 取单位向量
+     * <p>对于零向量取单位向量，这里定义返回零向量避免除0错误
      * @return 单位向量
      */
     public ColumbinaEN normVec() {
         double length = this.length();
+        if (length == 0) return this.mul(0);
         return this.mul(1 / length);
     }
 
@@ -149,10 +145,12 @@ public class ColumbinaEN extends EastNorth {
 
     /**
      * 获取从this（vecA）和other（vecB）的夹角
+     * <p>对于其中存在零向量的情况，考虑到零向量和任意向量都平行，返回0。
      * @param other 向量B
      * @return 夹角（[0, pi]）
      */
     public double angleRadBetween(ColumbinaEN other) {
+        if (this.length() * other.length() == 0) return 0;
         double cosTheta = this.dot(other) / (this.length() * other.length());
         // 防止浮点数误差导致cosTheta超出[-1,1]
         cosTheta = Math.max(-1.0, Math.min(1.0, cosTheta));

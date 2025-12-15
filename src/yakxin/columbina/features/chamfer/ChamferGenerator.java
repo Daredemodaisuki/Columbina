@@ -37,12 +37,9 @@ public final class ChamferGenerator extends AbstractGenerator<ChamferParams> {
     ) {
         if (corner.lenBA < 1e-9 || corner.lenBC < 1e-9) return null;  // 检查向量有效性（不能太短近乎于点挤在一起）
 
-        ColumbinaEN normBA = corner.BA.normVec();  // BA单位向量
-        ColumbinaEN normBC = corner.BC.normVec();  // BC单位向量
-
         // 获取新切点
-        ColumbinaEN c1 = corner.B.add(normBA.mul(enDistanceA));  // BA侧切点
-        ColumbinaEN c2 = corner.B.add(normBC.mul(enDistanceC));  // BC侧切点
+        ColumbinaEN c1 = corner.B.walk(corner.BA.bearingRad(), enDistanceA);  // BA侧切点
+        ColumbinaEN c2 = corner.B.walk(corner.BC.bearingRad(), enDistanceC);  // BC侧切点
 
         // 检查切点长度是否足够
         if (enDistanceA >= corner.lenBA || enDistanceC >= corner.lenBC) return null;
@@ -58,9 +55,6 @@ public final class ChamferGenerator extends AbstractGenerator<ChamferParams> {
     ) {
         if (corner.lenBA < 1e-9 || corner.lenBC < 1e-9) return null;  // 检查向量有效性（不能太短近乎于点挤在一起）
 
-        ColumbinaEN normBA = corner.BA.normVec();  // BA单位向量
-        ColumbinaEN normBC = corner.BC.normVec();  // BC单位向量
-
         // 直接从corner获取拐点夹角
         double thetaB = corner.angleRad;  // 夹角（弧度[0, π]）
 
@@ -70,8 +64,8 @@ public final class ChamferGenerator extends AbstractGenerator<ChamferParams> {
         double enDistanceC = enDistanceA * Math.sin(thetaA) / Math.sin(Math.PI - thetaB - thetaA);
 
         // 切点
-        ColumbinaEN c1 = corner.B.add(normBA.mul(enDistanceA));  // BA侧切点
-        ColumbinaEN c2 = corner.B.add(normBC.mul(enDistanceC));  // BC侧切点
+        ColumbinaEN c1 = corner.B.walk(corner.BA.bearingRad(), enDistanceA);  // BA侧切点
+        ColumbinaEN c2 = corner.B.walk(corner.BC.bearingRad(), enDistanceC);  // BC侧切点
         if (enDistanceA >= corner.lenBA || enDistanceC >= corner.lenBC) return null;  // 检查切点长度是否足够
 
         ArrayList<EastNorth> cutNodes = new ArrayList<>();
