@@ -6,7 +6,6 @@ import yakxin.columbina.data.ColumbinaCorner;
 import yakxin.columbina.data.ColumbinaEN;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 /**
@@ -60,7 +59,7 @@ public class UtilsArc {
      * @param enTransArcLength 缓和曲线长度
      * @return 打包好的双螺旋曲线的起始点、起始偏角
      */
-    private static TransArcStartResult getStartsOfEulerArcs(
+    public static TransArcStartResult getStartsOfEulerArcs(
             ColumbinaCorner corner,
             double enCurveRadius, double enTransArcLength  // 圆曲线半径（内圆R）、缓和段长度（ls）
     ) {
@@ -107,7 +106,7 @@ public class UtilsArc {
      * @param leftRight 往左走往右走
      * @return 打包好的单段螺旋曲线的节点、起始和终点偏角
      */
-    private static SingleEulerArcResult getUnrotatedEulerArc(
+    public static SingleEulerArcResult getUnrotatedEulerArc(
             double enCurveRadius, double enTransArcLength,
             double enChainageLength,
             int leftRight
@@ -156,7 +155,7 @@ public class UtilsArc {
      * @param transArc 没有移动旋转的单段双螺旋曲线
      * @return 打包好的单段螺旋曲线的节点、起始和终点偏角
      */
-    private static SingleEulerArcResult rotateAndMoveEulerArc(
+    public static SingleEulerArcResult rotateAndMoveEulerArc(
             EastNorth start, double startBearingRad,
             SingleEulerArcResult transArc
     ) {
@@ -225,75 +224,6 @@ public class UtilsArc {
             points.add(new EastNorth(east, north));
         }
         return points;
-    }
-
-    // 绘制一个拐角的完整的缓和曲线（汇总3段子曲线，返回null表示失败）
-    public static ArrayList<EastNorth> getTransCurve(
-            ColumbinaCorner corner,
-            double enCurveRadius, double enTransArcLength,  // 圆曲线半径（内圆R）、缓和段长度（ls）
-            double enChainageLength  // 每个桩（节点）之间的距离
-    ) throws IllegalArgumentException
-    {
-        // 确定两段双螺旋曲线的起点
-        TransArcStartResult transArcStarts = getStartsOfEulerArcs(corner, enCurveRadius, enTransArcLength);
-        if (transArcStarts == null) return null;
-
-        /// A侧螺旋线（从A侧直缓切点顺着画）
-        // 绘制
-        SingleEulerArcResult unrotatedTransArcA = getUnrotatedEulerArc(
-                enCurveRadius, enTransArcLength,
-                enChainageLength,
-                transArcStarts.leftRight
-        );
-        // 旋转、移动
-        SingleEulerArcResult rotatedTransArcA = rotateAndMoveEulerArc(
-                transArcStarts.startA,
-                transArcStarts.startAngleARad,
-                unrotatedTransArcA
-        );
-        /// C侧螺旋线（从C侧直缓切点开始倒着画）
-        // 绘制
-        SingleEulerArcResult unrotatedTransArcC = getUnrotatedEulerArc(
-                enCurveRadius, enTransArcLength,
-                enChainageLength,
-                -transArcStarts.leftRight  // C侧是倒回来画的，与A到C方向的左右相反
-        );
-        // 旋转、移动
-        SingleEulerArcResult rotatedTransArcC = rotateAndMoveEulerArc(
-                transArcStarts.startC,
-                transArcStarts.startAngleCRad,
-                unrotatedTransArcC
-        );
-        /// 圆曲线
-        // 计算圆心（从B向角平分线方向走(圆曲线半径R + 内移距离p) / sin(张角θ / 2)这个长度）
-        double enCenterToB = (enCurveRadius + transArcStarts.enShiftDistance) / Math.sin(corner.angleRad / 2);
-        ColumbinaEN center = corner.B.walk(corner.getBisectorBearingRad(), enCenterToB);
-        // 计算段数（圆心角）
-        double tangentABearingRad = rotatedTransArcA.endTangentAngleRad;
-        double tangentCBearingRad = UtilsMath.normAngleRad(rotatedTransArcC.endTangentAngleRad + Math.PI);  // C侧双螺旋是倒过来画的，所以它绘制意义上的（终点）出曲线方向取反向才是行进方向A→B→C的角度
-        double centralAngleRad = UtilsMath.normAngleRad(tangentCBearingRad - tangentABearingRad);  // 防止AB、BC跨±180°线时画优弧（「<」这种情况）
-        int numAngleSteps = Math.abs((int) (enCurveRadius * centralAngleRad / enChainageLength));
-        // 画曲线
-        List<EastNorth> circularArc = getCircleArc(
-                center, enCurveRadius,
-                tangentABearingRad, tangentCBearingRad,
-                numAngleSteps, transArcStarts.leftRight
-        );
-        /// 拼接
-        // 整理用于拼接的点
-        List<EastNorth> transArcA = new ArrayList<>(rotatedTransArcA.arcNodes);
-        List<EastNorth> transArcC = new ArrayList<>(rotatedTransArcC.arcNodes);
-        if (transArcA.size() < 2 || circularArc.size() < 2 || transArcC.size() < 2) return null;  // 曲线不完整，绘制失败
-        transArcA.removeLast();  // 不要ArcA的最后一个点（=圆曲线第一个点）
-        Collections.reverse(transArcC);  // 倒着画的原地逆序正回来
-        transArcC.removeFirst();  // 正序之后不要第一个点（=圆曲线最后一个点）
-
-        ArrayList<EastNorth> finalNodes = new ArrayList<>();
-        finalNodes.addAll(transArcA);
-        finalNodes.addAll(circularArc);
-        finalNodes.addAll(transArcC);
-
-        return finalNodes;
     }
 
     /**

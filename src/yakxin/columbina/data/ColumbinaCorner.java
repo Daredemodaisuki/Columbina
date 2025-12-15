@@ -21,7 +21,7 @@ public class ColumbinaCorner {
     public final double lenBA;
     public final double lenBC;
     // 储存角度
-    public final int leftRight;  // A→B→C是左拐（AB到BC是逆时针）还是右拐（AB到BC是顺时针）
+    public final int leftRight;  // A→B→C是左拐（AB到BC是逆时针，1）还是右拐（AB到BC是顺时针，-1）
     public final double angleRad;  // 夹角（张角，[0, π]）
     public final double deflectionRad;  // 偏转角（[-π, π]）
     // 拐点纬度（en和surface转换用）
