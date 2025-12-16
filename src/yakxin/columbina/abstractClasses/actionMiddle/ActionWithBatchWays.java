@@ -25,6 +25,7 @@ import yakxin.columbina.utils.UtilsUI;
 
 import javax.swing.*;
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * 圆角、斜角、缓和曲线用的模板类
@@ -138,16 +139,16 @@ public abstract class ActionWithBatchWays<
 
                 if (newNWCmd != null) {  // 应该不会和已提交但未执行（进入ds）的重复提交
                     commands.addAll(newNWCmd.addCommands);
-                    inputOutputPairs.put(singleInput.ways.getFirst(), newNWCmd.newWay);
-                    failedNodeIds.put(singleInput.ways.getFirst(), newNWCmd.failedNodeIds);
+                    inputOutputPairs.put(singleInput.ways.get(0), newNWCmd.newWay);
+                    failedNodeIds.put(singleInput.ways.get(0), newNWCmd.failedNodeIds);
                 }
                 else UtilsUI.warnInfo(I18n.tr(
                         "Algorithm did not return at least 2 nodes to form a way for way {0}, this way was not processed.",
-                        singleInput.ways.getFirst().getUniqueId()
+                        singleInput.ways.get(0).getUniqueId()
                 ));
             } catch (Exception exAdd) {
                 UtilsUI.errorInfo(I18n.tr("Unexpected error occurred while processing way {0}: {1}",
-                        singleInput.ways.getFirst().getUniqueId(), exAdd.getMessage()
+                        singleInput.ways.get(0).getUniqueId(), exAdd.getMessage()
                 ));
             }
         }
@@ -156,7 +157,7 @@ public abstract class ActionWithBatchWays<
             throw new ColumbinaException(I18n.tr("Failed to generate any new way."));
         }
         // 去重防止提交重复添加
-        commands = commands.stream().distinct().toList();
+        commands = commands.stream().distinct().collect(Collectors.toList());
 
         // 提示失败信息
         showFailedProcessedCorner(failedNodeIds);
@@ -217,7 +218,7 @@ public abstract class ActionWithBatchWays<
             }
         }
         // 去重防止提交重复删除
-        commands = commands.stream().distinct().toList();
+        commands = commands.stream().distinct().collect(Collectors.toList());
         return commands;
     }
 
@@ -232,7 +233,7 @@ public abstract class ActionWithBatchWays<
     public Map<String, String> getNewWayTags(ColumbinaSingleInput singleInput) {
         Map<String, String> newWayTags = new HashMap<>();
         if (singleInput.ways != null && singleInput.ways.size() == 1)
-            newWayTags = singleInput.ways.getFirst().getInterestingTags();  // 读取原Way的tag
+            newWayTags = singleInput.ways.get(0).getInterestingTags();  // 读取原Way的tag
         return newWayTags;
     }
 
@@ -271,7 +272,7 @@ public abstract class ActionWithBatchWays<
 
         // 正式构建绘制命令
         if (newWay != null) {
-            for (Node n : newNodes.stream().distinct().toList()) {  // 路径内部可能有节点复用（如闭合线），去重
+            for (Node n : newNodes.stream().distinct().collect(Collectors.toList())) {  // 路径内部可能有节点复用（如闭合线），去重
                 if (!ds.containsNode(n))  // 新路径的节点在ds中未绘制（不是复用的）才准备绘制
                     addCommands.add(new AddCommand(ds, n));  // 添加节点到命令序列
             }
@@ -316,7 +317,7 @@ public abstract class ActionWithBatchWays<
                 removeCommands.add(new DeleteCommand(ds, oldWay));  // 去除路径
                 // 去除节点（闭合曲线会删闭合点2次，自交路径也会导致重复删除，需要去重）
                 // 不能用ds.ContainsNode(n)判断删没删，因为cmdDel还没提交，delCommands内部重复删除会炸
-                for (Node n : oldWay.getNodes().stream().distinct().toList()) {
+                for (Node n : oldWay.getNodes().stream().distinct().collect(Collectors.toList())) {
                     boolean canBeDeleted = !n.isTagged();  // 有tag不删
                     for (OsmPrimitive ref : n.getReferrers()) {
                         if (!(ref instanceof Way && ref.equals(oldWay))) {

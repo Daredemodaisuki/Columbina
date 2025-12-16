@@ -29,7 +29,7 @@ public final class TransitionCurveGenerator extends AbstractGenerator<Transition
     public ColumbinaSingleOutput getOutputForSingleInput(ColumbinaSingleInput input, TransitionCurveParams params) {
         if (input.ways != null && input.ways.size() == 1) {
             return buildTransitionCurvePolyline(
-                    input.ways.getFirst(),
+                    input.ways.get(0),
                     params.surfaceRadius, params.surfaceTransArcLength, params.chainageNum
             );
         }
@@ -46,8 +46,8 @@ public final class TransitionCurveGenerator extends AbstractGenerator<Transition
      */
     private static ArrayList<EastNorth> getTransCurve(
             ColumbinaCorner corner,
-            double enCurveRadius, double enTransArcLength,  // 圆曲线半径（内圆R）、缓和段长度（ls）
-            double enChainageLength  // 每个桩（节点）之间的距离
+            double enCurveRadius, double enTransArcLength,
+            double enChainageLength
     ) {
         // 确定两段双螺旋曲线的起点
         UtilsArc.TransArcStartResult transArcStarts = UtilsArc.getStartsOfEulerArcs(corner, enCurveRadius, enTransArcLength);
@@ -99,9 +99,9 @@ public final class TransitionCurveGenerator extends AbstractGenerator<Transition
         List<EastNorth> transArcA = new ArrayList<>(rotatedTransArcA.arcNodes);
         List<EastNorth> transArcC = new ArrayList<>(rotatedTransArcC.arcNodes);
         if (transArcA.size() < 2 || circularArc.size() < 2 || transArcC.size() < 2) return null;  // 曲线不完整，绘制失败
-        transArcA.removeLast();  // 不要ArcA的最后一个点（=圆曲线第一个点）
+        transArcA.remove(transArcA.size() - 1);  // 不要ArcA的最后一个点（=圆曲线第一个点）
         Collections.reverse(transArcC);  // 倒着画的原地逆序正回来
-        transArcC.removeFirst();  // 正序之后不要第一个点（=圆曲线最后一个点）
+        transArcC.remove(0);  // 正序之后不要第一个点（=圆曲线最后一个点）
 
         ArrayList<EastNorth> finalNodes = new ArrayList<>();
         finalNodes.addAll(transArcA);
@@ -170,8 +170,8 @@ public final class TransitionCurveGenerator extends AbstractGenerator<Transition
         List<Node> finalNodes = new ArrayList<>();
         // 对于非闭合路径（或闭合点没有曲线的闭合路径），从第一个节点开始；
         // 对于闭合路径且闭合点有曲线，从第一条曲线第一个点开始（下面for中添加）
-        if (!way.isClosed() || (way.isClosed() && transCurves.getLast() == null))
-            finalNodes.add(nodes.getFirst());
+        if (!way.isClosed() || (way.isClosed() && transCurves.get(transCurves.size() - 1) == null))
+            finalNodes.add(nodes.get(0));
         // 遍历所有拐角
         for (int i = 0; i < numCorner; i ++) {
             if (transCurves.get(i) != null) {  // 有过渡曲线就添加曲线上的所有点
@@ -181,8 +181,8 @@ public final class TransitionCurveGenerator extends AbstractGenerator<Transition
             } else finalNodes.add(nodes.get(i + 1));  // 没有过渡曲线，添加原始拐点
         }
         // 添加最后一个节点
-        if (way.isClosed()) finalNodes.add(finalNodes.getFirst());
-        else finalNodes.add(nodes.getLast());
+        if (way.isClosed()) finalNodes.add(finalNodes.get(0));
+        else finalNodes.add(nodes.get(nodes.size() - 1));
 
         return new ColumbinaSingleOutput(finalNodes, failedNodes);
     }

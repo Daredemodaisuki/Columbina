@@ -18,6 +18,7 @@ import yakxin.columbina.data.dto.inputs.ColumbinaInput;
 import yakxin.columbina.data.dto.inputs.ColumbinaSingleInput;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 public abstract class ActionWithNodeWay<
         GeneratorType extends AbstractGenerator<ParamType>,  // 生成器泛型
@@ -85,7 +86,7 @@ public abstract class ActionWithNodeWay<
         List<Command> addCommands = new ArrayList<>();
 
         // 调用生成传入的函数计算路径
-        ColumbinaSingleInput singleInput = input.getFirst();  // 这个模板不支持批量，所以直接getFirst
+        ColumbinaSingleInput singleInput = input.get(0);  // 这个模板不支持批量，所以直接getFirst
         ColumbinaSingleOutput singleOutput = generator.getOutputForSingleInput(singleInput, params);
         if (singleOutput == null) return null;
         if (!singleOutput.ifCanMakeAWay()) return null;
@@ -102,7 +103,7 @@ public abstract class ActionWithNodeWay<
 
         // 正式构建绘制命令
         if (newWay != null) {
-            for (Node n : singleOutput.newNodes.stream().distinct().toList()) {  // 路径内部可能有节点复用（如闭合线），去重
+            for (Node n : singleOutput.newNodes.stream().distinct().collect(Collectors.toList())) {  // 路径内部可能有节点复用（如闭合线），去重
                 if (!ds.containsNode(n))  // 新路径的节点在ds中未绘制（不是复用的）才准备绘制
                     addCommands.add(new AddCommand(ds, n));  // 添加节点到命令序列
             }

@@ -17,7 +17,7 @@ public final class AngleLineGenerator extends AbstractGenerator<AngleLineParams>
     public ColumbinaSingleOutput getOutputForSingleInput(ColumbinaSingleInput input, AngleLineParams params)  // 内部注意类型检查！
     {
         return buildAngleLine(
-                input.nodes.getFirst(), input.ways.getFirst(),
+                input.nodes.get(0), input.ways.get(0),
                 params.angleDeg, params.surfaceLength
         );
     }

@@ -49,8 +49,8 @@ public final class CurveConnectDialog extends ExtendedDialog {
         UtilsUI.addSection(panel, I18n.tr("Curve Information"));
 
         UtilsUI.addLabel(panel, "Curve direction: ");
-        leftRight.addRadioButton(panel, CurveConnectGenerator.LEFT);
-        leftRight.addRadioButton(panel, CurveConnectGenerator.RIGHT);
+        leftRight.addRadioButton(panel, CurveConnectGenerator.COUNTER_CLOCKWISE_MODE);
+        leftRight.addRadioButton(panel, CurveConnectGenerator.CLOCKWISE_MODE);
 
         UtilsUI.addSpace(panel, 5);
         curveConnectR = UtilsUI.addInput(panel, I18n.tr("Circular curve surfaceRadius (m): "), CurveConnectPreference.getCurveConnectRadius());

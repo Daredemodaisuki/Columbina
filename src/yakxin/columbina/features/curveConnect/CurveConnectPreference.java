@@ -18,7 +18,7 @@ public class CurveConnectPreference extends AbstractPreference<CurveConnectParam
     public static final double DEFAULT_CURVE_CONNECT_TRANS_ARC_LENGTH = 51.45;
     public static final double DEFAULT_CURVE_CONNECT_CHAINAGE_LENGTH = 8.10;
     public static final int DEFAULT_CURVE_CONNECT_MAX_POINT_PER_ARC = 20;
-    public static final int DEFAULT_CURVE_CONNECT_LEFT_RIGHT = CurveConnectGenerator.RIGHT;
+    public static final int DEFAULT_CURVE_CONNECT_LEFT_RIGHT = CurveConnectGenerator.COUNTER_CLOCKWISE_MODE;
 
     public static void readPreference() {
         curveConnectRadius = Config.getPref().getDouble("columbina.curve-connect.radius", DEFAULT_CURVE_CONNECT_RADIUS);

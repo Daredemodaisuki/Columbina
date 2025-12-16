@@ -23,7 +23,7 @@ public final class ChamferGenerator extends AbstractGenerator<ChamferParams> {
     public ColumbinaSingleOutput getOutputForSingleInput(ColumbinaSingleInput input, ChamferParams params) {
         if (input.ways != null && input.ways.size() == 1) {
             return buildChamferPolyline(
-                    input.ways.getFirst(), params.mode,
+                    input.ways.get(0), params.mode,
                     params.surfaceDistanceA, params.surfaceDistanceC,
                     params.angleADeg
             );
@@ -134,8 +134,8 @@ public final class ChamferGenerator extends AbstractGenerator<ChamferParams> {
         List<Node> finalNodes = new ArrayList<>();
         // 对于非闭合路径（或闭合点没有曲线的闭合路径），从第一个节点开始；
         // 对于闭合路径且闭合点有曲线，从第一条曲线第一个点开始（下面for中添加）
-        if (!way.isClosed() || (way.isClosed() && chamfers.getLast() == null))
-            finalNodes.add(nodes.getFirst());
+        if (!way.isClosed() || (way.isClosed() && chamfers.get(chamfers.size() - 1) == null))
+            finalNodes.add(nodes.get(0));
         // 遍历所有拐角
         for (int i = 0; i < numCorner; i ++) {
             if (chamfers.get(i) != null) {  // 有过渡曲线就添加曲线上的所有点
@@ -145,8 +145,8 @@ public final class ChamferGenerator extends AbstractGenerator<ChamferParams> {
             } else finalNodes.add(nodes.get(i + 1));  // 没有过渡曲线，添加原始拐点
         }
         // 添加最后一个节点
-        if (way.isClosed()) finalNodes.add(finalNodes.getFirst());
-        else finalNodes.add(nodes.getLast());
+        if (way.isClosed()) finalNodes.add(finalNodes.get(0));
+        else finalNodes.add(nodes.get(nodes.size() - 1));
 
         return new ColumbinaSingleOutput(finalNodes, failedNodes);
         // 正式绘制前注意去重

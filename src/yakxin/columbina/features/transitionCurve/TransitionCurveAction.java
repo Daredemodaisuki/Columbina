@@ -8,6 +8,7 @@ import yakxin.columbina.abstractClasses.actionMiddle.ActionWithBatchWays;
 import yakxin.columbina.data.dto.inputs.ColumbinaInput;
 
 import java.awt.event.KeyEvent;
+import java.util.stream.Collectors;
 
 /**
  * 过渡曲线（缓和曲线）交互类
@@ -57,10 +58,10 @@ public final class TransitionCurveAction extends
         String undoRedoInfo;
         if (inputs.getInputNum(Way.class) == 1) {
             undoRedoInfo = I18n.tr("Transition curve of way {0}: R={1}m, Ls={2}m",
-                    inputs.getWays().getFirst().getUniqueId(), params.surfaceRadius, params.surfaceTransArcLength);
+                    inputs.getWays().get(0).getUniqueId(), params.surfaceRadius, params.surfaceTransArcLength);
         } else if (inputs.getInputNum(Way.class) <= 5) {
             undoRedoInfo = I18n.tr("Transition curve of way {0}: R={1}m, Ls={2}m",
-                    inputs.getWays().stream().map(Way::getUniqueId).toList(), params.surfaceRadius, params.surfaceTransArcLength);
+                    inputs.getWays().stream().map(Way::getUniqueId).collect(Collectors.toList()), params.surfaceRadius, params.surfaceTransArcLength);
         } else {
             undoRedoInfo = I18n.tr("Transition curve of {0} ways: R={1}m, Ls={2}m",
                     inputs.getInputNum(Way.class), params.surfaceRadius, params.surfaceTransArcLength);

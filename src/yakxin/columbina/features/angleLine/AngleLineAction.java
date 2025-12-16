@@ -56,7 +56,7 @@ public final class AngleLineAction extends
     @Override
     public String getUndoRedoInfo(ColumbinaInput inputs, AngleLineParams params) {
         return I18n.tr("Make oriented line: from node {0}, {1} {2}°, {3}m",
-                inputs.getWays().getFirst().getUniqueId(),
+                inputs.getWays().get(0).getUniqueId(),
                 params.angleDeg < 0 ? I18n.tr("left") : I18n.tr("right"),
                 params.angleDeg,
                 params.surfaceLength);
@@ -65,9 +65,9 @@ public final class AngleLineAction extends
     @Override
     public int checkInputDetails(List<ColumbinaSingleInput> singleInputs) {
         // 这个操作不支持批量，前面经过了数量检查，所以只有一组输入
-        ColumbinaSingleInput singleInput = singleInputs.getFirst();
-        Way way = singleInput.ways.getFirst();
-        Node node = singleInput.nodes.getFirst();
+        ColumbinaSingleInput singleInput = singleInputs.get(0);
+        Way way = singleInput.ways.get(0);
+        Node node = singleInput.nodes.get(0);
         // 闭合曲线过滤闭合点，顺便查重
         int count = 0, nodeNum = way.isClosed() ? way.getNodes().size() - 1 : way.getNodes().size();
         List<Node> wayNodes = new ArrayList<>();
@@ -89,7 +89,7 @@ public final class AngleLineAction extends
             );
 
         // 检查路径是否是非闭合路径第一个点
-        if (node == wayNodes.getFirst() && !way.isClosed())
+        if (node == wayNodes.get(0) && !way.isClosed())
             throw new ColumbinaException(
                     I18n.tr("The selected node is the first node of the way. ")
                             + I18n.tr("The bearing angle into this node cannot be determined.")
