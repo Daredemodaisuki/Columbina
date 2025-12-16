@@ -35,7 +35,7 @@ public class UtilsMath {
     }
 
 
-    /// 向量数学
+    /// 角度归一化
     public static double normAngleRad(double angleRad) {
         while (angleRad >= Math.PI) angleRad -= 2 * Math.PI;
         while (angleRad < -Math.PI) angleRad += 2 * Math.PI;

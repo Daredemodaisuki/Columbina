@@ -3,6 +3,7 @@ package yakxin.columbina.data.dto.inputs;
 import org.openstreetmap.josm.data.osm.Node;
 import org.openstreetmap.josm.data.osm.Way;
 
+import java.util.ArrayList;
 import java.util.List;
 
 
@@ -10,12 +11,31 @@ import java.util.List;
  * 整个输入由action类分包之后的喂给generator的单个输入
  */
 public final class ColumbinaSingleInput {
-    public List<Node> nodes;
-    public List<Way> ways;
+    public final List<Node> nodes;
+    public final List<Way> ways;
 
+    // 快捷传递中间量：如果在检查期间就预计算了一些内容（比如路径上的节点索引），可以赋值扔这里方便的给到生成器减少重复计算，生成器需要自己拆包
+    public List<Object> quickPrecomputedData;
+
+    /**
+     * 构建单组输入
+     * @param nodes 输入节点列表
+     * @param ways 输入路径列表
+     */
     public ColumbinaSingleInput(List<Node> nodes, List<Way> ways) {
+        this(nodes, ways, new ArrayList<>());
+    }
+
+    /**
+     * 带快捷传递中间量的构建单组输入
+     * @param nodes 输入节点列表
+     * @param ways 输入路径列表
+     * @param quickPrecomputedData 快捷传递中间量列表
+     */
+    public ColumbinaSingleInput(List<Node> nodes, List<Way> ways, List<Object> quickPrecomputedData) {
         this.nodes = nodes;
         this.ways = ways;
+        this.quickPrecomputedData = quickPrecomputedData;
     }
 
     /**
@@ -23,8 +43,18 @@ public final class ColumbinaSingleInput {
      * @param totalInput 总输入
      */
     public ColumbinaSingleInput(ColumbinaInput totalInput) {
+        this(totalInput, new ArrayList<>());
+    }
+
+    /**
+     * 对于不支持批量操作、无需分包的action，直接调用此函数从总输入直接转为ColumbinaSingleInput，并同时传入快捷传递中间量
+     * @param totalInput 总输入
+     * @param quickPrecomputedData 快捷传递中间量列表
+     */
+    public ColumbinaSingleInput(ColumbinaInput totalInput, List<Object> quickPrecomputedData) {
         this.nodes = totalInput.getNodes();
         this.ways = totalInput.getWays();
+        this.quickPrecomputedData = quickPrecomputedData;
     }
 }
 

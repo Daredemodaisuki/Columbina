@@ -96,7 +96,7 @@ public abstract class AbstractDrawingAction <
 
     /**
      * 检查输入要素内部具体的内容是否符合要求
-     *
+     * <p>在检查期间，部分操作的具体action类可能会预计算一些东西，预计算的东西可以直接赋值给ColumbinaSingleInput的快捷传递中间量（quickPrecomputedData），后续给到生成器可以减少重复计算。
      * @param singleInputs 单组输入要素构成的列表
      * @return 检查结果状态
      */

@@ -1,6 +1,7 @@
 package yakxin.columbina.data;
 
 import org.openstreetmap.josm.data.coor.EastNorth;
+import org.openstreetmap.josm.data.osm.Node;
 import yakxin.columbina.utils.UtilsMath;
 
 /**
@@ -11,7 +12,7 @@ public class ColumbinaEN extends EastNorth {
     public static final double EPSILON = 1e-10;
 
     /**
-     * 从EastNorth实体构造ColumbinaEN
+     * 从EastNorth（或ColumbinaEN）实体构造ColumbinaEN
      * @param en EastNorth实体
      */
     public ColumbinaEN(EastNorth en) {
@@ -28,22 +29,22 @@ public class ColumbinaEN extends EastNorth {
     }
 
     /**
-     * 从两个ColumbinaEN构造ColumbinaEN，获取从A到B的向量
+     * 从两个EastNorth（或ColumbinaEN）构造ColumbinaEN，获取从A到B的向量
      * <p>等同于 b.sub(a)
-     * @param a 点A坐标
-     * @param b 点B坐标
-     */
-    public ColumbinaEN(ColumbinaEN a, ColumbinaEN b) {
-        super(b.x - a.x, b.y - a.y);
-    }
-
-    /**
-     * 从两个EastNorth构造ColumbinaEN，获取从A到B的向量
      * @param a 点A坐标
      * @param b 点B坐标
      */
     public ColumbinaEN(EastNorth a, EastNorth b) {
         super(b.getX() - a.getX(), b.getY() - a.getY());
+    }
+
+    /**
+     * 从两个Node构造ColumbinaEN，获取从A到B的向量
+     * @param a 点A坐标
+     * @param b 点B坐标
+     */
+    public ColumbinaEN(Node a, Node b) {
+        this(a.getEastNorth(), b.getEastNorth());
     }
 
 
@@ -134,7 +135,7 @@ public class ColumbinaEN extends EastNorth {
     }
 
     /**
-     * 获取从this（A）到other（B）的偏转角
+     * 获取从this（vecA）到other（vecB）的偏转角
      * <p>不使用EastNorth的heading计算，因为它的角度系统和这个插件不一样
      * @param other 点B坐标
      * @return 从this到B的偏转角，坐标角度（以东为0，（逆时针）北正（顺时针）南负，区间在[-pi, pi]，±pi等同处理）
@@ -144,7 +145,7 @@ public class ColumbinaEN extends EastNorth {
     }
 
     /**
-     * 获取从this（vecA）和other（vecB）的夹角
+     * 获取this（vecA）和other（vecB）的夹角
      * <p>对于其中存在零向量的情况，考虑到零向量和任意向量都平行，返回0。
      * @param other 向量B
      * @return 夹角（[0, pi]）
@@ -158,7 +159,7 @@ public class ColumbinaEN extends EastNorth {
     }
 
     /**
-     * 判断从this（vecA）和other（vecB）是左拐还是右拐
+     * 判断从this（vecA）到other（vecB）是左拐（逆时针偏）还是右拐（顺时针偏）
      * <p>使用向量叉积的Z分量判断法
      * @param other 向量B
      * @return 左（1）右（-1）或共线（0）
@@ -169,3 +170,5 @@ public class ColumbinaEN extends EastNorth {
         return cross > 0 ? UtilsMath.LEFT : UtilsMath.RIGHT;
     }
 }
+
+

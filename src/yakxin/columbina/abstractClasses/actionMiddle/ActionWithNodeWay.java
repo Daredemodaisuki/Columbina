@@ -56,13 +56,11 @@ public abstract class ActionWithNodeWay<
 
     @Override
     public int checkInputNum(ColumbinaInput totalInput) {
-        // 检查是否是输入一个节点+一条路径，不检查节点是否在路径上（由生成器内部判断）
+        // 检查是否是输入一个节点+一条路径，不检查节点是否在路径上（由checkInputDetails判断）
         if (totalInput.getInputNum(Node.class) != 1)
             throw new IllegalArgumentException(I18n.tr("No node or multiple nodes are selected."));
         if (totalInput.getInputNum(Way.class) != 1)
             throw new IllegalArgumentException(I18n.tr("No way or multiple ways are selected."));
-        // if (!inputs.getNodes().getFirst().getReferrers().contains(inputs.getWays().getFirst()))
-        //     throw new IllegalArgumentException(I18n.tr("The way selected doesn''t contain the node selected."));
         return CHECK_OK;
     }
 

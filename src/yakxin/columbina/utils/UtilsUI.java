@@ -35,7 +35,7 @@ public class UtilsUI {
     // 标题栏
     public static JPanel addHeader(JPanel panel, String headTitle, String iconName) {
         JPanel header = new JPanel(new FlowLayout(FlowLayout.LEFT));
-        if (iconName != null && iconName != "") {
+        if (iconName != null && !iconName.isEmpty()) {
             ImageIcon icon = new ImageProvider(iconName).setSize(24,24).get();
             header.add(new JLabel(icon));
         }
