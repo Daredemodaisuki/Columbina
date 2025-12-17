@@ -11,7 +11,6 @@ import yakxin.columbina.data.dto.inputs.ColumbinaSingleInput;
 import yakxin.columbina.utils.UtilsData;
 
 import java.awt.event.KeyEvent;
-import java.util.ArrayList;
 import java.util.List;
 
 public final class AngleLineAction extends
@@ -64,6 +63,13 @@ public final class AngleLineAction extends
     }
 
     @Override
+    public int checkInputNum(ColumbinaInput totalInput) {
+        // 检查是否是输入一个节点+一条路径，不检查节点是否在路径上（由checkInputDetails判断）
+        UtilsData.checkInputNum(totalInput, 1, 1, 1, 1);
+        return CHECK_OK;
+    }
+
+    @Override
     public int checkInputDetails(List<ColumbinaSingleInput> singleInputs) {
         // 这个操作不支持批量，前面经过了数量检查，所以只有一组输入
         ColumbinaSingleInput singleInput = singleInputs.get(0);
@@ -89,7 +95,7 @@ public final class AngleLineAction extends
         }
 
         // 快捷传递中间量
-        singleInputs.get(0).quickPrecomputedData = new ArrayList<>(List.of(nodeIndex));
+        singleInputs.get(0).quickPrecomputedData.put("nodeIndex", nodeIndex);
 
         return CHECK_OK;
     }

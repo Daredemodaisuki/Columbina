@@ -1,5 +1,9 @@
 # Columbina开发文档
 
+本文档用于记录插件的架构和一些注意事项，从1.0.2版本开始产生抽象层时开始记录。
+
+〔自1.0.3起〕Columbina使用Java11以兼容JOSM最低Java版本。
+
 ## 总业务流程
 
 1. JOSM在启动新建`Columbina`主类实体，主类构造函数通过具体操作类的`create`函数新建实体、注册菜单；
@@ -7,16 +11,21 @@
 3. 流程走完后，功能结束。
 
 目前有以下功能：
-* Round Corners（倒圆角）（半径模式）
-* Chamfer Corners（倒斜角）
-* Transition Curve（过渡曲线）
-* Oriented Line（定向画线）（相对角度模式）
+* 〔自1.0.0起〕【R】Round Corners（倒圆角）（半径模式）
+  * 〔自1.0.2起〕改进了用于控制倒出的圆角节点密度的参数，并提供推荐半径显示
+* 〔自1.0.1起〕【C】Chamfer Corners（倒斜角）
+  * 切距模式
+  * 角A模式
+* 〔自1.0.2起〕【T】Transition Curve（过渡曲线）
+* 〔自1.0.2起〕【A】Oriented Line（定向画线）（相对角度模式）
 
-正在开发：
+正在 · 计划开发：
 * 倒圆角的切距模式
 * 定向画线的绝对角度模式
-* Curve Connect（曲线连接）
-* Regular Polygon（产生正多边形）
+* 〔计划1.0.3〕【W】Curve Connect（曲线连接）
+* 【P】Regular Polygon（产生正多边形）
+* 【V】Voronoi Line（计算Voronoi中线）
+* 【B】Buffer（绘制缓冲区）
 
 ## 重要的类
 
@@ -28,7 +37,7 @@
   <del>→ <a href="src/yakxin/columbina/Columbina.java">月之门由此进</a> ←</del>
 </p>
 
-### 抽象基类
+### 抽象五大基类
 
 #### 抽象绘图操作类（`yakxin.columbina.abstractClasses.AbstractDrawingAction`）
 
@@ -38,11 +47,10 @@
 
 > * 获取输入（选择的要素和输入参数）
 > * 调用具体的生成器计算
-> * 获取计算结果和失败结果
-> * 产生绘制命令
-> * 绘制（提交到撤销重做栈）
-> * 产生移除旧输入命令
-> * 移除（提交到撤销重做栈）
+> * 获取计算结果和失败输入记录
+> * 产生绘制命令并绘制（提交到撤销重做栈）
+> * 产生移除旧输入命令并移除（提交到撤销重做栈）
+> * 善后工作
 > 
 > 现确定上述流程为最基本的一个绘图功能所需之模板流程。
 
@@ -99,14 +107,12 @@
 
     导向直线（相对角度模式）、路径切圆功能由此派生，这些操作有下面的共同性：
     1. 对于这些功能而言，因为不是「分别计算的」，其失败就是整个失败，失败结果使用`List<Node>`即可；
-    2. 因为输入的节点就是新绘制路径的起点，所以不可以删除输入节点；在相对角度下也无需删除原有线段，产生空命令列表交给抽象类执行西北风即可。
+    2. 因为输入的节点就是新绘制路径的起点，所以不可以删除输入节点；在相对角度下也无需删除原有路径，产生空命令列表交给抽象类执行西北风即可。
     注意：导向直线功能可以只输入一个节点（绝对角度模式），相当于传入的Way是空的。
 
 > [!NOTE]
 > 
-> 未来如果还需要更多种类型输入，如果不涉及复用（比如就某个功能使用这种输入，可以考虑直接从`AbstractDrawingAction`继承）
-> 
-> 如果涉及复用，还可以继续开中间层
+> 正在考虑整合取消中间层，详见文末之「未来重构计划」第1点。
 
 #### 抽象生成器类（`yakxin.columbina.abstractClasses.AbstractGenerator`）
 
@@ -127,14 +133,14 @@
 * `yakxin.columbina.utils.UtilsArc`〔自1.0.3起〕：曲线相关的计算（包括根据圆心和角度画圆弧、画螺旋线等）：考虑到多个功能都要用，就整合在一起了；
 * `yakxin.columbina.utils.UtilsData`：数据处理（包含从序列命令中提取命令列表等）；
 * `yakxin.columbina.utils.UtilsMath`：数学计算（包含坐标转换、角度归一化、级数求和等）：
-  * 〔自1.0.3起〕弃用double[]的坐标转换、向量运算，使用`ColumbinaEN`提供的方法；
+  * 〔自1.0.3起〕完全弃用`double[]`的坐标转换、向量运算，使用`ColumbinaEN`提供的方法；
 * `yakxin.columbina.utils.UtilsUI`：用户界面组件（包含添加各种组件、消息弹窗、测试用调试输出窗口等）。
 
 ### 数据类
 
 * `yakxin.columbina.data.dto.inputs.ColumbinaInput`：总输入类，打包用户选择的所有要素；
 * `yakxin.columbina.data.dto.inputs.ColumbinaSingleInput`：单组输入，用于传递给生成器生成结果、和参数窗口计算推荐参数；
-  * 〔自1.0.3起〕`public List<Object> quickPrecomputedData`：快捷传递中间量公共字段：
+  * 〔自1.0.3起〕`public Map<String, Object>  quickPrecomputedData`：快捷传递中间量公共字段：
     * 如果在检查期间就预计算了一些内容（比如路径上的节点索引），可以赋值扔这里方便的给到生成器减少重复计算，生成器需要自己拆包；
     * 也考虑弹窗的推荐参数提前算好，通过这里直接传递到窗口；
 * `yakxin.columbina.data.dto.ColumbinaSingleOutput`：单组输出，包含新节点和部分失败记录；
@@ -143,17 +149,17 @@
   * 先前每个生成器都是手动存储拐角ABC节点又手动构建BA、BC等向量，这个类把它们统合在了一起，直接访问成员即可知道各种向量、长度、角度；
   * `public static ColumbinaCorner create(Way way, int indexA)`这个方法可以轻松从路径中直接提取对应节点（做了闭合路径的循环索引）并产生拐角，无需手动储存ABC三个点再构建；
 * `yakxin.columbina.data.ColumbinaEN`〔自1.0.3起〕：自定义东北坐标类：
-  * JOSM墨卡托投影的坐标是`EastNorth`类，但是早期没有注意到里面有加减乘除方法，相关的加减乘除先前每个生成器都需要调用UtilsMath中的各种静态double[]函数进行向量计算，需要额外存储很多变量，很繁琐；
+  * JOSM墨卡托投影的坐标是`EastNorth`类，但是早期没有注意到里面有加减乘除方法，相关的加减乘除先前每个生成器都需要调用`UtilsMath`中的各种静态`double[]`函数进行向量计算，需要额外存储很多变量，很繁琐；
   * `EastNorth`类本身有加减乘除，但是基于下面的原因，还是自行继承、实现了这个类；
     * `EastNorth`类的角度系统和本插件所用的「东为0，逆时针（左转、北）正角度，顺时针（右转、南）负角度」不一致，比如`rotate`方法的旋转方向和本插件预期相反（需要注意的是，`ColumbinaEN`还没有重写这个方法）；
     * `EastNorth`还差比如取得自己的方向角之类的方法；
   * 下面是一些非常方便的特有方法：
-    * `public ColumbinaEN(EastNorth a, EastNorth b)`和`public ColumbinaEN(Node a, Node b)`：从两个EastNorth（或ColumbinaEN）或Node直接构造ColumbinaEN，获取从A到B的向量；
+    * `public ColumbinaEN(EastNorth a, EastNorth b)`和`public ColumbinaEN(Node a, Node b)`：从两个`EastNorth`（或`ColumbinaEN`）或`Node`直接构造`ColumbinaEN`，获取从A到B的向量；
     * `public double bearingRad()`：获取向量相对于原点的方向角；
-    * `public double deflectionRadTo(ColumbinaEN other)`：获取从this（vecA）到other（vecB）的偏转角；
-    * `public double angleRadBetween(ColumbinaEN other)`：获取this（vecA）和other（vecB）的夹角；
-    * `public int turnLeftRightTo(ColumbinaEN other)`：判断从this（vecA）到other（vecB）是左拐（逆时针偏）还是右拐（顺时针偏）；
-    * `public ColumbinaEN walk(double bearingRad, double enDistance)`：从this出发，沿指定角度行进指定距离，得到新的点；
+    * `public double deflectionRadTo(ColumbinaEN other)`：获取从`this`（vecA）到`other`（vecB）的偏转角；
+    * `public double angleRadBetween(ColumbinaEN other)`：获取`this`（vecA）和`other`（vecB）的夹角；
+    * `public int turnLeftRightTo(ColumbinaEN other)`：判断从`this`（vecA）到`other`（vecB）是左拐（逆时针偏）还是右拐（顺时针偏）；
+    * `public ColumbinaEN walk(double bearingRad, double enDistance)`：从`this`出发，沿指定角度行进指定距离，得到新的点；
 * `yakxin.columbina.data.ColumbinaException`：自定义异常类，主要起类型标识符作用；
 * `yakxin.columbina.data.ColumbinaSeqCommand`：自定义命令序列（主要是改图标和重写描述），用于撤销/重做栈；
 
@@ -192,7 +198,7 @@
 2. 根据调用和泛型使用的顺序，从后往前，先完成`xxParams`：
    * 继承`AbstractParams`
    * 添加功能特定的参数字段
-3. 完成`xxPreference`（与4直接有相互调用，应当同步进行）：
+3. 完成`xxPreference`（与4直接有相互调用，应当同步实现）：
    * 继承`AbstractPreference<xxParams>`
    * 实现`getParamsAndUpdatePreference`方法（调用`xxDialog`并检查数值）
    * 管理用户首选项的读写
@@ -200,10 +206,12 @@
    * 继承`ExtendedDialog`
    * 创建参数输入界面
    * 实现获取参数的方法（getter）
+   * 如果需要计算推荐参数，需要提前实现在Action类的检查部分，并把参数提交到`ColumbinaSingleInput`的`quickPrecomputedData`中；创建界面时提取相关推荐参数
 5. 完成`xxGenerator`：
    * 继承`AbstractGenerator<xxParams>`
    * 实现数学上的具体算法（输入应为地面长度，实现数学计算时应在生成器内部转为东北坐标下的长度）
    * 实现`getOutputForSingleInput`方法（调用数学上的算法）
+   * 如果预估Action类检查期间预计算的东西有用，需要提前实现这个检查部分，并把预计算内容提交到`ColumbinaSingleInput`的`quickPrecomputedData`中；实现`getOutputForSingleInput`时，提取预计算内容
 6. 最后完成`xxAction`：
    * 继承`中间层<xxGenerator, xxPreference, xxParams>`
    * 在静态工厂的`create`函数中填入功能信息
@@ -220,12 +228,12 @@
 
 1. 目前抽象层数貌似有点多了，考虑逐步整合：
    * 第一阶段：两个中间层可以考虑重新定义为「对于批量输入的（现在的`ActionWithBatchWays`）」和「非批量输入的（现在的`ActionWithNodeWay`）」；
-   * 第二阶段：随后非批量输入等同于批量输入一组，最终合并到一起并取消中间层；
-   * 现在区分两个中间层主要就是考虑到`ActionWithBatchWays`中的失败记录的类型不同、处理不一样，但其实可以考虑改作`List<Map<ColumbinaSingleInput, Object>>`，其中：
+   * 第二阶段：随后非批量输入等同于批量输入一组，最终合并到一起并移动至最底层、取消中间层；
+   * 现在两个中间层除了前面的输入不同，主要就是二者失败记录的类型不同、处理不一样，但其实可以考虑改作`Map<ColumbinaSingleInput, Object>`，其中：
      * `ColumbinaSingleInput`是失败或者部分失败的输入，需要给到一个`toString`的方法显示输入具体是什么；
-     * `Object`是部分失败记录，具体的动作类定义一个根据`Object`自行输出String的方法（`Object`也可以是`null`表示这组输入都失败了）；
+     * `Object`是部分失败记录，具体的动作类定义一个根据`Object`自行输出`String`的方法（`Object`也可以是`null`表示这组输入都失败了）；
      * 两个拼在一起就是现状`ActionWithBatchWays`输出部分失败消息的逻辑；
 2. 目前Preference弹Dialog，弹完检查后先更改窗口的内容，保存时又从窗口组件读取——比较耦合、需要重构，不过不慌：
    * ~~可能可以考虑再加一个Dialog泛型和`abstractDialog<ParamType>`抽象类，弹窗由action负责，窗口类提供一个getParam，action接收到之后调用首选项的校验函数，校验有问题就在首选项类抛出异常，OK返回CHECK_OK；~~
    * 也可以考虑不增加它，现状Preference弹出窗口，本来也就是弹出会保存到首选项的「参数设置」窗口，逻辑OK，只是需要整理下避免来回读写；
-3. Preference弹窗时会向Dialog传入input以便窗口显示推荐参数（如果需要），推荐参数由Dialog自行计算，窗口负责了数据计算，职责不太明晰，现在`ColumbinaSingleInput`有了新的公共属性「快捷传递中间量（`List<Object> quickPrecomputedData`）」，也许可以在action类具体检查时计算推荐参数并送入这里，窗口直接读取？
+3. Preference弹窗时会向Dialog传入input以便窗口显示推荐参数（如果需要），现状推荐参数由Dialog自行计算，窗口负责了数据计算，职责不太明晰，现在`ColumbinaSingleInput`有了「快捷传递中间量（`quickPrecomputedData`）」后，也许可以在action类具体检查时计算推荐参数并送入这里，窗口直接读取？

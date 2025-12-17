@@ -78,24 +78,8 @@ public abstract class ActionWithBatchWays<
 
     @Override
     public int checkInputNum(ColumbinaInput totalInput) {
-        boolean ifOnlyContain2NodeWays = true;
-        // 没有选定路径、（有限制时）选择太少或太多中止流程
-        if (totalInput.isEmpty(Way.class))
-            throw new IllegalArgumentException(I18n.tr("No way is selected."));
-        // 检查是否只包含2点路径
-        for (Way way : totalInput.getWays()) {
-            if ((!way.isClosed() && way.getNodes().size() >= 3) || (way.isClosed() && way.getNodes().size() >= 4)) {
-                ifOnlyContain2NodeWays = false;
-                break;
-            }
-        }
-        if (ifOnlyContain2NodeWays) throw new IllegalArgumentException("All selected ways only contain 2 nodes, and cannot find corners.");
-
-        // 参数检查
-        if (minSelection != NO_LIMITATION_ON_INPUT_NUM && totalInput.getInputNum(Way.class) < minSelection)
-            throw new IllegalArgumentException(I18n.tr("Too few ways are selected, should be grater than {0}.", minSelection));
-        if (maxSelection != NO_LIMITATION_ON_INPUT_NUM && totalInput.getInputNum(Way.class) > maxSelection)
-            throw new IllegalArgumentException(I18n.tr("Too many ways are selected, should be less than {0}.", maxSelection));
+        // 参数数量检查，不检查是否只包含2点路径（由checkInputDetails判断）
+        UtilsData.checkInputNum(totalInput, NO_LIMITATION_ON_INPUT_NUM, NO_LIMITATION_ON_INPUT_NUM, minSelection, maxSelection);
         if (totalInput.getInputNum(Way.class) > 5) {
                 int confirmTooMany = JOptionPane.showConfirmDialog(
                         null,
@@ -109,13 +93,27 @@ public abstract class ActionWithBatchWays<
     }
 
     @Override
-    public int checkInputDetails(List<ColumbinaSingleInput> singleInputs) {return CHECK_OK;}  // 这个模板下暂时没有需要具体检查的
+    public int checkInputDetails(List<ColumbinaSingleInput> singleInputs) {
+        // 检查是否只包含2点路径
+        boolean ifOnlyContain2NodeWays = true;
+        for (ColumbinaSingleInput singleInput : singleInputs) {
+            Way way = singleInput.ways.get(0);
+            if ((!way.isClosed() && way.getNodes().size() >= 3) || (way.isClosed() && way.getNodes().size() >= 4)) {
+                ifOnlyContain2NodeWays = false;
+                break;  // 有正常路径就行
+            }
+        }
+        if (ifOnlyContain2NodeWays)
+            throw new ColumbinaException("All selected ways only contain 2 nodes, and cannot find corners.");
+
+        return CHECK_OK;
+    }
 
     @Override
-    public List<ColumbinaSingleInput> splitBatchInputs(ColumbinaInput inputs) {
+    public List<ColumbinaSingleInput> splitBatchInputs(ColumbinaInput totalInput) {
         // 对于这一类，单组输入都是一条路径
         List<ColumbinaSingleInput> singleInputs = new ArrayList<>();
-        for (Way wayToBeProcessed : inputs.getWays()) {
+        for (Way wayToBeProcessed : totalInput.getWays()) {
             singleInputs.add(new ColumbinaSingleInput(
                     new ArrayList<Node>(),
                     new ArrayList<Way>(Collections.singleton(wayToBeProcessed))

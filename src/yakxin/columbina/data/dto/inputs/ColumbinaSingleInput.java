@@ -3,8 +3,9 @@ package yakxin.columbina.data.dto.inputs;
 import org.openstreetmap.josm.data.osm.Node;
 import org.openstreetmap.josm.data.osm.Way;
 
-import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 
 /**
@@ -15,7 +16,7 @@ public final class ColumbinaSingleInput {
     public final List<Way> ways;
 
     // 快捷传递中间量：如果在检查期间就预计算了一些内容（比如路径上的节点索引），可以赋值扔这里方便的给到生成器减少重复计算，生成器需要自己拆包
-    public List<Object> quickPrecomputedData;
+    public Map<String, Object> quickPrecomputedData;
 
     /**
      * 构建单组输入
@@ -23,7 +24,7 @@ public final class ColumbinaSingleInput {
      * @param ways 输入路径列表
      */
     public ColumbinaSingleInput(List<Node> nodes, List<Way> ways) {
-        this(nodes, ways, new ArrayList<>());
+        this(nodes, ways, new HashMap<>());
     }
 
     /**
@@ -32,7 +33,7 @@ public final class ColumbinaSingleInput {
      * @param ways 输入路径列表
      * @param quickPrecomputedData 快捷传递中间量列表
      */
-    public ColumbinaSingleInput(List<Node> nodes, List<Way> ways, List<Object> quickPrecomputedData) {
+    public ColumbinaSingleInput(List<Node> nodes, List<Way> ways, Map<String, Object> quickPrecomputedData) {
         this.nodes = nodes;
         this.ways = ways;
         this.quickPrecomputedData = quickPrecomputedData;
@@ -43,7 +44,7 @@ public final class ColumbinaSingleInput {
      * @param totalInput 总输入
      */
     public ColumbinaSingleInput(ColumbinaInput totalInput) {
-        this(totalInput, new ArrayList<>());
+        this(totalInput, new HashMap<>());
     }
 
     /**
@@ -51,7 +52,7 @@ public final class ColumbinaSingleInput {
      * @param totalInput 总输入
      * @param quickPrecomputedData 快捷传递中间量列表
      */
-    public ColumbinaSingleInput(ColumbinaInput totalInput, List<Object> quickPrecomputedData) {
+    public ColumbinaSingleInput(ColumbinaInput totalInput, Map<String, Object> quickPrecomputedData) {
         this.nodes = totalInput.getNodes();
         this.ways = totalInput.getWays();
         this.quickPrecomputedData = quickPrecomputedData;

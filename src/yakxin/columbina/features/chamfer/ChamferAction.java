@@ -30,7 +30,7 @@ public final class ChamferAction extends
         super(
                 name, iconName, description, shortcut,
                 generator, preference,
-                AbstractDrawingAction.NO_LIMITATION_ON_INPUT_NUM, AbstractDrawingAction.NO_LIMITATION_ON_INPUT_NUM
+                1, AbstractDrawingAction.NO_LIMITATION_ON_INPUT_NUM
         );
     }
 

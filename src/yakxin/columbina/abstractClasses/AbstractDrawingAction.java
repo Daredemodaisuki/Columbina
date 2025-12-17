@@ -12,6 +12,7 @@ import yakxin.columbina.data.ColumbinaException;
 import yakxin.columbina.data.ColumbinaSeqCommand;
 import yakxin.columbina.data.dto.inputs.ColumbinaInput;
 import yakxin.columbina.data.dto.inputs.ColumbinaSingleInput;
+import yakxin.columbina.utils.UtilsData;
 import yakxin.columbina.utils.UtilsUI;
 
 import java.awt.event.ActionEvent;
@@ -33,6 +34,7 @@ public abstract class AbstractDrawingAction <
         extends JosmAction
     {
     public static final int NO_LIMITATION_ON_INPUT_NUM = -1;
+    public static final int NO_THIS_KIND_OF_INPUT = 0;
     public static final int CHECK_OK = 0;
     public static final int CHECK_OK_BUT_WARN = 1;
     public static final int USER_CANCEL = 2;
@@ -53,10 +55,10 @@ public abstract class AbstractDrawingAction <
 
     /**
      * 拆分批量输入为单组输入
-     * @param inputs 输入要素
+     * @param totalInput 输入要素
      * @return 单组输入列表
      */
-    public abstract List<ColumbinaSingleInput> splitBatchInputs(ColumbinaInput inputs);
+    public abstract List<ColumbinaSingleInput> splitBatchInputs(ColumbinaInput totalInput);
 
     /**
      * 将输入要素传入generator获取并汇总全部添加指令
@@ -88,7 +90,11 @@ public abstract class AbstractDrawingAction <
 
     /**
      * 检查输入要素的数量是否合法
-     * <p>具体的数量要求应在中间层或具体操作类中定义。
+     * <p>这里不检查具体的输入要求（比如节点是否在路径上）。
+     * <p>具体的数量要求应在中间层或具体操作类中定义，UtilsData中有同名方法，具体实现时可以调用，如果数值不合法将抛出IllegalArgumentException；
+     * <p>同名方法不会返回任何值，说明检查通过，在具体类的实现中，同名方法检查OK后具体类就可以返回CHECK_OK（0）；
+     * <p>如果检查通过后有一些询问（比如选择太多了是否一次处理），用户取消返回USER_CANCEL（2）。
+     * @see UtilsData#checkInputNum(ColumbinaInput, int, int, int, int)
      * @param totalInput 全部输入要素
      * @return 检查结果状态
      */
@@ -96,6 +102,9 @@ public abstract class AbstractDrawingAction <
 
     /**
      * 检查输入要素内部具体的内容是否符合要求
+     * <p>检查OK后具体类可以返回CHECK_OK（0）；
+     * <p>如果需要询问，用户取消返回USER_CANCEL（2）；
+     * <p>如果不符合要求，抛出ColumbinaException。
      * <p>在检查期间，部分操作的具体action类可能会预计算一些东西，预计算的东西可以直接赋值给ColumbinaSingleInput的快捷传递中间量（quickPrecomputedData），后续给到生成器可以减少重复计算。
      * @param singleInputs 单组输入要素构成的列表
      * @return 检查结果状态

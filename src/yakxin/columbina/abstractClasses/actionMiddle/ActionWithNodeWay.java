@@ -26,10 +26,6 @@ public abstract class ActionWithNodeWay<
         ParamType extends AbstractParams> // 输入参数泛型
         extends AbstractDrawingAction<GeneratorType, PreferenceType, ParamType>
 {
-    // private final int minNodeSelection;
-    // private final int maxNodeSelection;
-    // private final int minWaySelection;
-    // private final int maxWaySelection;
     private Way newWay = null;
 
     /**
@@ -45,32 +41,19 @@ public abstract class ActionWithNodeWay<
     public ActionWithNodeWay(
             String name, String iconName, String description, Shortcut shortcut,
             GeneratorType generator, PreferenceType preference
-            // int minNodeSelection, int maxNodeSelection, int minWaySelection, int maxWaySelection
     ) {
         super(name, iconName, description, shortcut, generator, preference);
-        // this.minNodeSelection = minNodeSelection;  // 这个模板下的操作没有批量的概念，暂时不要这些字段
-        // this.maxNodeSelection = maxNodeSelection;
-        // this.minWaySelection = minWaySelection;
-        // this.maxWaySelection = maxWaySelection;
-    }
-
-    @Override
-    public int checkInputNum(ColumbinaInput totalInput) {
-        // 检查是否是输入一个节点+一条路径，不检查节点是否在路径上（由checkInputDetails判断）
-        if (totalInput.getInputNum(Node.class) != 1)
-            throw new IllegalArgumentException(I18n.tr("No node or multiple nodes are selected."));
-        if (totalInput.getInputNum(Way.class) != 1)
-            throw new IllegalArgumentException(I18n.tr("No way or multiple ways are selected."));
-        return CHECK_OK;
     }
 
     // 暂时交由具体动作类实现
+    public abstract int checkInputNum(ColumbinaInput totalInput);
+
     public abstract int checkInputDetails(List<ColumbinaSingleInput> singleInputs);
 
     @Override
-    public List<ColumbinaSingleInput> splitBatchInputs(ColumbinaInput inputs) {
+    public List<ColumbinaSingleInput> splitBatchInputs(ColumbinaInput totalInput) {
         // 批量输入分包（这个模板不支持批量，所以直接将全部输入扔进去）
-        return new ArrayList<>(Collections.singleton(new ColumbinaSingleInput(inputs)));
+        return new ArrayList<>(Collections.singleton(new ColumbinaSingleInput(totalInput)));
     }
 
     @Override

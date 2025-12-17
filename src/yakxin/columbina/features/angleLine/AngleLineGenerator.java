@@ -17,9 +17,9 @@ public final class AngleLineGenerator extends AbstractGenerator<AngleLineParams>
     @Override
     public ColumbinaSingleOutput getOutputForSingleInput(ColumbinaSingleInput input, AngleLineParams params)  // 内部注意类型检查！
     {
-        if (input.quickPrecomputedData.get(0) instanceof Integer)  // 如果有快捷传递中间量
+        if (input.quickPrecomputedData.get("nodeIndex") instanceof Integer)  // 如果有快捷传递中间量
             return buildAngleLine(
-                    input.nodes.get(0), input.ways.get(0), (Integer) input.quickPrecomputedData.get(0),
+                    input.nodes.get(0), input.ways.get(0), (Integer) input.quickPrecomputedData.get("nodeIndex"),
                     params.angleDeg, params.surfaceLength
             );
         else
