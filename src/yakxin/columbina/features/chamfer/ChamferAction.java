@@ -56,7 +56,7 @@ public final class ChamferAction extends
     @Override
     public String getUndoRedoInfo(ColumbinaInput inputs, ChamferParams params) {
         String undoRedoInfo;
-        if (params.mode == ChamferGenerator.USING_DISTANCE) {
+        if (params.mode == ChamferGenerator.DISTANCE_MODE) {
             if (inputs.getInputNum(Way.class) == 1) undoRedoInfo = I18n.tr("Chamfer of way {0}: {1}m, {2}m", inputs.getWays().get(0).getUniqueId(), params.surfaceDistanceA, params.surfaceDistanceC);
             else if (inputs.getInputNum(Way.class) <= 5) undoRedoInfo = I18n.tr("Chamfer of way {0}: {1}m, {2}m", inputs.getWays().stream().map(Way::getUniqueId).collect(Collectors.toList()), params.surfaceDistanceA, params.surfaceDistanceC);
             else undoRedoInfo = I18n.tr("Chamfer of {0} ways: {1}m, {2}m", inputs.getInputNum(Way.class), params.surfaceDistanceA, params.surfaceDistanceC);

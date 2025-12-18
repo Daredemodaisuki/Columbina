@@ -113,8 +113,8 @@ Since the plugin also uses Utilsplugin2, you will need to add the Utilsplugin2.j
 The JAR file for JOSM's core can be downloaded from [its official website](https://josm.openstreetmap.de/). The JAR for Utilsplugin2 can be found in the aforementioned plugin directory.
 <br> JOSM本体的JAR文件可以在其[官网](https://josm.openstreetmap.de/)下载到，Utilsplugin2的JAR可在前述插件文件夹下找到。
 
-Some helpful documents could be found at [doc.md](doc.md), but now it is in Chinese.
-<br> 请查看[doc.md](doc.md)获取更多有用的信息。
+Some helpful documents could be found at [`doc.md`](doc.md), but now it is in Chinese.
+<br> 请查看[`doc.md`](doc.md)获取更多有用的信息。
 
 This project currently has no plans to be integrated into JOSM's SVN system, which means localization for various languages must be handled independently.
 The plugin's native language is Chinese, and an English translation is already provided (as JOSM requires English to be used within the I18n functions).

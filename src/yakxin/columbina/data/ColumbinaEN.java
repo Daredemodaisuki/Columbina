@@ -2,7 +2,7 @@ package yakxin.columbina.data;
 
 import org.openstreetmap.josm.data.coor.EastNorth;
 import org.openstreetmap.josm.data.osm.Node;
-import yakxin.columbina.utils.UtilsMath;
+import yakxin.columbina.utils.UtilsArc;
 
 /**
  * 扩展的EastNorth类
@@ -108,6 +108,15 @@ public class ColumbinaEN extends EastNorth {
     }
 
     /**
+     * 取this（A）和other（B）中点
+     * @param other 点B坐标
+     * @return 中点坐标
+     */
+    public ColumbinaEN centerBetween(ColumbinaEN other) {
+        return new ColumbinaEN(super.getCenter(other));
+    }
+
+    /**
      * 取模长
      * @return 模长
      */
@@ -167,7 +176,22 @@ public class ColumbinaEN extends EastNorth {
     public int turnLeftRightTo(ColumbinaEN other) {
         double cross = this.x * other.y - this.y * other.x;
         if (Math.abs(cross) < EPSILON) return COLLINEAR;
-        return cross > 0 ? UtilsMath.LEFT : UtilsMath.RIGHT;
+        return cross > 0 ? UtilsArc.LEFT : UtilsArc.RIGHT;
+    }
+    
+    /**
+     * 判断B是否在AC连线上且在AC中间
+     * <p>根据AB、BC、AC的方向角是否一致进行判断。
+     * @param a 点A坐标
+     * @param b 点B坐标
+     * @param c 点C坐标
+     * @return 判断结果
+     */
+    public static boolean isBOnAC(ColumbinaEN a, ColumbinaEN b, ColumbinaEN c) {
+        double bearingAB = new ColumbinaEN(a, b).bearingRad();
+        double bearingBC = new ColumbinaEN(b, c).bearingRad();
+        double bearingAC = new ColumbinaEN(a, c).bearingRad();
+        return (Math.abs(bearingAB - bearingBC) < 10e-6 && Math.abs(bearingAC - bearingBC) < 10e-6);
     }
 }
 

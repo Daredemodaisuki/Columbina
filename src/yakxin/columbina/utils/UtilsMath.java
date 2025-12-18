@@ -7,10 +7,6 @@ import org.openstreetmap.josm.tools.I18n;
 import yakxin.columbina.data.ColumbinaException;
 
 public class UtilsMath {
-    public static final int LEFT = 1;
-    public static final int RIGHT = -LEFT;  // -1
-
-
     /// 坐标转换
     public static EastNorth toEastNorth(LatLon ll) {  // 经纬度转距离坐标
         return ProjectionRegistry.getProjection().latlon2eastNorth(ll);

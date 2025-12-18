@@ -6,15 +6,17 @@ public final class CurveConnectParams extends AbstractParams {
     public final double surfaceCircleRadius;
     public final double surfaceTransArcLength;
     public final double surfaceChainageLength;
+    public final int dirMode;
 
     CurveConnectParams(
             double surfaceCircleRadius, double surfaceTransArcLength,
-            double surfaceChainageLength,
+            double surfaceChainageLength, int dirMode,
             boolean selectNew
     ) {
         super(selectNew);
         this.surfaceCircleRadius = surfaceCircleRadius;
         this.surfaceTransArcLength = surfaceTransArcLength;
         this.surfaceChainageLength = surfaceChainageLength;
+        this.dirMode = dirMode;
     }
 }

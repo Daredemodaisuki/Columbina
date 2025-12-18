@@ -50,8 +50,11 @@ public final class TransitionCurveGenerator extends AbstractGenerator<Transition
             double enChainageLength
     ) {
         // 确定两段双螺旋曲线的起点
-        UtilsArc.TransArcStartResult transArcStarts = UtilsArc.getStartsOfEulerArcs(corner, enCurveRadius, enTransArcLength);
-        if (transArcStarts == null) return null;  // 缓和曲线长度太长导致切距超过拐角两侧距离
+        UtilsArc.TransArcStartResult transArcStarts = UtilsArc.getStartsOfEulerArcs(corner, UtilsArc.DIRECT, enCurveRadius, enTransArcLength);
+        // 缓和曲线长度太长导致切距超过拐角两侧距离
+        if (transArcStarts.enTangentLength > corner.lenBA || transArcStarts.enTangentLength > corner.lenBC)
+            return null;
+        // TODO：缓和曲线长度太长导致回旋线部分的转角就大于了总偏转角，导致曲线直接绕了一圈
 
         /// A侧螺旋线（从A侧直缓切点顺着画）
         // 绘制

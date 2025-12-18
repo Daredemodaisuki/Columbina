@@ -4,7 +4,6 @@ import org.openstreetmap.josm.gui.ExtendedDialog;
 import org.openstreetmap.josm.gui.MainApplication;
 import org.openstreetmap.josm.tools.I18n;
 import yakxin.columbina.features.fillet.FilletPreference;
-import yakxin.columbina.data.dto.PanelSectionResult;
 import yakxin.columbina.utils.UtilsUI;
 
 import javax.swing.*;
@@ -47,15 +46,15 @@ public final class ChamferDialog extends ExtendedDialog {
         // 单选框组
         List<String> modeNames = new ArrayList<>();
         modeNames.add(I18n.tr("Distance Mode"));  // 0 ChamferGenerator.USING_DISTANCE
-        modeNames.add(I18n.tr("Angle A Mode"));  // 1 ChamferGenerator.USING_ANGLE_A
+        modeNames.add(I18n.tr("Angle A Mode"));  // 1 ChamferGenerator.ANGLE_A_MODE
         modeGroup = new UtilsUI.RadioButtonGroup(modeNames, ChamferPreference.getChamferMode());
 
         // 窗体
         UtilsUI.addHeader(panel, I18n.tr("Chamfer Corners"), "ChamferCorners");
 
         UtilsUI.addSection(panel, I18n.tr("Chamfer Information"));
-        modeGroup.addRadioButton(panel, ChamferGenerator.USING_DISTANCE);
-        modeGroup.addRadioButton(panel, ChamferGenerator.USING_ANGLE_A);
+        modeGroup.addRadioButton(panel, ChamferGenerator.DISTANCE_MODE);
+        modeGroup.addRadioButton(panel, ChamferGenerator.ANGLE_A_MODE);
         chamferDistanceA = UtilsUI.addInput(panel, I18n.tr("Chamfer distance A (m): "), String.valueOf(ChamferPreference.getChamferDistanceA()));
         chamferDistanceC = UtilsUI.addInput(panel, I18n.tr("Chamfer distance C (m): "), String.valueOf(ChamferPreference.getChamferDistanceC()));
         chamferAngleADeg = UtilsUI.addInput(panel, I18n.tr("Chamfer angle to A (degrees°): "), String.valueOf(ChamferPreference.getChamferAngleADeg()));
@@ -82,7 +81,7 @@ public final class ChamferDialog extends ExtendedDialog {
 
         // 监听到单选框切换时更改可见性
         Runnable update = () -> {
-            if (modeGroup.getButtonSelected() == ChamferGenerator.USING_DISTANCE) {
+            if (modeGroup.getButtonSelected() == ChamferGenerator.DISTANCE_MODE) {
                 distanceA.setEnabled(true); distanceC.setEnabled(true);
                 angleADeg.setEnabled(false);
             } else {

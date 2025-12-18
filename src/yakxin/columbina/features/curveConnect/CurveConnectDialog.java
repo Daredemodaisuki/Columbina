@@ -40,7 +40,7 @@ public final class CurveConnectDialog extends ExtendedDialog {
         // 单选框组
         leftRight = new UtilsUI.RadioButtonGroup(
                 new ArrayList<>(List.of(new String[]{I18n.tr("Turn left"), I18n.tr("Turn right")})),
-                CurveConnectPreference.getCurveConnectLeftRight()
+                CurveConnectPreference.getCurveConnectDirMode()
         );
 
         // 窗体

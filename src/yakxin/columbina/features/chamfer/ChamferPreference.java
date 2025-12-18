@@ -22,7 +22,7 @@ public final class ChamferPreference extends AbstractPreference<ChamferParams> {
     public static final double DEFAULT_CHAMFER_DISTANCE_A = 100;
     public static final double DEFAULT_CHAMFER_DISTANCE_C = 100;
     public static final double DEFAULT_CHAMFER_ANGLE_A_DEG = 51.4;
-    public static final int DEFAULT_CHAMFER_MODE = ChamferGenerator.USING_DISTANCE;
+    public static final int DEFAULT_CHAMFER_MODE = ChamferGenerator.DISTANCE_MODE;
 
     // 读取和储存
     public static void readPreference() {
@@ -127,12 +127,12 @@ public final class ChamferPreference extends AbstractPreference<ChamferParams> {
         if (distanceA <= 0) throw new IllegalArgumentException(I18n.tr("Invalid round chamfer distance BA, should be greater than 0m."));
 
         double distanceC = chamferDialog.getChamferDistanceC();
-        if (mode == ChamferGenerator.USING_DISTANCE) {
+        if (mode == ChamferGenerator.DISTANCE_MODE) {
             if (distanceC <= 0) throw new IllegalArgumentException(I18n.tr("Invalid round chamfer distance BC, should be greater than 0m."));
         }
 
         double angleADeg = chamferDialog.getChamferAngleADeg();
-        if (mode == ChamferGenerator.USING_ANGLE_A) {
+        if (mode == ChamferGenerator.ANGLE_A_MODE) {
             if (angleADeg <= 0) throw new IllegalArgumentException(I18n.tr("Invalid round chamfer angle A, should be greater than 0m."));
         }
 

@@ -15,9 +15,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 public final class ChamferGenerator extends AbstractGenerator<ChamferParams> {
-
-    public static final int USING_DISTANCE = 0;
-    public static final int USING_ANGLE_A = 1;
+    // 模式常量
+    public static final int DISTANCE_MODE = 0;
+    public static final int ANGLE_A_MODE = 1;
 
     @Override
     public ColumbinaSingleOutput getOutputForSingleInput(ColumbinaSingleInput input, ChamferParams params) {
@@ -113,8 +113,8 @@ public final class ChamferGenerator extends AbstractGenerator<ChamferParams> {
 
                 // 有EN长度之后继续算切角
                 List<EastNorth> chamfer;
-                if (mode == USING_DISTANCE) chamfer = getChamferCutNodesUsingDistance(corner, enDistanceA1, enDistanceC);
-                else if (mode == USING_ANGLE_A) chamfer = getChamferCutNodesUsingAngleA(corner, enDistanceA2, angleADeg);
+                if (mode == DISTANCE_MODE) chamfer = getChamferCutNodesUsingDistance(corner, enDistanceA1, enDistanceC);
+                else if (mode == ANGLE_A_MODE) chamfer = getChamferCutNodesUsingAngleA(corner, enDistanceA2, angleADeg);
                 else chamfer = null;
 
                 if (chamfer == null) {  // 该拐角没有生成斜角（半径过大或角度问题）

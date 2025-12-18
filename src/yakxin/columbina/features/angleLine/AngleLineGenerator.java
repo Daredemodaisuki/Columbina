@@ -22,11 +22,11 @@ public final class AngleLineGenerator extends AbstractGenerator<AngleLineParams>
                     input.nodes.get(0), input.ways.get(0), (Integer) input.quickPrecomputedData.get("nodeIndex"),
                     params.angleDeg, params.surfaceLength
             );
-        else
-            return buildAngleLine(
-                    input.nodes.get(0), input.ways.get(0), UtilsData.getNodeIndex(input.nodes.get(0), input.ways.get(0)),
-                    params.angleDeg, params.surfaceLength
-            );
+        return buildAngleLine(
+                input.nodes.get(0), input.ways.get(0), UtilsData.getNodeIndex(input.nodes.get(0), input.ways.get(0)),
+                params.angleDeg, params.surfaceLength
+        );
+        // throw new ColumbinaException(I18n.tr("No or wrong precomputed data received."));
     }
 
     /**

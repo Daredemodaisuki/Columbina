@@ -1,7 +1,6 @@
 package yakxin.columbina.utils;
 
 import org.openstreetmap.josm.data.coor.EastNorth;
-import org.openstreetmap.josm.tools.I18n;
 import yakxin.columbina.data.ColumbinaCorner;
 import yakxin.columbina.data.ColumbinaEN;
 
@@ -13,6 +12,11 @@ import java.util.List;
  */
 public class UtilsArc {
     public static final int TERM_MAX = 10;  // 前11项（n从0到10）
+    public static final int LEFT = 1;  // 左拐
+    public static final int RIGHT = -LEFT;  // 右拐，-1
+    public static final int DIRECT = 1;  // 直接弯
+    public static final int LOOP = -DIRECT;  // 回旋弯，-1
+    
     /// 求和级数的单项：使用匿名函数具体定义TermFunction的抽象compute方法
     // 缓和曲线内移距离p，第一参数曲线长度ls
     private static final UtilsMath.TermFunction termShiftDistance = (n, ls, params) -> {
@@ -55,34 +59,36 @@ public class UtilsArc {
     /**
      * 确定两段双螺旋曲线的起点
      * @param corner 拐角
-     * @param enCurveRadius 圆曲线半径
-     * @param enTransArcLength 缓和曲线长度
+     * @param directLoop 弯道模式（DIRECT直接弯〔1〕，LOOP回旋弯〔-1〕）
+     * @param enCurveRadius 圆曲线半径（内圆R）
+     * @param enTransArcLength 缓和曲线长度（ls）
      * @return 打包好的双螺旋曲线的起始点、起始偏角
      */
     public static TransArcStartResult getStartsOfEulerArcs(
-            ColumbinaCorner corner,
-            double enCurveRadius, double enTransArcLength  // 圆曲线半径（内圆R）、缓和段长度（ls）
+            ColumbinaCorner corner, int directLoop,
+            double enCurveRadius, double enTransArcLength
     ) {
+        if (directLoop != DIRECT && directLoop != LOOP)
+            throw new IllegalArgumentException("getStartsOfEulerArcs: Unexpected directLoop arg.");
+        
         // 计算两侧切距T
         // T = (圆曲线半径R + 内移距离p) * tan(路径偏转角α / 2) + 切线增长q
-        double enShiftDistance = UtilsMath.sumSeriesAtVarValue(  // 内移距离（p）：外圆内圆间距
-                termShiftDistance,
-                TERM_MAX,
-                enTransArcLength,
-                enCurveRadius
-        );
         double enTangleOffset = UtilsMath.sumSeriesAtVarValue(  // 切线增长（q，或m表示）
                 termTangleOffset,
                 TERM_MAX,
                 enTransArcLength,
                 enCurveRadius
         );
+        double enShiftDistance = UtilsMath.sumSeriesAtVarValue(  // 内移距离（p）：外圆内圆间距
+                termShiftDistance,
+                TERM_MAX,
+                enTransArcLength,
+                enCurveRadius
+        );
         double enTangentLength =
-                (enCurveRadius + enShiftDistance) * Math.tan(Math.abs(corner.deflectionRad) / 2) + enTangleOffset;
+                (enCurveRadius + enShiftDistance) * Math.tan(Math.abs(corner.deflectionRad) / 2) + directLoop * enTangleOffset;
 
-        // 按照切距确定起点
-        if (enTangentLength > corner.lenBA || enTangentLength > corner.lenBC)
-            return null;  // 缓和曲线长度太长导致切距超过拐角两侧距离
+        // 按照切距确定起点（这里不检查缓和曲线长度、切距是否超过拐角两侧距离，由调用者自己检查）
         ColumbinaEN zhA = corner.B.walk(corner.BA.bearingRad(), enTangentLength);  // A侧直缓切点
         ColumbinaEN zhC = corner.B.walk(corner.BC.bearingRad(), enTangentLength);  // C侧直缓切点
 
@@ -92,7 +98,7 @@ public class UtilsArc {
 
         return new TransArcStartResult(
                 zhA, zhC,
-                enShiftDistance,
+                enShiftDistance, enTangentLength,
                 startAngleARad, startAngleCRad,
                 corner.leftRight
         );
@@ -111,10 +117,10 @@ public class UtilsArc {
             double enChainageLength,
             int leftRight
     ) {
-        if (leftRight != UtilsMath.LEFT && leftRight != UtilsMath.RIGHT)  // 哇，还有凉面派
-            throw new IllegalArgumentException(I18n.tr("getUnrotatedTransitionArc: Unexpected leftRight arg."));
+        if (leftRight != LEFT && leftRight != RIGHT)  // 哇，还有凉面派
+            throw new IllegalArgumentException("getUnrotatedTransitionArc: Unexpected leftRight arg.");
         if (enChainageLength > enTransArcLength)  // 桩距不能比总长度还大
-            throw new IllegalArgumentException(I18n.tr("getUnrotatedTransitionArc: enChainageLength > enTransArcLength."));
+            throw new IllegalArgumentException("getUnrotatedTransitionArc: enChainageLength > enTransArcLength.");
 
         List<EastNorth> result = new ArrayList<>();
         int totalChainage = (int) Math.ceil(enTransArcLength / enChainageLength);  // 总桩数（向上取整）
@@ -203,7 +209,7 @@ public class UtilsArc {
         // 计算圆弧总角度（根据转弯方向确定旋转方向）
         startBearingRad = UtilsMath.normAngleRad(startBearingRad); endBearingRad = UtilsMath.normAngleRad(endBearingRad);  // 确保角度在[-π, π]范围内
         double totalAngle;
-        if (leftRight == UtilsMath.LEFT) {
+        if (leftRight == LEFT) {
             // 左拐：逆时针，endAngle应该大于startAngle
             if (endBearingRad <= startBearingRad) endBearingRad += 2 * Math.PI;
             totalAngle = endBearingRad - startBearingRad;
@@ -215,7 +221,7 @@ public class UtilsArc {
 
         double centerToStartBearingRad = UtilsMath.normAngleRad(startBearingRad - leftRight * 0.5 * Math.PI);  // 圆心到起始点的角度（左拐-90°）
         double angleStep = totalAngle / segments;  // 计算角度步长
-        if (leftRight == UtilsMath.RIGHT) angleStep = -angleStep;  // 如果是右拐，角度步长为负
+        if (leftRight == RIGHT) angleStep = -angleStep;  // 如果是右拐，角度步长为负
         for (int i = 0; i <= segments; i ++) {  // 生成圆弧上的点
             double currentAngle = centerToStartBearingRad + i * angleStep;
             // 计算圆弧上的点坐标
@@ -226,6 +232,9 @@ public class UtilsArc {
         return points;
     }
 
+    public static UtilsMath.TermFunction getTermTangleOffset() {return termTangleOffset;}
+    public static UtilsMath.TermFunction getTermShiftDistance() {return termShiftDistance;}
+    
     /**
      * 打包双螺旋曲线的起始点、起始偏角
      */
@@ -233,18 +242,20 @@ public class UtilsArc {
         public final EastNorth startA;
         public final EastNorth startC;
         public final double enShiftDistance;  // 内移距离p（用于算圆心）
+        public final double enTangentLength;  // 切距T
         public final double startAngleARad;  // AB方向，坐标角度：以东为0，北正南负
         public final double startAngleCRad;  // CB方向，坐标角度：以东为0，北正南负
         public final int leftRight;
 
         public TransArcStartResult(
                 EastNorth startA, EastNorth startC,
-                double enShiftDistance,
+                double enShiftDistance, double enTangentLength,
                 double startAngleARad, double startAngleCRad,
                 int leftRight) {
             this.startA = startA;
             this.startC = startC;
             this.enShiftDistance = enShiftDistance;
+            this.enTangentLength = enTangentLength;
             this.startAngleARad = startAngleARad;
             this.startAngleCRad = startAngleCRad;
             this.leftRight = leftRight;
