@@ -136,7 +136,7 @@ public final class FilletDialog extends ExtendedDialog {
                     try {  // 第一端拐角：节点i-1, i, i+1
                         double ang1 = ColumbinaCorner.create(way, i + numNode - 1).angleRad;  // +numNode防止读取-1
                         // 检查角度是否在有效范围内
-                        if (ang1 >= Math.max(minAngleRad, 10e-6) && ang1 <= Math.min(maxAngleRad, Math.PI - 10e-6)) {
+                        if (ang1 >= Math.max(minAngleRad, UtilsMath.EPSILON_EASING) && ang1 <= Math.min(maxAngleRad, Math.PI - UtilsMath.EPSILON_EASING)) {
                             cotAng1 = 1 / Math.tan(ang1 / 2);
                         } else cotAng1 = 0;  // 计算第一端拐角（节点i处的拐角）
                     } catch (ColumbinaException ignored) {}  // 如果无法创建拐角，拐角记为0
@@ -144,7 +144,7 @@ public final class FilletDialog extends ExtendedDialog {
                     try {  // 第二端拐角：节点i, i+1, i+2
                         double ang2 = ColumbinaCorner.create(way, i).angleRad;
                         // 检查角度是否在有效范围内
-                        if (ang2 >= Math.max(minAngleRad, 10e-6) && ang2 <= Math.min(maxAngleRad, Math.PI - 10e-6)) {
+                        if (ang2 >= Math.max(minAngleRad, UtilsMath.EPSILON_EASING) && ang2 <= Math.min(maxAngleRad, Math.PI - UtilsMath.EPSILON_EASING)) {
                             cotAng2 = 1 / Math.tan(ang2 / 2);
                         } else cotAng2 = 0;  // 计算第二端拐角（节点i+1处的拐角）
                     } catch (ColumbinaException ignored) {}  // 如果无法创建拐角，拐角记为0

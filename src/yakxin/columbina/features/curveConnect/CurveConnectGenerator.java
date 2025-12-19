@@ -290,7 +290,7 @@ public final class CurveConnectGenerator extends AbstractGenerator<CurveConnectP
     private static IntersectResult getIntersectResult(ColumbinaEN start, ColumbinaEN startDirVec, ColumbinaEN end, ColumbinaEN endDirVec) {
         boolean parallel; ColumbinaEN intersect;
         
-        if (endDirVec.east() * startDirVec.north() - startDirVec.east() * endDirVec.north() < 10e-6) {  // 分母=0则是平行
+        if (endDirVec.east() * startDirVec.north() - startDirVec.east() * endDirVec.north() < UtilsMath.EPSILON_EASING) {  // 分母=0则是平行
             double t = ((end.north() - start.north()) * endDirVec.east() - (end.east() - start.east()) * endDirVec.north())
                     / (endDirVec.east() * startDirVec.north() - startDirVec.east() * endDirVec.north());
             parallel = false;

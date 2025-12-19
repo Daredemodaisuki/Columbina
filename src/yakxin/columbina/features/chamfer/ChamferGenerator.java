@@ -35,7 +35,7 @@ public final class ChamferGenerator extends AbstractGenerator<ChamferParams> {
     public static ArrayList<EastNorth> getChamferCutNodesUsingDistance(
             ColumbinaCorner corner, double enDistanceA, double enDistanceC
     ) {
-        if (corner.lenBA < 1e-9 || corner.lenBC < 1e-9) return null;  // 检查向量有效性（不能太短近乎于点挤在一起）
+        if (corner.lenBA < UtilsMath.EPSILON_STRICT || corner.lenBC < UtilsMath.EPSILON_STRICT) return null;  // 检查向量有效性（不能太短近乎于点挤在一起）
 
         // 获取新切点
         ColumbinaEN c1 = corner.B.walk(corner.BA.bearingRad(), enDistanceA);  // BA侧切点
@@ -53,13 +53,13 @@ public final class ChamferGenerator extends AbstractGenerator<ChamferParams> {
     public static ArrayList<EastNorth> getChamferCutNodesUsingAngleA(
             ColumbinaCorner corner, double enDistanceA, double angleADeg
     ) {
-        if (corner.lenBA < 1e-9 || corner.lenBC < 1e-9) return null;  // 检查向量有效性（不能太短近乎于点挤在一起）
+        if (corner.lenBA < UtilsMath.EPSILON_STRICT || corner.lenBC < UtilsMath.EPSILON_STRICT) return null;  // 检查向量有效性（不能太短近乎于点挤在一起）
 
         // 直接从corner获取拐点夹角
         double thetaB = corner.angleRad;  // 夹角（弧度[0, π]）
 
         double thetaA = Math.toRadians(angleADeg);  // A切角（弧度）
-        if (thetaA + thetaB >= Math.PI - 1e-9) return null;  // 夹角B+切角A>180°，无法构成三角形
+        if (thetaA + thetaB >= Math.PI - UtilsMath.EPSILON_STRICT) return null;  // 夹角B+切角A>180°，无法构成三角形
         // 计算enDistanceC：Bc1/sinC = Bc2/sinA → enDistanceC = Bc2=Bc1*sinA/sinC
         double enDistanceC = enDistanceA * Math.sin(thetaA) / Math.sin(Math.PI - thetaB - thetaA);
 

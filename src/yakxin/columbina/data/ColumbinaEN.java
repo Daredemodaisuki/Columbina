@@ -3,13 +3,13 @@ package yakxin.columbina.data;
 import org.openstreetmap.josm.data.coor.EastNorth;
 import org.openstreetmap.josm.data.osm.Node;
 import yakxin.columbina.utils.UtilsArc;
+import yakxin.columbina.utils.UtilsMath;
 
 /**
  * 扩展的EastNorth类
  */
 public class ColumbinaEN extends EastNorth {
     public static final int COLLINEAR = 0;
-    public static final double EPSILON = 1e-10;
 
     /**
      * 从EastNorth（或ColumbinaEN）实体构造ColumbinaEN
@@ -175,7 +175,7 @@ public class ColumbinaEN extends EastNorth {
      */
     public int turnLeftRightTo(ColumbinaEN other) {
         double cross = this.x * other.y - this.y * other.x;
-        if (Math.abs(cross) < EPSILON) return COLLINEAR;
+        if (Math.abs(cross) < UtilsMath.EPSILON_STRICT) return COLLINEAR;
         return cross > 0 ? UtilsArc.LEFT : UtilsArc.RIGHT;
     }
     
@@ -191,7 +191,7 @@ public class ColumbinaEN extends EastNorth {
         double bearingAB = new ColumbinaEN(a, b).bearingRad();
         double bearingBC = new ColumbinaEN(b, c).bearingRad();
         double bearingAC = new ColumbinaEN(a, c).bearingRad();
-        return (Math.abs(bearingAB - bearingBC) < 10e-6 && Math.abs(bearingAC - bearingBC) < 10e-6);
+        return (Math.abs(bearingAB - bearingBC) < UtilsMath.EPSILON_EASING && Math.abs(bearingAC - bearingBC) < UtilsMath.EPSILON_EASING);
     }
 }
 

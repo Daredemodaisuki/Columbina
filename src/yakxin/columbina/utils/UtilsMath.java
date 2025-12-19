@@ -7,6 +7,9 @@ import org.openstreetmap.josm.tools.I18n;
 import yakxin.columbina.data.ColumbinaException;
 
 public class UtilsMath {
+    public static double EPSILON_EASING = 1e-6;
+    public static double EPSILON_STRICT = 1e-9;
+    
     /// 坐标转换
     public static EastNorth toEastNorth(LatLon ll) {  // 经纬度转距离坐标
         return ProjectionRegistry.getProjection().latlon2eastNorth(ll);
@@ -19,7 +22,7 @@ public class UtilsMath {
     public static double surfaceDistanceToEastNorth(double surfaceDistance, double lat) throws ColumbinaException {
         double cosLat = Math.cos(Math.toRadians(lat));
         // 避免cosLat为0（极点附近）
-        if (Math.abs(cosLat) < 1e-9) {
+        if (Math.abs(cosLat) < UtilsMath.EPSILON_STRICT) {
             throw new ColumbinaException(I18n.tr("Too near the pole, failed to calculate EN distance."));
         }
         return surfaceDistance / cosLat;

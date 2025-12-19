@@ -50,7 +50,7 @@ public final class FilletGenerator extends AbstractGenerator<FilletParams> {
         double theta = corner.angleRad;  // 拐点张角
         // 检查张角有效性、切距
         if (theta < Math.toRadians(minAngleDeg) || theta > Math.toRadians(maxAngleDeg)) return null;  // 自定义角度控制
-        if (theta < 1e-9 || theta > Math.PI - 1e-9) return null;  // θ为0说明成了发卡角，θ为π说明张角基本是直线
+        if (theta < UtilsMath.EPSILON_STRICT || theta > Math.PI - UtilsMath.EPSILON_STRICT) return null;  // θ为0说明成了发卡角，θ为π说明张角基本是直线
         double tangentLength = enRadius / Math.tan(theta / 2.0);
         if (corner.lenBA < tangentLength || corner.lenBC < tangentLength) return null;  // 切距不足
         // 节点数控制
@@ -79,7 +79,7 @@ public final class FilletGenerator extends AbstractGenerator<FilletParams> {
         return buildSmoothPolyline(way, surfaceRadius, 20);
     }
     public static ColumbinaSingleOutput buildSmoothPolyline(Way way, double surfaceRadius, int maxPointNum) {
-        return buildSmoothPolyline(way, surfaceRadius, 1.0, maxPointNum, 1e-9, 180 - 1e-9);
+        return buildSmoothPolyline(way, surfaceRadius, 1.0, maxPointNum, UtilsMath.EPSILON_STRICT, 180 - UtilsMath.EPSILON_STRICT);
     }
 
     /**
