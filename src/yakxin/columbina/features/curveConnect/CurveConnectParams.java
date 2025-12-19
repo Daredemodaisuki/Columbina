@@ -11,7 +11,7 @@ public final class CurveConnectParams extends AbstractParams {
 
     CurveConnectParams(
             double surfaceCircleRadius, double surfaceTransArcLength,
-            double surfaceChainageLength, int dirMode,
+            double surfaceChainageLength, int dirMode, boolean ableToAdjustInputNode,
             boolean selectNew
     ) {
         super(selectNew);
@@ -19,6 +19,6 @@ public final class CurveConnectParams extends AbstractParams {
         this.surfaceTransArcLength = surfaceTransArcLength;
         this.surfaceChainageLength = surfaceChainageLength;
         this.dirMode = dirMode;
-        this.ableToAdjustInputNode = true;
+        this.ableToAdjustInputNode = ableToAdjustInputNode;
     }
 }

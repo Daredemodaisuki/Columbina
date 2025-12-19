@@ -3,7 +3,6 @@ package yakxin.columbina.features.curveConnect;
 import org.openstreetmap.josm.gui.ExtendedDialog;
 import org.openstreetmap.josm.gui.MainApplication;
 import org.openstreetmap.josm.tools.I18n;
-import yakxin.columbina.features.angleLine.AngleLinePreference;
 import yakxin.columbina.utils.UtilsUI;
 
 import javax.swing.*;
@@ -21,11 +20,12 @@ public final class CurveConnectDialog extends ExtendedDialog {
     // 窗体组件
     private final JPanel panel = new JPanel(new GridBagLayout());
     private final JFormattedTextField curveConnectR;
-    private final JFormattedTextField cueveConnectTransArcLength;
+    private final JFormattedTextField curveConnectTransArcLength;
     private final JFormattedTextField curveConnectChainageLength;
     private final JFormattedTextField curveConnectMaxPointNum;
-    private final UtilsUI.RadioButtonGroup leftRight;
+    private final UtilsUI.RadioButtonGroup curveConnectDirection;
 
+    private final JCheckBox curveConnectAbleToAdjustTanNodes;
     private final JCheckBox selectNewWays;
 
     CurveConnectDialog() {
@@ -38,28 +38,29 @@ public final class CurveConnectDialog extends ExtendedDialog {
         setDefaultButton(1);  // ESC取消
 
         // 单选框组
-        leftRight = new UtilsUI.RadioButtonGroup(
+        curveConnectDirection = new UtilsUI.RadioButtonGroup(
                 new ArrayList<>(List.of(new String[]{I18n.tr("Turn left"), I18n.tr("Turn right")})),
                 CurveConnectPreference.getCurveConnectDirMode()
         );
 
         // 窗体
-        UtilsUI.addHeader(panel, I18n.tr("Curve Connect"), null);  // 暂不设置图标
+        UtilsUI.addHeader(panel, I18n.tr("Curve Connect"), "CurveConnect");  // 暂不设置图标
 
         UtilsUI.addSection(panel, I18n.tr("Curve Information"));
 
         UtilsUI.addLabel(panel, "Curve direction: ");
-        leftRight.addRadioButton(panel, CurveConnectGenerator.COUNTER_CLOCKWISE_MODE);
-        leftRight.addRadioButton(panel, CurveConnectGenerator.CLOCKWISE_MODE);
+        curveConnectDirection.addRadioButton(panel, CurveConnectGenerator.COUNTER_CLOCKWISE_MODE);
+        curveConnectDirection.addRadioButton(panel, CurveConnectGenerator.CLOCKWISE_MODE);
 
         UtilsUI.addSpace(panel, 5);
         curveConnectR = UtilsUI.addInput(panel, I18n.tr("Circular curve surfaceRadius (m): "), CurveConnectPreference.getCurveConnectRadius());
-        cueveConnectTransArcLength = UtilsUI.addInput(panel, I18n.tr("Transition curve length (m): "), CurveConnectPreference.getCurveConnectTransArcLength());
+        curveConnectTransArcLength = UtilsUI.addInput(panel, I18n.tr("Transition curve length (m): "), CurveConnectPreference.getCurveConnectTransArcLength());
         curveConnectChainageLength = UtilsUI.addInput(panel, I18n.tr("Chainage length (node spacing, m): "), CurveConnectPreference.getCurveConnectChainageLength());
         curveConnectMaxPointNum = UtilsUI.addInput(panel, I18n.tr("Maximum nodes (excluding start and end): "), CurveConnectPreference.getCurveConnectMaxPointPerArc());
+        curveConnectAbleToAdjustTanNodes = UtilsUI.addCheckbox(panel, I18n.tr("Able to cut or extent existing way ends"), CurveConnectPreference.isCurveConnectAbleToAdjustInputNode());
 
         UtilsUI.addSection(panel, I18n.tr("Other Operations"));
-        selectNewWays = UtilsUI.addCheckbox(panel, I18n.tr("Select new ways after drawing"), AngleLinePreference.isAngleLineSelectNewWays());
+        selectNewWays = UtilsUI.addCheckbox(panel, I18n.tr("Select new ways after drawing"), CurveConnectPreference.isCurveConnectSelectNewWays());
 
         contentInsets = new Insets(5, 15, 5, 15);  // 内容边距
         setContent(panel);
@@ -70,6 +71,14 @@ public final class CurveConnectDialog extends ExtendedDialog {
     }
 
     // 获取数据
+    public CurveConnectParams getParams() {
+        return new CurveConnectParams(
+                getCurveConnectR(), getCurveConnectTransArcLength(), getCurveConnectChainageLength(),
+                getCurveConnectDirection(), getAbleToAdjustTanNodes(),
+                getIfSelectNew()
+        );
+    }
+    
     public double getCurveConnectR() {
         try {
             return NumberFormat.getInstance(Locale.US).parse(curveConnectR.getText()).doubleValue();
@@ -80,7 +89,7 @@ public final class CurveConnectDialog extends ExtendedDialog {
     }
     public double getCurveConnectTransArcLength() {
         try {
-            return NumberFormat.getInstance(Locale.US).parse(cueveConnectTransArcLength.getText()).doubleValue();
+            return NumberFormat.getInstance(Locale.US).parse(curveConnectTransArcLength.getText()).doubleValue();
         } catch (ParseException e) {
             return CurveConnectPreference.DEFAULT_CURVE_CONNECT_TRANS_ARC_LENGTH;
         }
@@ -99,6 +108,7 @@ public final class CurveConnectDialog extends ExtendedDialog {
             return CurveConnectPreference.DEFAULT_CURVE_CONNECT_MAX_POINT_PER_ARC;
         }
     }
-    public int getLeftRight() { return leftRight.getButtonSelected();}
+    public int getCurveConnectDirection() { return curveConnectDirection.getButtonSelected();}
     public boolean getIfSelectNew() {return selectNewWays.isSelected();}
+    public boolean getAbleToAdjustTanNodes() {return  curveConnectAbleToAdjustTanNodes.isSelected();}
 }

@@ -1,6 +1,7 @@
 package yakxin.columbina.features.curveConnect;
 
 import org.openstreetmap.josm.spi.preferences.Config;
+import org.openstreetmap.josm.tools.I18n;
 import yakxin.columbina.abstractClasses.AbstractPreference;
 import yakxin.columbina.data.dto.inputs.ColumbinaInput;
 
@@ -12,6 +13,7 @@ public final class CurveConnectPreference extends AbstractPreference<CurveConnec
     private static double curveConnectChainageLength;
     private static int curveConnectMaxPointPerArc;
     private static int curveConnectDirMode;
+    private static boolean curveConnectAbleToAdjustInputNode;
     private static boolean curveConnectSelectNewWays;
 
     public static final double DEFAULT_CURVE_CONNECT_RADIUS = 114.5;
@@ -26,6 +28,7 @@ public final class CurveConnectPreference extends AbstractPreference<CurveConnec
         curveConnectChainageLength = Config.getPref().getDouble("columbina.curve-connect.chainage-length", DEFAULT_CURVE_CONNECT_CHAINAGE_LENGTH);
         curveConnectMaxPointPerArc = Config.getPref().getInt("columbina.curve-connect.max-num-of-point", DEFAULT_CURVE_CONNECT_MAX_POINT_PER_ARC);
         curveConnectDirMode = Config.getPref().getInt("columbina.curve-connect.direction-mode", DEFAULT_CURVE_CONNECT_DIR_MODE);
+        curveConnectAbleToAdjustInputNode = Config.getPref().getBoolean("columbina.curve-connect.able-to-modify-ends", true);
         curveConnectSelectNewWays = Config.getPref().getBoolean("columbina.curve-connect.need-copy-tags", true);
     }
 
@@ -52,9 +55,25 @@ public final class CurveConnectPreference extends AbstractPreference<CurveConnec
     public static int getCurveConnectDirMode() {
         return curveConnectDirMode;
     }
-
+    
+    public static boolean isCurveConnectAbleToAdjustInputNode() {
+        return curveConnectAbleToAdjustInputNode;
+    }
+    
+    /**
+     * 弹窗并校验、保存、返回参数
+     * @return 输入的参数
+     */
     @Override
     public CurveConnectParams getParamsAndUpdatePreference(ColumbinaInput input) {
-        return null;
+        CurveConnectDialog curveConnectDialog = new CurveConnectDialog();
+        if (curveConnectDialog.getValue() != 1) return null;  // 按ESC（0）或点击取消（2），退出；点击确定继续是1
+        
+        CurveConnectParams params = curveConnectDialog.getParams();
+        
+        if (params.surfaceCircleRadius <= 0)
+            throw new IllegalArgumentException(I18n.tr("Invalid curve radius, should be greater than 0m."));
+        
+        return params;
     }
 }

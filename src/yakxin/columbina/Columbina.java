@@ -6,6 +6,7 @@ import org.openstreetmap.josm.plugins.Plugin;
 import org.openstreetmap.josm.plugins.PluginInformation;
 import yakxin.columbina.features.angleLine.AngleLineAction;
 import yakxin.columbina.features.chamfer.ChamferAction;
+import yakxin.columbina.features.curveConnect.CurveConnectAction;
 import yakxin.columbina.features.fillet.FilletAction;
 import yakxin.columbina.features.transitionCurve.TransitionCurveAction;
 
@@ -25,6 +26,7 @@ public class Columbina extends Plugin {
         MainMenu.add(MainApplication.getMenu().moreToolsMenu, TransitionCurveAction.create());  // 过渡曲线
 
         MainMenu.add(MainApplication.getMenu().moreToolsMenu, AngleLineAction.create());
+        MainMenu.add(MainApplication.getMenu().moreToolsMenu, CurveConnectAction.create());
     }
 }
 

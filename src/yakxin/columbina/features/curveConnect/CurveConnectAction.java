@@ -2,6 +2,7 @@ package yakxin.columbina.features.curveConnect;
 
 import org.openstreetmap.josm.data.osm.Node;
 import org.openstreetmap.josm.data.osm.Way;
+import org.openstreetmap.josm.tools.I18n;
 import org.openstreetmap.josm.tools.Shortcut;
 import yakxin.columbina.abstractClasses.actionMiddle.ActionWithNodeWay;
 import yakxin.columbina.data.ColumbinaException;
@@ -9,6 +10,7 @@ import yakxin.columbina.data.dto.inputs.ColumbinaInput;
 import yakxin.columbina.data.dto.inputs.ColumbinaSingleInput;
 import yakxin.columbina.utils.UtilsData;
 
+import java.awt.event.KeyEvent;
 import java.util.List;
 
 public final class CurveConnectAction extends
@@ -26,6 +28,25 @@ public final class CurveConnectAction extends
      */
     public CurveConnectAction(String name, String iconName, String description, Shortcut shortcut, CurveConnectGenerator generator, CurveConnectPreference preference) {
         super(name, iconName, description, shortcut, generator, preference);
+    }
+    
+    /**
+     * 懒得在主类填参数就用静态工厂方法
+     * @return 构建好的实例
+     */
+    public static CurveConnectAction create() {
+        return new CurveConnectAction(
+                I18n.tr("Curve Connect"), "CurveConnect",
+                I18n.tr("Connect way ends with curve."),
+                Shortcut.registerShortcut(
+                        "tools:curveConnect",
+                        "More tools: Columbina/Curve Connect",
+                        KeyEvent.VK_W,
+                        Shortcut.ALT_CTRL_SHIFT
+                ),
+                new CurveConnectGenerator(),
+                new CurveConnectPreference()
+        );
     }
 
     @Override
