@@ -1,5 +1,6 @@
 package yakxin.columbina.features.curveConnect;
 
+import org.openstreetmap.josm.data.coor.EastNorth;
 import org.openstreetmap.josm.data.osm.Node;
 import org.openstreetmap.josm.data.osm.Way;
 import org.openstreetmap.josm.tools.I18n;
@@ -12,10 +13,18 @@ import yakxin.columbina.data.dto.inputs.ColumbinaSingleInput;
 import yakxin.columbina.utils.UtilsArc;
 import yakxin.columbina.utils.UtilsMath;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
 public final class CurveConnectGenerator extends AbstractGenerator<CurveConnectParams> {
     // 模式常量，注意这个不是用来判断±1的！
     public static final int COUNTER_CLOCKWISE_MODE = 0;  // 逆时针左拐
     public static final int CLOCKWISE_MODE = 1;  // 顺时针右拐
+    // 切点策略
+    public static final int FAILED = -1;
+    public static final int ADJUST_END_NODES = 0;
+    public static final int ADD_NODES = 1;
 
     @Override
     public ColumbinaSingleOutput getOutputForSingleInput(ColumbinaSingleInput input, CurveConnectParams params) {
@@ -36,7 +45,7 @@ public final class CurveConnectGenerator extends AbstractGenerator<CurveConnectP
                         endNode, input.ways.get(1), endIndex,
                         params.surfaceCircleRadius, params.surfaceTransArcLength,
                         params.surfaceChainageLength,
-                        params.dirMode, true, true
+                        params.dirMode, params.ableToAdjustInputNode
                 );
             }
         }
@@ -55,45 +64,36 @@ public final class CurveConnectGenerator extends AbstractGenerator<CurveConnectP
      * @param enTransArcLength 缓和曲线长度（ls）
      * @param enChainageLength 桩距（节点间距，米）
      * @param dirMode 模式索引（COUNTER_CLOCKWISE_MODE逆时针左拐〔0〕，CLOCKWISE_MODE顺时针右拐〔1〕）
-     * @param ableToAdjustInputNode 对于端头起点和终点，是否允许裁剪
-     * @param ableToAdjustCenter 是否允许移动圆心
-     * @return 这个拐角缓和曲线包含的点
+     * @param ableToAdjustInputNode 对于端头起点和终点，是否允许裁剪或沿伸
+     * @return 这个拐角缓和曲线包含的点和其他信息
      */
     private static ColumbinaSingleOutput buildCorner(
             Node startNode, Way startWay, int startNodeIdx,
             Node endNode, Way endWay, int endNodeIdx,
             double enCurveRadius, double enTransArcLength,  // 圆曲线半径（内圆R）、缓和段长度（ls）
             double enChainageLength,  // 每个桩（节点）之间的距离
-            int dirMode, boolean ableToAdjustInputNode, boolean ableToAdjustCenter
+            int dirMode, boolean ableToAdjustInputNode
     ) {
         /// 计算交点
         //   点startNode(x1, y1) + t·方向向量startDirVec(dx1, dy1) = 点endNode(x2, y2) + s·方向向量endDirVec(dx2, dy2)
         //   x1 + t * dx1 = x2 + s * dx2
         //   y1 + t * dy1 = y2 + s * dy2
         //   解得 t = [(y₂-y₁)·dx₂ - (x₂-x₁)·dy₂] / (dx₂·dy₁ - dx₁·dy₂)
-        boolean parallel;
-        ColumbinaEN intersect;  // 交点
-
-        int startNodeNum = startWay.isClosed() ? startWay.getNodesCount() - 1 : startWay.getNodesCount();  // 闭合曲线过滤闭合点
-        int endNodeNum = endWay.isClosed() ? endWay.getNodesCount() - 1 : endWay.getNodesCount();
+        final int startNodeNum = startWay.isClosed() ? startWay.getNodesCount() - 1 : startWay.getNodesCount();  // 闭合曲线过滤闭合点
+        final int endNodeNum = endWay.isClosed() ? endWay.getNodesCount() - 1 : endWay.getNodesCount();
         ColumbinaEN start = new ColumbinaEN(startNode.getEastNorth()), end = new ColumbinaEN(endNode.getEastNorth());
         // 入曲线和出曲线方向向量
-        ColumbinaEN startDirVec = new ColumbinaEN(startWay.getNode((startNodeIdx + startNodeNum - 1) % startNodeNum), startNode).normVec();
-        ColumbinaEN endDirVec = new ColumbinaEN(endNode, endWay.getNode((endNodeIdx + 1) % endNodeNum)).normVec();
-        if (endDirVec.east() * startDirVec.north() - startDirVec.east() * endDirVec.north() != 0) {
-            double t = ((end.north() - start.north()) * endDirVec.east() - (end.east() - start.east()) * endDirVec.north())
-                    / (endDirVec.east() * startDirVec.north() - startDirVec.east() * endDirVec.north());
-            parallel = false;
-            intersect = start.walk(startDirVec.bearingRad(), t);  // 如果不平行，直接可以计算交点
-        } else {
-            parallel = true;
-            intersect = start.centerBetween(end);  // 如果平行，则直接以start和end中点作为交点
-        }
-
+        Node beforeStartNode = startWay.getNode((startNodeIdx + startNodeNum - 1) % startNodeNum);
+        Node afterEndNode = endWay.getNode((endNodeIdx + 1) % endNodeNum);
+        ColumbinaEN startDirVec = new ColumbinaEN(beforeStartNode, startNode).normVec();
+        ColumbinaEN endDirVec = new ColumbinaEN(endNode, afterEndNode).normVec();
+        
+        IntersectResult intersectResult = getIntersectResult(start, startDirVec, end, endDirVec); // 交点和是否平行
+        
         /// 计算切距切点
         ColumbinaCorner stdCorner;  // 起点在交点前、终点在交点后的标准拐角（不然拐角可能会倒过来）
         UtilsArc.TransArcStartResult transArcStarts;
-        if (parallel) {  // 如果是平行的，切距就是切线增长
+        if (intersectResult.parallel) {  // 如果是平行的，切距就是切线增长
             double enTangleOffset = UtilsMath.sumSeriesAtVarValue(  // 切线增长（q，或m表示）
                     UtilsArc.getTermTangleOffset(),
                     UtilsArc.TERM_MAX,
@@ -107,13 +107,12 @@ public final class CurveConnectGenerator extends AbstractGenerator<CurveConnectP
                     enCurveRadius
             );
             // 平行的话没有corner，手动构建起始点、偏角
-            //   intersect分别投影到start、end所在线上的点往startDirVec反方向走enTangleOffset距离
-            double enStartToProject = new ColumbinaEN(start, intersect).dot(startDirVec);
-            double enEndToProject = new ColumbinaEN(end, intersect).dot(endDirVec);
-            ColumbinaEN startTanEN = start.walk(startDirVec.bearingRad(), enStartToProject - enTangleOffset);
-            ColumbinaEN endTanEN = end.walk(startDirVec.bearingRad(), enEndToProject - enTangleOffset);
+            //  intersect分别投影到start、end所在线上的点往startDirVec反方向走enTangleOffset距离
+            double enStartToProject = new ColumbinaEN(start, intersectResult.intersect).dot(startDirVec);
+            double enEndToProject = new ColumbinaEN(end, intersectResult.intersect).dot(endDirVec);
             transArcStarts = new UtilsArc.TransArcStartResult(
-                    startTanEN, endTanEN,
+                    start.walk(startDirVec.bearingRad(), enStartToProject - enTangleOffset),  // 起点端切点
+                    end.walk(startDirVec.bearingRad(), enEndToProject - enTangleOffset),  // 终点端切点
                     enShiftDistance, enTangleOffset,
                     startDirVec.bearingRad(), UtilsMath.reverseAngleRad(startDirVec.bearingRad()),
                     dirMode == COUNTER_CLOCKWISE_MODE ? UtilsArc.LEFT : UtilsArc.RIGHT
@@ -121,9 +120,9 @@ public final class CurveConnectGenerator extends AbstractGenerator<CurveConnectP
             stdCorner = null;  // 平行的话不适用，放这里占位
         } else {
             // 计算标准拐角（交点沿着起始反方向倒着走10m、沿着结束正方向顺着走10m），保证起点在交点前、终点在交点后
-            ColumbinaEN stdStart = intersect.walk(UtilsMath.reverseAngleRad(startDirVec.bearingRad()), 10);
-            ColumbinaEN stdEnd = intersect.walk(endDirVec.bearingRad(), 10);
-            stdCorner = new ColumbinaCorner(stdStart, intersect, stdEnd);
+            ColumbinaEN stdStart = intersectResult.intersect.walk(UtilsMath.reverseAngleRad(startDirVec.bearingRad()), 10);
+            ColumbinaEN stdEnd = intersectResult.intersect.walk(endDirVec.bearingRad(), 10);
+            stdCorner = new ColumbinaCorner(stdStart, intersectResult.intersect, stdEnd);
             // 判断mode和实际转弯方向是否一致以确定是直接弯还是回旋弯
             int directLoop = getDirectLoop(dirMode, stdCorner.leftRight);
             
@@ -131,11 +130,10 @@ public final class CurveConnectGenerator extends AbstractGenerator<CurveConnectP
         }
 
         /// 计算圆心位置
-        // 先计算默认圆心
         ColumbinaEN center;
-        if (parallel) {
+        if (intersectResult.parallel) {
             // 对于平行的，默认圆心就是起点终点之中点（intersect）
-            center = intersect;
+            center = intersectResult.intersect;
         } else {
             // 默认从交点向内/外角平分线方向走(圆曲线半径R + 内移距离p) / sin(张角θ / 2)这个长度为圆心
             int leftRight = startDirVec.turnLeftRightTo(endDirVec);
@@ -148,26 +146,161 @@ public final class CurveConnectGenerator extends AbstractGenerator<CurveConnectP
                 center = stdCorner.B.walk(stdCorner.getBisectorBearingRad(), enCenterToB);
         }
         
-        // 但还需要判断是否需要移动
-        // 依据是切点是否在起点前一个点到起点之间和终点到终点后一个点之间（保证切距OK）
-        //  如果在之间，则直接使用切点作为曲线起点，圆心可用不动
-        //   如果刚好起点是起点线的最后一个点，或终点是终点线第一个点（两个端头），且用户允许裁切后连接，后续就需要各自裁切
-        //   如果是在路径中间，或者前述情况下用户不允许裁切，则单纯添加节点即可，不裁切
-        //  如果不在之间：
-        //   如果是端头情况，且切点在起点之后、终点之前（相当于只是够不到切点），则沿伸起点、终点所在线段连到切点，圆心也可用不动
-        //   如果也不是端头，或者不是「够不到切点」，后续就尝试移动圆心和切点（相当于平移曲线），如果用户也不允许调整圆心或无法调整，则失败
-        if (ifCanUseTanNode(startNode, startWay, startNodeIdx, endNode, endWay, endNodeIdx, transArcStarts)) {  // 切点在之间
-            // TODO
-        } else {  // 切点不在之间
-            // TODO
-            //  调整圆心：
-            //   如果是直接弯，无法调整
-            //   如果是回旋弯，起点或（和）终点缺多少切距，就按照对应方向分别移动相应的差的切距，最终刚好输入的start或（和）end就是切点
-            //   （如果是一边差一边不差，只修改差的那边）
+        /// 判断切距是否足够以确定是否需要裁切或沿伸
+        // 是否是端头
+        boolean isStartLastNode = !startWay.isClosed() && startNodeIdx == startNodeNum - 1;
+        boolean isEndFirstNode = !endWay.isClosed() && endNodeIdx == 0;
+        ColumbinaEN beforeStart = new ColumbinaEN(beforeStartNode.getEastNorth()), startTan = new ColumbinaEN(transArcStarts.startA);
+        ColumbinaEN afterEnd = new ColumbinaEN(afterEndNode.getEastNorth()), endTan = new ColumbinaEN(transArcStarts.startC);
+        // 匹配切点策略
+        TanNodeStrategyResult tanNodeStrategy = getTanNodeStrategyResult(
+                ableToAdjustInputNode,
+                beforeStart, startTan, start, isStartLastNode,
+                end, endTan, afterEnd, isEndFirstNode
+        );
+        if (tanNodeStrategy.startMethod == FAILED || tanNodeStrategy.endMethod == FAILED) return null;
+        
+        /// 绘制螺旋线
+        // TODO：缓和曲线长度太长导致回旋线部分的转角就大于了总偏转角，导致曲线直接绕了一圈
+        // A侧螺旋线（从A侧直缓切点顺着画）
+        UtilsArc.SingleEulerArcResult unrotatedTransArcA = UtilsArc.getUnrotatedEulerArc(  // 绘制
+                enCurveRadius, enTransArcLength,
+                enChainageLength,
+                transArcStarts.leftRight
+        );
+        
+        UtilsArc.SingleEulerArcResult rotatedTransArcA = UtilsArc.rotateAndMoveEulerArc(  // 旋转、移动
+                transArcStarts.startA,
+                transArcStarts.startAngleARad,
+                unrotatedTransArcA
+        );
+        // C侧螺旋线（从C侧直缓切点开始倒着画）
+        UtilsArc.SingleEulerArcResult unrotatedTransArcC = UtilsArc.getUnrotatedEulerArc(  // 绘制
+                enCurveRadius, enTransArcLength,
+                enChainageLength,
+                -transArcStarts.leftRight  // C侧是倒回来画的，与A到C方向的左右相反
+        );
+        UtilsArc.SingleEulerArcResult rotatedTransArcC = UtilsArc.rotateAndMoveEulerArc(  // 旋转、移动
+                transArcStarts.startC,
+                transArcStarts.startAngleCRad,
+                unrotatedTransArcC
+        );
+        
+        /// 圆曲线
+        // 计算段数（圆心角）
+        double tangentBearingARad = rotatedTransArcA.endTangentAngleRad;
+        double tangentBearingCRad = UtilsMath.normAngleRad(rotatedTransArcC.endTangentAngleRad + Math.PI);  // C侧双螺旋是倒过来画的，所以它绘制意义上的（终点）出曲线方向取反向才是行进方向A→B→C的角度
+        double centralAngleRad = UtilsMath.normAngleRad(tangentBearingCRad - tangentBearingARad);  // 防止AB、BC跨±180°线时画优弧（「<」这种情况）
+        int numAngleSteps = Math.abs((int) (enCurveRadius * centralAngleRad / enChainageLength));
+        // 画曲线
+        List<EastNorth> circularArc = UtilsArc.getCircleArc(
+                center, enCurveRadius,
+                tangentBearingARad, tangentBearingCRad,
+                numAngleSteps, transArcStarts.leftRight
+        );
+        
+        /// 拼接
+        // 整理用于拼接的点
+        List<EastNorth> transArcA = new ArrayList<>(rotatedTransArcA.arcNodes);
+        List<EastNorth> transArcC = new ArrayList<>(rotatedTransArcC.arcNodes);
+        if (transArcA.size() < 2 || circularArc.size() < 2 || transArcC.size() < 2) return null;  // 曲线不完整，绘制失败
+        transArcA.remove(transArcA.size() - 1);  // 不要ArcA的最后一个点（=圆曲线第一个点）
+        Collections.reverse(transArcC);  // 倒着画的原地逆序正回来
+        transArcC.remove(0);  // 正序之后不要第一个点（=圆曲线最后一个点）
+        
+        ArrayList<EastNorth> finalNodeEN = new ArrayList<>();
+        finalNodeEN.addAll(transArcA);
+        finalNodeEN.addAll(circularArc);
+        finalNodeEN.addAll(transArcC);
+        ArrayList<Node> finalNodes = new ArrayList<>();
+        for (EastNorth en : finalNodeEN)
+            finalNodes.add(new Node(en));
+        
+        ColumbinaSingleOutput result = new ColumbinaSingleOutput(finalNodes, new ArrayList<>());
+        result.extraData.put("startMethod", tanNodeStrategy.startMethod);
+        result.extraData.put("endMethod", tanNodeStrategy.endMethod);
+        
+        return result;
+    }
+    
+    /**
+     * 判断切距是否足够以确定是否需要裁切或沿伸
+     * <ul><li>
+     *     如果是前-切-起/终-切-后（切点在之间）：<ul>
+     *     <li>如果用户选择的起点是起点线的最后一个点，或终点是终点线第一个点（端头）且用户允许沿伸或裁切后连接，就直接裁切；</li>
+     *     <li>如果不是端头或不允许，则直接加点；</li></ul>
+     * </li>
+     * <li>
+     *     如果是前-起-切/切-终-后（切点在延长线）：<ul>
+     *     <li>如果用户选择的是端头，且用户允许沿伸或裁切后连接，就直接沿伸；</li>
+     *     <li>如果不是端头或不允许，则失败；</li></ul>
+     * </li>
+     * <li>
+     *     如果是切-前-起/终-后-切（切距太大救不了）：失败
+     * </li></ul>
+     * <p>后续两端分别判断，分别操作
+     *
+     * @param start 起点
+     * @param startTan 起点侧切点
+     * @param beforeStart 起点前一个点
+     * @param isStartLastNode 起点是否是最后一个点（端头）
+     * @param end 终点
+     * @param endTan 终点侧切点
+     * @param afterEnd 终点后一个点
+     * @param isEndFirstNode 终点是否是第一个点（端头）
+     * @param ableToAdjustInputNode 是否允许调整端头
+     * @return 策略
+     */
+    private static TanNodeStrategyResult getTanNodeStrategyResult(
+            boolean ableToAdjustInputNode,
+            ColumbinaEN beforeStart, ColumbinaEN startTan, ColumbinaEN start, boolean isStartLastNode,
+            ColumbinaEN end, ColumbinaEN endTan, ColumbinaEN afterEnd, boolean isEndFirstNode
+    ) {
+        final int startMethod;
+        final int endMethod;
+        // 起点端
+        if (ColumbinaEN.isBOnAC(beforeStart, startTan, start)) {
+            if (isStartLastNode && ableToAdjustInputNode) {/*裁切逻辑*/ startMethod = ADJUST_END_NODES;}
+            else /*直接加节点逻辑*/ startMethod = ADD_NODES;
+        } else if (ColumbinaEN.isBOnAC(beforeStart, start, startTan)) {
+            if (isStartLastNode && ableToAdjustInputNode) {/*沿伸逻辑*/ startMethod = ADJUST_END_NODES;}
+            else startMethod = FAILED;
+        } else startMethod = FAILED;
+        // 终点端
+        if (ColumbinaEN.isBOnAC(end, endTan, afterEnd)) {
+            if (isEndFirstNode && ableToAdjustInputNode) {/*裁切逻辑*/ endMethod = ADJUST_END_NODES;}
+            else /*直接加节点逻辑*/ endMethod = ADD_NODES;
+        } else if (ColumbinaEN.isBOnAC(endTan, end, afterEnd)) {
+            if (isEndFirstNode && ableToAdjustInputNode) {/*沿伸逻辑*/ endMethod = ADJUST_END_NODES;}
+            else endMethod = FAILED;
+        } else endMethod = FAILED;
+        
+        return new TanNodeStrategyResult(startMethod, endMethod);
+    }
+    
+    /**
+     * 计算交点和是否平行
+     * <p>如果平行，则直接以start和end中点作为交点
+     * @param endDirVec 终点路径方向向量
+     * @param startDirVec 终点路径方向向量
+     * @param end 终点
+     * @param start 起点
+     * @return 交点和是否平行
+     */
+    private static IntersectResult getIntersectResult(ColumbinaEN start, ColumbinaEN startDirVec, ColumbinaEN end, ColumbinaEN endDirVec) {
+        boolean parallel; ColumbinaEN intersect;
+        
+        if (endDirVec.east() * startDirVec.north() - startDirVec.east() * endDirVec.north() < 10e-6) {  // 分母=0则是平行
+            double t = ((end.north() - start.north()) * endDirVec.east() - (end.east() - start.east()) * endDirVec.north())
+                    / (endDirVec.east() * startDirVec.north() - startDirVec.east() * endDirVec.north());
+            parallel = false;
+            intersect = start.walk(startDirVec.bearingRad(), t);  // 如果不平行，直接可以计算交点
+        } else {
+            parallel = true;
+            intersect = start.centerBetween(end);  // 如果平行，则直接以start和end中点作为交点
         }
-
-        /// 绘制
-        return null;
+        
+        return new IntersectResult(parallel, intersect);
     }
     
     /**
@@ -190,39 +323,29 @@ public final class CurveConnectGenerator extends AbstractGenerator<CurveConnectP
     }
     
     /**
-     * 根据原起始、结束路径和起始点、终点以及切点数据判断是否可以直接使用切点数据给出的起点、终点
-     * <p>起始就是检查起始端切点是否在起始路径上原起点前一个点和原起点之间，同理，检查检查结束端切点是否在结束路径上原终点和原终点后一个点之间
-     * <p>如果在，则说明切点在起始路径和结束路径上，可以直接使用
-     * <p>如果不在，则说明切点在路径以外的地方，不能使用，下一步应尝试移动圆心
-     * @param startNode 原起点
-     * @param startWay 起始路径
-     * @param startNodeIdx 原起点在起始路径上的索引
-     * @param endNode 原终点
-     * @param endWay 终点路径
-     * @param endNodeIdx 原终点在终点路径上的索引
-     * @param transArcStarts 切点数据
-     * @return 是否可以直接使用切点
+     * 打包切点策略
      */
-    private static boolean ifCanUseTanNode(
-            Node startNode, Way startWay, int startNodeIdx,
-            Node endNode, Way endWay, int endNodeIdx,
-            UtilsArc.TransArcStartResult transArcStarts
-    ) {
-        int startNodeNum = startWay.isClosed() ? startWay.getNodesCount() - 1 : startWay.getNodesCount();  // 闭合曲线过滤闭合点
-        int endNodeNum = endWay.isClosed() ? endWay.getNodesCount() - 1 : endWay.getNodesCount();
+    private static class TanNodeStrategyResult {
+        public final int startMethod;
+        public final int endMethod;
         
-        ColumbinaEN beforeStart = new ColumbinaEN(startWay.getNode((startNodeIdx + startNodeNum - 1) % startNodeNum).getEastNorth());
-        ColumbinaEN startTan = new ColumbinaEN(transArcStarts.startA);
-        ColumbinaEN start = new ColumbinaEN(startNode.getEastNorth());
-        ColumbinaEN end = new ColumbinaEN(endNode.getEastNorth());
-        ColumbinaEN endTan = new ColumbinaEN(transArcStarts.startC);
-        ColumbinaEN afterEnd = new ColumbinaEN(endWay.getNode((endNodeIdx + 1) % endNodeNum).getEastNorth());
-        
-        return ColumbinaEN.isBOnAC(beforeStart, startTan, start) && ColumbinaEN.isBOnAC(end, endTan, afterEnd);
+        public TanNodeStrategyResult(int startMethod, int endMethod) {
+            this.startMethod = startMethod;
+            this.endMethod = endMethod;
+        }
     }
     
-    private static void adjustCircleCenter() {
-    
+    /**
+     * 打包交点和是否平行
+     */
+    private static class IntersectResult {
+        public final boolean parallel;
+        public final ColumbinaEN intersect;
+        
+        public IntersectResult(boolean parallel, ColumbinaEN intersect) {
+            this.parallel = parallel;
+            this.intersect = intersect;
+        }
     }
 }
 

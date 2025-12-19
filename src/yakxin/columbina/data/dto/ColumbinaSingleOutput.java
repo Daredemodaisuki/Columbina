@@ -3,7 +3,9 @@ package yakxin.columbina.data.dto;
 import org.openstreetmap.josm.data.osm.Node;
 import org.openstreetmap.josm.data.osm.Way;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * 公共单组输出类，目前单组输出只考虑输出一条路径的情况
@@ -11,6 +13,7 @@ import java.util.List;
 public final class ColumbinaSingleOutput {
     public final List<Node> newNodes;
     public final List<Long> failedNodes;
+    public Map<String, Object> extraData;
 
     /**
      * 构造函数
@@ -18,8 +21,13 @@ public final class ColumbinaSingleOutput {
      * @param failedNodeIdsInSingleInput 单组输入中部分失败的输入节点
      */
     public ColumbinaSingleOutput(List<Node> newNodesInSingleOutput, List<Long> failedNodeIdsInSingleInput) {
+        this(newNodesInSingleOutput, failedNodeIdsInSingleInput, new HashMap<>());
+    }
+    
+    public ColumbinaSingleOutput(List<Node> newNodesInSingleOutput, List<Long> failedNodeIdsInSingleInput, Map<String, Object> extraData) {
         this.newNodes = newNodesInSingleOutput;
         this.failedNodes = failedNodeIdsInSingleInput;
+        this.extraData = extraData;
     }
 
     /**
