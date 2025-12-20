@@ -53,6 +53,7 @@ public final class CurveConnectPreference extends AbstractPreference<CurveConnec
         if (newParams.surfaceCircleRadius <= 0)
             throw new IllegalArgumentException(I18n.tr("Invalid curve radius, should be greater than 0m."));
         
+        // 更新配置项
         RADIUS.setValue(newParams.surfaceCircleRadius);
         TRANS_ARC_LEN.setValue(newParams.surfaceTransArcLength);
         CHAINAGE_LEN.setValue(newParams.surfaceChainageLength);

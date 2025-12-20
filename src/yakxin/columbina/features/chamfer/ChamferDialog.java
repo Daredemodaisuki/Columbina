@@ -35,7 +35,7 @@ public final class ChamferDialog extends ExtendedDialog {
     ChamferDialog(ChamferParams savedParams) {
         super(MainApplication.getMainFrame(), I18n.tr("Columbina"), BUTTON_TEXTS, true);
         setButtonIcons(BUTTON_ICONS);
-        setDefaultButton(1);
+        setDefaultButton(1);  // ESC取消
         
         // 单选框组
         List<String> modeNames = new ArrayList<>();
