@@ -30,7 +30,7 @@ public final class TransitionCurveGenerator extends AbstractGenerator<Transition
         if (input.ways != null && input.ways.size() == 1) {
             return buildTransitionCurvePolyline(
                     input.ways.get(0),
-                    params.surfaceRadius, params.surfaceTransArcLength, params.chainageNum
+                    params.surfaceRadius, params.surfaceTransArcLength, params.surfaceChainageLength
             );
         }
         return null;

@@ -16,9 +16,8 @@ import java.util.Locale;
 public final class CurveConnectDialog extends ExtendedDialog {
     private static final String[] BUTTON_TEXTS = new String[] {I18n.tr("Confirm"), I18n.tr("Cancel")};
     private static final String[] BUTTON_ICONS = new String[] {"ok", "cancel"};
-
+    
     // 窗体组件
-    private final JPanel panel = new JPanel(new GridBagLayout());
     private final JFormattedTextField curveConnectR;
     private final JFormattedTextField curveConnectTransArcLength;
     private final JFormattedTextField curveConnectChainageLength;
@@ -43,6 +42,7 @@ public final class CurveConnectDialog extends ExtendedDialog {
         );
 
         // 窗体
+        JPanel panel = new JPanel(new GridBagLayout());
         UtilsUI.addHeader(panel, I18n.tr("Curve Connect"), "CurveConnect");  // 暂不设置图标
 
         UtilsUI.addSection(panel, I18n.tr("Curve Information"));
