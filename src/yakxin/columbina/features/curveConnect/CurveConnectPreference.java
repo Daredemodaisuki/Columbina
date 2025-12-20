@@ -6,10 +6,15 @@ import yakxin.columbina.data.ColumbinaPrefItem;
 import yakxin.columbina.data.dto.inputs.ColumbinaInput;
 
 public final class CurveConnectPreference extends AbstractPreference<CurveConnectParams> {
-    public CurveConnectPreference() {readPreference();}
+    public CurveConnectPreference() {
+        super(new ColumbinaPrefItem[] {
+                RADIUS, TRANS_ARC_LEN, CHAINAGE_LEN, DIRECTION_MODE, ABLE_MOD_ENDS, NEED_SELECT_NEW
+        });
+    }
     
     public static final String PREF_NAME = "curve-connect";
     
+    // 默认值
     public static final double DEFAULT_CURVE_CONNECT_RADIUS = 114.5;
     public static final double DEFAULT_CURVE_CONNECT_TRANS_ARC_LENGTH = 51.45;
     public static final double DEFAULT_CURVE_CONNECT_CHAINAGE_LENGTH = 8.10;
@@ -21,18 +26,6 @@ public final class CurveConnectPreference extends AbstractPreference<CurveConnec
     private static final ColumbinaPrefItem<Integer> DIRECTION_MODE  = new ColumbinaPrefItem<>(PREF_NAME,"direction-mode", Integer.class, DEFAULT_CURVE_CONNECT_DIR_MODE);
     private static final ColumbinaPrefItem<Boolean> ABLE_MOD_ENDS   = new ColumbinaPrefItem<>(PREF_NAME,"able-to-modify-ends", Boolean.class, true);
     private static final ColumbinaPrefItem<Boolean> NEED_SELECT_NEW = new ColumbinaPrefItem<>(PREF_NAME,"slc-new-ways", Boolean.class, true);
-    
-    private final ColumbinaPrefItem<?>[] ALL = new ColumbinaPrefItem[] {
-        RADIUS, TRANS_ARC_LEN, CHAINAGE_LEN, DIRECTION_MODE, ABLE_MOD_ENDS, NEED_SELECT_NEW
-    };
-
-    public void readPreference() {
-        for (ColumbinaPrefItem<?> item : ALL) item.readFromConfig();
-    }
-    
-    public void savePreference() {
-        for (ColumbinaPrefItem<?> item : ALL) item.saveToConfig();
-    }
     
     /**
      * 弹窗并校验、保存、返回参数

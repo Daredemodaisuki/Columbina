@@ -6,7 +6,11 @@ import yakxin.columbina.data.ColumbinaPrefItem;
 import yakxin.columbina.data.dto.inputs.ColumbinaInput;
 
 public final class TransitionCurvePreference extends AbstractPreference<TransitionCurveParams> {
-    public TransitionCurvePreference() {readPreference();}
+    public TransitionCurvePreference() {
+        super(new ColumbinaPrefItem[] {
+                RADIUS, TRANS_ARC_LEN, CHAINAGE_LEN, NEED_COPY_TAGS, NEED_DELETE_OLD, NEED_SELECT_NEW
+        });
+    }
     
     public static final String PREF_NAME = "transition-curve";
     
@@ -21,18 +25,6 @@ public final class TransitionCurvePreference extends AbstractPreference<Transiti
     private static final ColumbinaPrefItem<Boolean> NEED_COPY_TAGS  = new ColumbinaPrefItem<>(PREF_NAME, "need-copy-tags", Boolean.class, true);
     private static final ColumbinaPrefItem<Boolean> NEED_DELETE_OLD = new ColumbinaPrefItem<>(PREF_NAME, "need-del-old-ways", Boolean.class, false);
     private static final ColumbinaPrefItem<Boolean> NEED_SELECT_NEW = new ColumbinaPrefItem<>(PREF_NAME, "need-slc-new-ways", Boolean.class, true);
-    
-    private final ColumbinaPrefItem<?>[] ALL = new ColumbinaPrefItem[] {
-            RADIUS, TRANS_ARC_LEN, CHAINAGE_LEN, NEED_COPY_TAGS, NEED_DELETE_OLD, NEED_SELECT_NEW
-    };
-    
-    public void readPreference() {
-        for (ColumbinaPrefItem<?> item : ALL) item.readFromConfig();
-    }
-    
-    public void savePreference() {
-        for (ColumbinaPrefItem<?> item : ALL) item.saveToConfig();
-    }
     
     /**
      * 弹窗并保存、返回参数

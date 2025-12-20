@@ -8,10 +8,15 @@ import yakxin.columbina.utils.UtilsMath;
 import yakxin.columbina.utils.UtilsUI;
 
 public final class AngleLinePreference extends AbstractPreference<AngleLineParams> {
-    public AngleLinePreference() {readPreference();}
+    public AngleLinePreference() {
+        super(new ColumbinaPrefItem[] {
+                ANGLE_DEG, LENGTH, NEED_SELECT_NEW
+        });
+    }
     
     public static final String PREF_NAME = "angle-line";
     
+    // 默认值
     public static final double DEFAULT_ANGLE_LINE_ANGLE_DEG = 45.0;
     public static final double DEFAULT_ANGLE_LINE_LENGTH = 100.0;
     
@@ -19,22 +24,6 @@ public final class AngleLinePreference extends AbstractPreference<AngleLineParam
     private static final ColumbinaPrefItem<Double>  LENGTH          = new ColumbinaPrefItem<>(PREF_NAME, "length", Double.class, DEFAULT_ANGLE_LINE_LENGTH);
     private static final ColumbinaPrefItem<Boolean> NEED_SELECT_NEW = new ColumbinaPrefItem<>(PREF_NAME, "slc-new-ways", Boolean.class, true);
     
-    private final ColumbinaPrefItem<?>[] ALL = new ColumbinaPrefItem[] {
-            ANGLE_DEG, LENGTH, NEED_SELECT_NEW
-    };
-    
-    public void readPreference() {
-        for (ColumbinaPrefItem<?> item : ALL) item.readFromConfig();
-    }
-    
-    public void savePreference() {
-        for (ColumbinaPrefItem<?> item : ALL) item.saveToConfig();
-    }
-    
-    /**
-     * 弹窗并保存、返回参数
-     * @return 输入的参数
-     */
     @Override
     public AngleLineParams getParamsAndUpdatePreference(ColumbinaInput input) {
         readPreference();

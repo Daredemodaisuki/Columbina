@@ -6,10 +6,15 @@ import yakxin.columbina.data.ColumbinaPrefItem;
 import yakxin.columbina.data.dto.inputs.ColumbinaInput;
 
 public final class ChamferPreference extends AbstractPreference<ChamferParams> {
-    public ChamferPreference() {readPreference();}
+    public ChamferPreference() {
+        super(new ColumbinaPrefItem[] {
+                DISTANCE_A, DISTANCE_C, ANGLE_A_DEG, MODE, NEED_COPY_TAGS, NEED_DELETE_OLD, NEED_SELECT_NEW
+        });
+    }
     
     public static final String PREF_NAME = "chamfer";
     
+    // 默认值
     public static final double DEFAULT_CHAMFER_DISTANCE_A = 100;
     public static final double DEFAULT_CHAMFER_DISTANCE_C = 100;
     public static final double DEFAULT_CHAMFER_ANGLE_A_DEG = 51.4;
@@ -22,18 +27,6 @@ public final class ChamferPreference extends AbstractPreference<ChamferParams> {
     private static final ColumbinaPrefItem<Boolean> NEED_COPY_TAGS   = new ColumbinaPrefItem<>(PREF_NAME, "need-copy-tags", Boolean.class, true);
     private static final ColumbinaPrefItem<Boolean> NEED_DELETE_OLD  = new ColumbinaPrefItem<>(PREF_NAME, "need-del-old-ways", Boolean.class, false);
     private static final ColumbinaPrefItem<Boolean> NEED_SELECT_NEW  = new ColumbinaPrefItem<>(PREF_NAME, "need-slc-new-ways", Boolean.class, true);
-    
-    private final ColumbinaPrefItem<?>[] ALL = new ColumbinaPrefItem[] {
-            DISTANCE_A, DISTANCE_C, ANGLE_A_DEG, MODE, NEED_COPY_TAGS, NEED_DELETE_OLD, NEED_SELECT_NEW
-    };
-    
-    public void readPreference() {
-        for (ColumbinaPrefItem<?> item : ALL) item.readFromConfig();
-    }
-    
-    public void savePreference() {
-        for (ColumbinaPrefItem<?> item : ALL) item.saveToConfig();
-    }
     
     /**
      * 弹窗并保存、返回参数

@@ -12,7 +12,6 @@ import yakxin.columbina.data.dto.ColumbinaSingleOutput;
 import yakxin.columbina.data.dto.inputs.ColumbinaSingleInput;
 import yakxin.columbina.utils.UtilsArc;
 import yakxin.columbina.utils.UtilsMath;
-import yakxin.columbina.utils.UtilsUI;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -163,11 +162,11 @@ public final class CurveConnectGenerator extends AbstractGenerator<CurveConnectP
                 beforeStart, startTan, start, isStartLastNode,
                 end, endTan, afterEnd, isEndFirstNode
         );
-        UtilsUI.testMsgWindow(tanNodeStrategy.startMethod + " " + tanNodeStrategy.endMethod);
+        // UtilsUI.testMsgWindow(tanNodeStrategy.startMethod + " " + tanNodeStrategy.endMethod);
         if (tanNodeStrategy.startMethod == FAILED || tanNodeStrategy.endMethod == FAILED) return null;
         
         /// 绘制螺旋线
-        UtilsUI.testMsgWindow("开始绘制了");
+        // UtilsUI.testMsgWindow("开始绘制了");
         int actualLeftRight = dirMode == COUNTER_CLOCKWISE_MODE ? UtilsArc.LEFT : UtilsArc.RIGHT;
         // TODO：缓和曲线长度太长导致回旋线部分的转角就大于了总偏转角，导致曲线直接绕了一圈
         // TODO：回旋线移动有误：回旋弯应该向后移动
@@ -277,12 +276,12 @@ public final class CurveConnectGenerator extends AbstractGenerator<CurveConnectP
             else startMethod = FAILED;
         } else startMethod = FAILED;
         // 终点端
-        UtilsUI.testMsgWindow("end端\n"
-                + "end" + end + " tan" + endTan + " after" + afterEnd + "\n"
-                + "end-tan" + new ColumbinaEN(end, endTan).bearingRad() + "\n"
-                + "tan-after" + new ColumbinaEN(endTan, afterEnd).bearingRad() + "\n"
-                + "end-after" + new ColumbinaEN(end, afterEnd).bearingRad() + "\n"
-        );
+        // UtilsUI.testMsgWindow("end端\n"
+        //         + "end" + end + " tan" + endTan + " after" + afterEnd + "\n"
+        //         + "end-tan" + new ColumbinaEN(end, endTan).bearingRad() + "\n"
+        //         + "tan-after" + new ColumbinaEN(endTan, afterEnd).bearingRad() + "\n"
+        //         + "end-after" + new ColumbinaEN(end, afterEnd).bearingRad() + "\n"
+        // );
         if (ColumbinaEN.isBOnAC(end, endTan, afterEnd)) {
             if (isEndFirstNode && ableToAdjustInputNode) {/*裁切逻辑*/ endMethod = ADJUST_END_NODES;}
             else /*直接加节点逻辑*/ endMethod = ADD_NODES;

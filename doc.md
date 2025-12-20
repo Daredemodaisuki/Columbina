@@ -128,6 +128,12 @@
 
 和抽象参数类差不多，主要是起到明确泛型的作用，当然，每个抽象首选项类也需要负责弹出参数设置对话框、获取参数、保存到自身并返回给动作类，有一个统一的抽象函数`getParamsAndUpdatePreference`。
 
+〔自1.0.3起〕先前窗口直接从`Config`读取存储的首选项，而首选项类又从窗口组件读取内容更新自身、`Config`并传出参数实体，比较耦合，故优化了首选项的写法：
+* 抽象首选项提供`ColumbinaPrefItem<?>[] ALL`集中所有配置项，并提供与JOSM的`Config`的交互方法，其中会自动遍历每个配置项，不用具体类重复抄写；
+* 具体类只需要写所需的各种`static final ColumbinaPrefItem<Intager/Double/Boolean>`，在构造时传入配置项列表即可；
+* 现在起窗口读取参数不再直接从`Config`读取，而是具体类在`getParamsAndUpdatePreference`汇总当前参数的快照实体并传给窗口（弹窗前需要手动`readPreference`一次），窗口从参数中读取，新参数也通过新的参数实体返回；
+* 具体类在得到新参数后拆包校验，并直接（如果需要静默调整参数，则拆包后重新将检查后的值打包新的参数实体）并向外返回。
+
 ### 工具类
 
 * `yakxin.columbina.utils.UtilsArc`〔自1.0.3起〕：曲线相关的计算（包括根据圆心和角度画圆弧、画螺旋线等）：考虑到多个功能都要用，就整合在一起了；
@@ -160,8 +166,9 @@
     * `public double angleRadBetween(ColumbinaEN other)`：获取`this`（vecA）和`other`（vecB）的夹角；
     * `public int turnLeftRightTo(ColumbinaEN other)`：判断从`this`（vecA）到`other`（vecB）是左拐（逆时针偏）还是右拐（顺时针偏）；
     * `public ColumbinaEN walk(double bearingRad, double enDistance)`：从`this`出发，沿指定角度行进指定距离，得到新的点；
+* `yakxin.columbina.data.ColumbinaPrefItem`：自定义首选项配置项类，主要用于与`Config`的交互，通过在构造时指定JOSM中的键名，首选项读写不用再抄写多次键名；
 * `yakxin.columbina.data.ColumbinaException`：自定义异常类，主要起类型标识符作用；
-* `yakxin.columbina.data.ColumbinaSeqCommand`：自定义命令序列（主要是改图标和重写描述），用于撤销/重做栈；
+* `yakxin.columbina.data.ColumbinaSeqCommand`：自定义命令序列（主要是改图标和重写描述），用于撤销/重做栈。
 
 ## 异常处理
 

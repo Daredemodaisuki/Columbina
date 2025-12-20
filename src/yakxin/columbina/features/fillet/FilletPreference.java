@@ -7,7 +7,13 @@ import yakxin.columbina.data.dto.inputs.ColumbinaInput;
 import yakxin.columbina.utils.UtilsUI;
 
 public final class FilletPreference extends AbstractPreference<FilletParams> {
-    public FilletPreference() {readPreference();}
+    public FilletPreference() {
+        super(new ColumbinaPrefItem[] {
+                RADIUS, CHAINAGE_LENGTH,
+                MAX_POINT_PER_ARC, MIN_ANGLE_DEG, MAX_ANGLE_DEG,
+                NEED_COPY_TAGS, NEED_DELETE_OLD, NEED_SELECT_NEW
+        });
+    }
     
     public static final String PREF_NAME = "round-corner";
     
@@ -26,19 +32,6 @@ public final class FilletPreference extends AbstractPreference<FilletParams> {
     private static final ColumbinaPrefItem<Boolean> NEED_COPY_TAGS    = new ColumbinaPrefItem<>(PREF_NAME, "need-copy-tags", Boolean.class, true);
     private static final ColumbinaPrefItem<Boolean> NEED_DELETE_OLD   = new ColumbinaPrefItem<>(PREF_NAME, "need-del-old-ways", Boolean.class, false);
     private static final ColumbinaPrefItem<Boolean> NEED_SELECT_NEW   = new ColumbinaPrefItem<>(PREF_NAME, "need-slc-new-ways", Boolean.class, true);
-    
-    private final ColumbinaPrefItem<?>[] ALL = new ColumbinaPrefItem[] {
-            RADIUS, CHAINAGE_LENGTH, MAX_POINT_PER_ARC, MIN_ANGLE_DEG, MAX_ANGLE_DEG,
-            NEED_COPY_TAGS, NEED_DELETE_OLD, NEED_SELECT_NEW
-    };
-    
-    public void readPreference() {
-        for (ColumbinaPrefItem<?> item : ALL) item.readFromConfig();
-    }
-    
-    public void savePreference() {
-        for (ColumbinaPrefItem<?> item : ALL) item.saveToConfig();
-    }
     
     /**
      * 弹窗并校验、保存、返回参数
