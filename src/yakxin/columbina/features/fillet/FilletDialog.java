@@ -39,7 +39,7 @@ public final class FilletDialog extends ExtendedDialog {
     private final JCheckBox copyTag;
     
     // 构建窗口 - 从params读取初始值，同时接收input用于计算最大半径
-    public FilletDialog(ColumbinaInput input, FilletParams savedParams) {
+    FilletDialog(ColumbinaInput input, FilletParams savedParams) {
         // 标题、按钮
         super(MainApplication.getMainFrame(),
                 I18n.tr("Columbina"),
@@ -178,6 +178,7 @@ public final class FilletDialog extends ExtendedDialog {
             return NumberFormat.getInstance(Locale.US).parse(filletR.getText()).doubleValue();
         } catch (ParseException e) {
             return FilletPreference.DEFAULT_FILLET_RADIUS;
+            // 能返回数值就返回，有异常的话返回默认值（但这里不做数值校验，在Action类中检查是否合法）
         }
     }
     public double getFilletChainageLength() {

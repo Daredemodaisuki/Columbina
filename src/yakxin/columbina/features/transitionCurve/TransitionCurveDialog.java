@@ -30,7 +30,7 @@ public final class TransitionCurveDialog extends ExtendedDialog {
     private final JCheckBox copyTag;
 
     // 构建窗口
-    public TransitionCurveDialog(TransitionCurveParams savedParams) {
+    TransitionCurveDialog(TransitionCurveParams savedParams) {
         // 标题、按钮
         super(MainApplication.getMainFrame(),
                 I18n.tr("Columbina"),
@@ -95,6 +95,7 @@ public final class TransitionCurveDialog extends ExtendedDialog {
             return NumberFormat.getInstance(Locale.US).parse(transitionRadius.getText()).doubleValue();
         } catch (ParseException e) {
             return TransitionCurvePreference.DEFAULT_TRANSITION_CURVE_RADIUS;
+            // 能返回数值就返回，有异常的话返回默认值（但这里不做数值校验，在Action类中检查是否合法）
         }
     }
     public double getTransitionLength() {
