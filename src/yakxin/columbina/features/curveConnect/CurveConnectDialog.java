@@ -22,13 +22,12 @@ public final class CurveConnectDialog extends ExtendedDialog {
     private final JFormattedTextField curveConnectR;
     private final JFormattedTextField curveConnectTransArcLength;
     private final JFormattedTextField curveConnectChainageLength;
-    private final JFormattedTextField curveConnectMaxPointNum;
     private final UtilsUI.RadioButtonGroup curveConnectDirection;
 
     private final JCheckBox curveConnectAbleToAdjustTanNodes;
     private final JCheckBox selectNewWays;
-
-    CurveConnectDialog() {
+    
+    CurveConnectDialog(CurveConnectParams savedParams) {
         super(MainApplication.getMainFrame(),
                 I18n.tr("Columbina"),
                 BUTTON_TEXTS,
@@ -40,7 +39,7 @@ public final class CurveConnectDialog extends ExtendedDialog {
         // 单选框组
         curveConnectDirection = new UtilsUI.RadioButtonGroup(
                 new ArrayList<>(List.of(new String[]{I18n.tr("Turn left"), I18n.tr("Turn right")})),
-                CurveConnectPreference.getCurveConnectDirMode()
+                savedParams.dirMode
         );
 
         // 窗体
@@ -53,14 +52,13 @@ public final class CurveConnectDialog extends ExtendedDialog {
         curveConnectDirection.addRadioButton(panel, CurveConnectGenerator.CLOCKWISE_MODE);
 
         UtilsUI.addSpace(panel, 5);
-        curveConnectR = UtilsUI.addInput(panel, I18n.tr("Circular curve surfaceRadius (m): "), CurveConnectPreference.getCurveConnectRadius());
-        curveConnectTransArcLength = UtilsUI.addInput(panel, I18n.tr("Transition curve length (m): "), CurveConnectPreference.getCurveConnectTransArcLength());
-        curveConnectChainageLength = UtilsUI.addInput(panel, I18n.tr("Chainage length (node spacing, m): "), CurveConnectPreference.getCurveConnectChainageLength());
-        curveConnectMaxPointNum = UtilsUI.addInput(panel, I18n.tr("Maximum nodes (excluding start and end): "), CurveConnectPreference.getCurveConnectMaxPointPerArc());
-        curveConnectAbleToAdjustTanNodes = UtilsUI.addCheckbox(panel, I18n.tr("Able to cut or extent existing way ends"), CurveConnectPreference.isCurveConnectAbleToAdjustInputNode());
+        curveConnectR = UtilsUI.addInput(panel, I18n.tr("Circular curve surfaceRadius (m): "), savedParams.surfaceCircleRadius);
+        curveConnectTransArcLength = UtilsUI.addInput(panel, I18n.tr("Transition curve length (m): "), savedParams.surfaceTransArcLength);
+        curveConnectChainageLength = UtilsUI.addInput(panel, I18n.tr("Chainage length (node spacing, m): "), savedParams.surfaceChainageLength);
+        curveConnectAbleToAdjustTanNodes = UtilsUI.addCheckbox(panel, I18n.tr("Able to cut or extent existing way ends"), savedParams.ableToAdjustInputNode);
 
         UtilsUI.addSection(panel, I18n.tr("Other Operations"));
-        selectNewWays = UtilsUI.addCheckbox(panel, I18n.tr("Select new ways after drawing"), CurveConnectPreference.isCurveConnectSelectNewWays());
+        selectNewWays = UtilsUI.addCheckbox(panel, I18n.tr("Select new ways after drawing"), savedParams.selectNew);
 
         contentInsets = new Insets(5, 15, 5, 15);  // 内容边距
         setContent(panel);
@@ -101,14 +99,9 @@ public final class CurveConnectDialog extends ExtendedDialog {
             return CurveConnectPreference.DEFAULT_CURVE_CONNECT_CHAINAGE_LENGTH;
         }
     }
-    public int getCurveConnectMaxPointNum() {
-        try {
-            return NumberFormat.getInstance(Locale.US).parse(curveConnectMaxPointNum.getText()).intValue();
-        } catch (ParseException e) {
-            return CurveConnectPreference.DEFAULT_CURVE_CONNECT_MAX_POINT_PER_ARC;
-        }
-    }
     public int getCurveConnectDirection() { return curveConnectDirection.getButtonSelected();}
     public boolean getIfSelectNew() {return selectNewWays.isSelected();}
     public boolean getAbleToAdjustTanNodes() {return  curveConnectAbleToAdjustTanNodes.isSelected();}
 }
+
+
