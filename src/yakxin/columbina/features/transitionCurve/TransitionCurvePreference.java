@@ -26,10 +26,6 @@ public final class TransitionCurvePreference extends AbstractPreference<Transiti
     private static final ColumbinaPrefItem<Boolean> NEED_DELETE_OLD = new ColumbinaPrefItem<>(PREF_NAME, "need-del-old-ways", Boolean.class, false);
     private static final ColumbinaPrefItem<Boolean> NEED_SELECT_NEW = new ColumbinaPrefItem<>(PREF_NAME, "need-slc-new-ways", Boolean.class, true);
     
-    /**
-     * 弹窗并保存、返回参数
-     * @return 输入的参数
-     */
     @Override
     public TransitionCurveParams getParamsAndUpdatePreference(ColumbinaInput input) {
         readPreference();
@@ -53,7 +49,7 @@ public final class TransitionCurvePreference extends AbstractPreference<Transiti
         if (newParams.surfaceChainageLength > newParams.surfaceTransArcLength)
             throw new IllegalArgumentException(I18n.tr("Invalid transition curve length and chainage length. The curve length should be grater chainage length."));
         
-        // 更新参数
+        // 更新配置项
         RADIUS.setValue(newParams.surfaceRadius);
         TRANS_ARC_LEN.setValue(newParams.surfaceTransArcLength);
         CHAINAGE_LEN.setValue(newParams.surfaceChainageLength);

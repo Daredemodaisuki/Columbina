@@ -28,10 +28,6 @@ public final class ChamferPreference extends AbstractPreference<ChamferParams> {
     private static final ColumbinaPrefItem<Boolean> NEED_DELETE_OLD  = new ColumbinaPrefItem<>(PREF_NAME, "need-del-old-ways", Boolean.class, false);
     private static final ColumbinaPrefItem<Boolean> NEED_SELECT_NEW  = new ColumbinaPrefItem<>(PREF_NAME, "need-slc-new-ways", Boolean.class, true);
     
-    /**
-     * 弹窗并保存、返回参数
-     * @return 输入的参数
-     */
     @Override
     public ChamferParams getParamsAndUpdatePreference(ColumbinaInput input) {
         readPreference();
@@ -58,6 +54,7 @@ public final class ChamferPreference extends AbstractPreference<ChamferParams> {
             if (newParams.angleADeg <= 0) throw new IllegalArgumentException(I18n.tr("Invalid round chamfer angle A, should be greater than 0m."));
         }
         
+        // 更新配置项
         DISTANCE_A.setValue(newParams.surfaceDistanceA);
         DISTANCE_C.setValue(newParams.surfaceDistanceC);
         ANGLE_A_DEG.setValue(newParams.angleADeg);

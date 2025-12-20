@@ -27,10 +27,6 @@ public final class CurveConnectPreference extends AbstractPreference<CurveConnec
     private static final ColumbinaPrefItem<Boolean> ABLE_MOD_ENDS   = new ColumbinaPrefItem<>(PREF_NAME,"able-to-modify-ends", Boolean.class, true);
     private static final ColumbinaPrefItem<Boolean> NEED_SELECT_NEW = new ColumbinaPrefItem<>(PREF_NAME,"slc-new-ways", Boolean.class, true);
     
-    /**
-     * 弹窗并校验、保存、返回参数
-     * @return 输入的参数
-     */
     @Override
     public CurveConnectParams getParamsAndUpdatePreference(ColumbinaInput input) {
         readPreference();

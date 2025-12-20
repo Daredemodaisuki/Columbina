@@ -33,10 +33,6 @@ public final class FilletPreference extends AbstractPreference<FilletParams> {
     private static final ColumbinaPrefItem<Boolean> NEED_DELETE_OLD   = new ColumbinaPrefItem<>(PREF_NAME, "need-del-old-ways", Boolean.class, false);
     private static final ColumbinaPrefItem<Boolean> NEED_SELECT_NEW   = new ColumbinaPrefItem<>(PREF_NAME, "need-slc-new-ways", Boolean.class, true);
     
-    /**
-     * 弹窗并校验、保存、返回参数
-     * @return 输入的参数
-     */
     @Override
     public FilletParams getParamsAndUpdatePreference(ColumbinaInput input) {
         readPreference();

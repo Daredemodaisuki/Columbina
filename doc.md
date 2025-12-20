@@ -207,15 +207,16 @@
 2. 根据调用和泛型使用的顺序，从后往前，先完成`xxParams`：
    * 继承`AbstractParams`
    * 添加功能特定的参数字段
-3. 完成`xxPreference`（与4直接有相互调用，应当同步实现）：
-   * 继承`AbstractPreference<xxParams>`
-   * 实现`getParamsAndUpdatePreference`方法（调用`xxDialog`并检查数值）
-   * 管理用户首选项的读写
-4. 完成`xxDialog`：
+3. 完成`xxDialog`：
    * 继承`ExtendedDialog`
    * 创建参数输入界面
-   * 实现获取参数的方法（getter）
+   * 构造函数中从参数读入已存首选项，并实现输出参数的方法（`getParams`）
    * 如果需要计算推荐参数，需要提前实现在Action类的检查部分，并把参数提交到`ColumbinaSingleInput`的`quickPrecomputedData`中；创建界面时提取相关推荐参数
+   * 〔自1.0.3起〕无需同时与4进行，现在已基本解耦，3仅会引用4的默认值常量
+4. 完成`xxPreference`：
+    * 继承`AbstractPreference<xxParams>`，并定义所需的配置项`ColumbinaPrefItem`常量
+    * 实现`getParamsAndUpdatePreference`方法（调用`xxDialog`的`getParams`并检查数值）
+    * 〔自1.0.3起〕无需再手动管理用户首选项的读写，抽象类已写好，支持自动遍历
 5. 完成`xxGenerator`：
    * 继承`AbstractGenerator<xxParams>`
    * 实现数学上的具体算法（输入应为地面长度，实现数学计算时应在生成器内部转为东北坐标下的长度）
@@ -242,7 +243,4 @@
      * `ColumbinaSingleInput`是失败或者部分失败的输入，需要给到一个`toString`的方法显示输入具体是什么；
      * `Object`是部分失败记录，具体的动作类定义一个根据`Object`自行输出`String`的方法（`Object`也可以是`null`表示这组输入都失败了）；
      * 两个拼在一起就是现状`ActionWithBatchWays`输出部分失败消息的逻辑；
-2. 目前Preference弹Dialog，弹完检查后先更改窗口的内容，保存时又从窗口组件读取——比较耦合、需要重构，不过不慌：
-   * ~~可能可以考虑再加一个Dialog泛型和`abstractDialog<ParamType>`抽象类，弹窗由action负责，窗口类提供一个getParam，action接收到之后调用首选项的校验函数，校验有问题就在首选项类抛出异常，OK返回CHECK_OK；~~
-   * 也可以考虑不增加它，现状Preference弹出窗口，本来也就是弹出会保存到首选项的「参数设置」窗口，逻辑OK，只是需要整理下避免来回读写；
-3. Preference弹窗时会向Dialog传入input以便窗口显示推荐参数（如果需要），现状推荐参数由Dialog自行计算，窗口负责了数据计算，职责不太明晰，现在`ColumbinaSingleInput`有了「快捷传递中间量（`quickPrecomputedData`）」后，也许可以在action类具体检查时计算推荐参数并送入这里，窗口直接读取？
+2. Preference弹窗时会向Dialog传入input以便窗口显示推荐参数（如果需要），现状推荐参数由Dialog自行计算，窗口负责了数据计算，职责不太明晰，现在`ColumbinaSingleInput`有了「快捷传递中间量（`quickPrecomputedData`）」后，也许可以在action类具体检查时计算推荐参数并送入这里，窗口直接读取？
