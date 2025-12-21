@@ -115,8 +115,8 @@ public abstract class ActionWithBatchWays<
         List<ColumbinaSingleInput> singleInputs = new ArrayList<>();
         for (Way wayToBeProcessed : totalInput.getWays()) {
             singleInputs.add(new ColumbinaSingleInput(
-                    new ArrayList<Node>(),
-                    new ArrayList<Way>(Collections.singleton(wayToBeProcessed))
+                    new ArrayList<>(),
+                    new ArrayList<>(Collections.singleton(wayToBeProcessed))
             ));
         }
         return singleInputs;
@@ -254,7 +254,7 @@ public abstract class ActionWithBatchWays<
         ColumbinaSingleOutput singleOutput = generator.getOutputForSingleInput(singleInput, params);
         if (singleOutput == null) return null;
         if (!singleOutput.ifCanMakeAWay()) return null;
-        List<Node> newNodes = singleOutput.newNodes;
+        List<Node> newNodes = singleOutput.wayNodes;
         List<Long> failedNodeIds = singleOutput.failedNodes;
         List<Command> addCommands = new LinkedList<>();
 

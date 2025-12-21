@@ -87,6 +87,7 @@ public final class CurveConnectGenerator extends AbstractGenerator<CurveConnectP
         ColumbinaEN startDirVec = new ColumbinaEN(beforeStartNode, startNode).normVec();
         ColumbinaEN endDirVec = new ColumbinaEN(endNode, afterEndNode).normVec();
         
+        // TODO：如果只选择了一个节点，那么它就是交点
         IntersectResult intersectResult = getIntersectResult(start, startDirVec, end, endDirVec); // 交点和是否平行
         
         /// 计算切距切点
@@ -256,6 +257,9 @@ public final class CurveConnectGenerator extends AbstractGenerator<CurveConnectP
             ColumbinaEN beforeStart, ColumbinaEN startTan, ColumbinaEN start, boolean isStartLastNode,
             ColumbinaEN end, ColumbinaEN endTan, ColumbinaEN afterEnd, boolean isEndFirstNode
     ) {
+        // TODO：实测下来还需要补充的情况：
+        //  如果此时交点不是起点路径最后一个点，那么还可能需要尝试在交点与起点路径下一个点之间开始曲线，
+        //  如果此时交点不是终点路径第一个点，那么还可能需要尝试在终点路径上一个与交点之间结束曲线
         final int startMethod;
         final int endMethod;
         // 起点端

@@ -84,7 +84,7 @@ public abstract class ActionWithNodeWay<
 
         // 正式构建绘制命令
         if (newWay != null) {
-            for (Node n : singleOutput.newNodes.stream().distinct().collect(Collectors.toList())) {  // 路径内部可能有节点复用（如闭合线），去重
+            for (Node n : singleOutput.wayNodes.stream().distinct().collect(Collectors.toList())) {  // 路径内部可能有节点复用（如闭合线），去重
                 if (!ds.containsNode(n))  // 新路径的节点在ds中未绘制（不是复用的）才准备绘制
                     addCommands.add(new AddCommand(ds, n));  // 添加节点到命令序列
             }
@@ -96,7 +96,7 @@ public abstract class ActionWithNodeWay<
 
     @Override
     public List<Command> concludeRemoveCommands(DataSet ds) {
-        return new ArrayList<Command>();  // 这个模板下不需要移除，返回空列表即可
+        return new ArrayList<>();  // 这个模板下不需要移除，返回空列表即可
     }
 
     @Override

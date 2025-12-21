@@ -78,7 +78,6 @@ public final class CurveConnectAction extends
         Way endWay = singleInput.ways.get(1);
         Node node1 = singleInput.nodes.get(0);
         Node node2 = singleInput.nodes.size() == 2 ? singleInput.nodes.get(1) : node1;
-        // TODO：测试获取到的先后是否正确
 
         // 计算节点在路径中的索引
         int n1StartIdx = UtilsData.getNodeIndex(node1, startWay);
@@ -89,12 +88,12 @@ public final class CurveConnectAction extends
         // 任何节点都不能是自交路径的自交节点
         if (n1StartIdx == UtilsData.SELF_INTERSECTION || n1EndIdx == UtilsData.SELF_INTERSECTION
                 || n2StartIdx == UtilsData.SELF_INTERSECTION || n2EndIdx == UtilsData.SELF_INTERSECTION)
-            throw new ColumbinaException("不允许选择自交路径的自交节点");
+            throw new ColumbinaException(I18n.tr("Self-intersection nodes of self-intersecting ways are not allowed."));
 
         // 当只选择了1个节点，要求同时在2条路径上
         if (singleInput.nodes.size() == 1) {
             if (n1StartIdx == UtilsData.NODE_NOT_FOUND || n1EndIdx == UtilsData.NODE_NOT_FOUND)
-                throw new ColumbinaException("只选择一个节点时，该节点必须同时位于两条路径上");
+                throw new ColumbinaException(I18n.tr("When only one node is selected, that node must lie on both ways."));
             // 该节点同时作为start和end节点
             singleInput.quickPrecomputedData.put("start", new Object[]{node1, n1StartIdx});
             singleInput.quickPrecomputedData.put("end", new Object[]{node1, n1EndIdx});
@@ -104,7 +103,7 @@ public final class CurveConnectAction extends
             boolean node1OnBoth = (n1StartIdx != UtilsData.NODE_NOT_FOUND && n1EndIdx != UtilsData.NODE_NOT_FOUND);
             boolean node2OnBoth = (n2StartIdx != UtilsData.NODE_NOT_FOUND && n2EndIdx != UtilsData.NODE_NOT_FOUND);
             if (node1OnBoth && node2OnBoth)
-                throw new ColumbinaException("选择两个节点时，至少有一个节点不能同时位于两条路径上");
+                throw new ColumbinaException(I18n.tr("When two nodes are selected, at least one node must not be shared by both ways."));
             // 自动匹配start和end节点
             Node startNode, endNode;
             int startIdx, endIdx;
@@ -115,7 +114,7 @@ public final class CurveConnectAction extends
                 startNode = node2; startIdx = n2StartIdx;
                 endNode = node1; endIdx = n1EndIdx;
             } else
-                throw new ColumbinaException("所选节点无法在起止路径之间建立有效对应关系");
+                throw new ColumbinaException(I18n.tr("Cannot find a valid correspondence between the selected nodes with the start and end ways."));
             singleInput.quickPrecomputedData.put("start", new Object[]{startNode, startIdx});
             singleInput.quickPrecomputedData.put("end", new Object[]{endNode, endIdx});
         }
@@ -125,9 +124,9 @@ public final class CurveConnectAction extends
         Object[] endData = (Object[]) singleInput.quickPrecomputedData.get("end");
         int startIdx = (int) startData[1]; int endIdx = (int) endData[1];
         if (!startWay.isClosed() && startIdx == 0)
-            throw new ColumbinaException("起始路径为非闭合路径时，起点不能是第一个节点");
+            throw new ColumbinaException(I18n.tr("For a non-closed start way, the starting node cannot be the first node."));
         if (!endWay.isClosed() && endIdx == endWay.getNodesCount() - 1)
-            throw new ColumbinaException("终止路径为非闭合路径时，终点不能是最后一个节点");
+            throw new ColumbinaException(I18n.tr("For a non-closed end way, the ending node cannot be the last node."));
 
         return CHECK_OK;
     }

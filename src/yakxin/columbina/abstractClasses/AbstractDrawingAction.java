@@ -213,6 +213,7 @@ public abstract class AbstractDrawingAction <
         }
 
         // 绘制部分的撤销重做栈处理并正式提交执行
+        // TODO：icon
         Command cmdAdd = new ColumbinaSeqCommand(getUndoRedoInfo(totalInput, params), cmdsAdd, "RoundCorners");
         UndoRedoHandler.getInstance().add(cmdAdd);
 
