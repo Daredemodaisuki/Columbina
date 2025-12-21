@@ -1,8 +1,8 @@
 # Columbina开发文档
 
-本文档用于记录插件的架构和一些注意事项，从1.0.2版本开始产生抽象层时开始记录。
+本文档用于记录插件的结构和一些注意事项，从1.0.2版本开始产生抽象层时开始记录。
 
-〔自1.0.3起〕Columbina使用Java11以兼容JOSM最低Java版本。
+〔自1.0.3起〕Columbina从Java21降至Java11以兼容JOSM最低Java版本。
 
 ## 总业务流程
 
@@ -129,8 +129,8 @@
 和抽象参数类差不多，主要是起到明确泛型的作用，当然，每个抽象首选项类也需要负责弹出参数设置对话框、获取参数、保存到自身并返回给动作类，有一个统一的抽象函数`getParamsAndUpdatePreference`。
 
 〔自1.0.3起〕先前窗口直接从`Config`读取存储的首选项，而首选项类又从窗口组件读取内容更新自身、`Config`并传出参数实体，比较耦合，故优化了首选项的写法：
-* 抽象首选项提供`ColumbinaPrefItem<?>[] ALL`集中所有配置项，并提供与JOSM的`Config`的交互方法，其中会自动遍历每个配置项，不用具体类重复抄写；
-* 具体类只需要写所需的各种`static final ColumbinaPrefItem<Intager/Double/Boolean>`，在构造时传入配置项列表即可；
+* 改版的抽象首选项参考了枚举的实现，提供`ColumbinaPrefItem<?>[] ALL`集中所有配置项，并提供与JOSM的`Config`的交互方法，其中会自动遍历每个配置项，不用具体类重复抄写；
+* 具体类只需要声明所需的各种`static final ColumbinaPrefItem<Intager/Double/Boolean>`，在构造时传入配置项列表即可；
 * 现在起窗口读取参数不再直接从`Config`读取，而是具体类在`getParamsAndUpdatePreference`汇总当前参数的快照实体并传给窗口（弹窗前需要手动`readPreference`一次），窗口从参数中读取，新参数也通过新的参数实体返回；
 * 具体类在得到新参数后拆包校验，并直接（如果需要静默调整参数，则拆包后重新将检查后的值打包新的参数实体）并向外返回。
 
@@ -138,7 +138,7 @@
 
 * `yakxin.columbina.utils.UtilsArc`〔自1.0.3起〕：曲线相关的计算（包括根据圆心和角度画圆弧、画螺旋线等）：考虑到多个功能都要用，就整合在一起了；
 * `yakxin.columbina.utils.UtilsData`：数据处理（包含从序列命令中提取命令列表等）；
-* `yakxin.columbina.utils.UtilsMath`：数学计算（包含坐标转换、角度归一化、级数求和等）：
+* `yakxin.columbina.utils.UtilsMath`：数学计算（包含坐标转换、角度反转和归一化、级数求和等）：
   * 〔自1.0.3起〕完全弃用`double[]`的坐标转换、向量运算，使用`ColumbinaEN`提供的方法；
 * `yakxin.columbina.utils.UtilsUI`：用户界面组件（包含添加各种组件、消息弹窗、测试用调试输出窗口等）。
 
@@ -146,13 +146,13 @@
 
 * `yakxin.columbina.data.dto.inputs.ColumbinaInput`：总输入类，打包用户选择的所有要素；
 * `yakxin.columbina.data.dto.inputs.ColumbinaSingleInput`：单组输入，用于传递给生成器生成结果、和参数窗口计算推荐参数；
-  * 〔自1.0.3起〕`public Map<String, Object>  quickPrecomputedData`：快捷传递中间量公共字段：
+  * 〔自1.0.3起〕`public Map<String, Object> quickPrecomputedData`：快捷传递中间量公共字段：
     * 如果在检查期间就预计算了一些内容（比如路径上的节点索引），可以赋值扔这里方便的给到生成器减少重复计算，生成器需要自己拆包；
     * 也考虑弹窗的推荐参数提前算好，通过这里直接传递到窗口；
 * `yakxin.columbina.data.dto.ColumbinaSingleOutput`：单组输出，包含新节点和部分失败记录；
 * `yakxin.columbina.data.dto.PanelSectionResult`：UI面板之分隔线+小栏目标题打包；
 * `yakxin.columbina.data.ColumbinaCorner`〔自1.0.3起〕：拐角类：
-  * 先前每个生成器都是手动存储拐角ABC节点又手动构建BA、BC等向量，这个类把它们统合在了一起，直接访问成员即可知道各种向量、长度、角度；
+  * 先前每个生成器都是手动存储拐角ABC节点又手动构建BA、BC等向量，这个类把它们统合在了一起，直接访问成员即可知道各种向量、长度、角度，还支持算角平分线方向角等；
   * `public static ColumbinaCorner create(Way way, int indexA)`这个方法可以轻松从路径中直接提取对应节点（做了闭合路径的循环索引）并产生拐角，无需手动储存ABC三个点再构建；
 * `yakxin.columbina.data.ColumbinaEN`〔自1.0.3起〕：自定义东北坐标类：
   * JOSM墨卡托投影的坐标是`EastNorth`类，但是早期没有注意到里面有加减乘除方法，相关的加减乘除先前每个生成器都需要调用`UtilsMath`中的各种静态`double[]`函数进行向量计算，需要额外存储很多变量，很繁琐；
@@ -166,7 +166,8 @@
     * `public double angleRadBetween(ColumbinaEN other)`：获取`this`（vecA）和`other`（vecB）的夹角；
     * `public int turnLeftRightTo(ColumbinaEN other)`：判断从`this`（vecA）到`other`（vecB）是左拐（逆时针偏）还是右拐（顺时针偏）；
     * `public ColumbinaEN walk(double bearingRad, double enDistance)`：从`this`出发，沿指定角度行进指定距离，得到新的点；
-* `yakxin.columbina.data.ColumbinaPrefItem`：自定义首选项配置项类，主要用于与`Config`的交互，通过在构造时指定JOSM中的键名，首选项读写不用再抄写多次键名；
+    * `public static boolean isBOnAC(ColumbinaEN a, ColumbinaEN b, ColumbinaEN c)`：判断B是否在AC连线上且在AC中间；
+* `yakxin.columbina.data.ColumbinaPrefItem`：〔自1.0.3起〕自定义首选项配置项类，主要用于与`Config`的交互，通过在构造时指定JOSM中的键名，首选项读写不用再抄写多次键名（防止抄错）；
 * `yakxin.columbina.data.ColumbinaException`：自定义异常类，主要起类型标识符作用；
 * `yakxin.columbina.data.ColumbinaSeqCommand`：自定义命令序列（主要是改图标和重写描述），用于撤销/重做栈。
 
@@ -214,9 +215,9 @@
    * 如果需要计算推荐参数，需要提前实现在Action类的检查部分，并把参数提交到`ColumbinaSingleInput`的`quickPrecomputedData`中；创建界面时提取相关推荐参数
    * 〔自1.0.3起〕无需同时与4进行，现在已基本解耦，3仅会引用4的默认值常量
 4. 完成`xxPreference`：
-    * 继承`AbstractPreference<xxParams>`，并定义所需的配置项`ColumbinaPrefItem`常量
-    * 实现`getParamsAndUpdatePreference`方法（调用`xxDialog`的`getParams`并检查数值）
-    * 〔自1.0.3起〕无需再手动管理用户首选项的读写，抽象类已写好，支持自动遍历
+   * 继承`AbstractPreference<xxParams>`，并定义所需的配置项`ColumbinaPrefItem`常量
+   * 实现`getParamsAndUpdatePreference`方法（调用`xxDialog`的`getParams`并检查数值）
+   * 〔自1.0.3起〕无需再手动管理用户首选项的读写，现在的抽象类已提供方法，支持自动遍历
 5. 完成`xxGenerator`：
    * 继承`AbstractGenerator<xxParams>`
    * 实现数学上的具体算法（输入应为地面长度，实现数学计算时应在生成器内部转为东北坐标下的长度）

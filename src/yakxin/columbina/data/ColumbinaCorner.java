@@ -69,10 +69,10 @@ public class ColumbinaCorner {
             b = way.getNode((indexA + 1) % numNode);
             c = way.getNode((indexA + 2) % numNode);
         } catch (Exception exWay) {  // 以防万一，捕获如访问超界等异常并包装成ColumbinaException抛出
-            throw new ColumbinaException("Failed to create ColumbinaCorner: " + exWay.getMessage());
+            throw new ColumbinaException("ColumbinaCorner.create: Failed to create ColumbinaCorner: " + exWay.getMessage());
         }
         if (a == null || b == null || c == null)
-            throw new ColumbinaException("Get null Node when creating ColumbinaCorner from Way.");
+            throw new ColumbinaException("ColumbinaCorner.create: Get null Node when creating ColumbinaCorner from Way.");
 
         return new ColumbinaCorner(
                 new ColumbinaEN(a.getEastNorth()), new ColumbinaEN(b.getEastNorth()), new ColumbinaEN(c.getEastNorth())
@@ -87,3 +87,5 @@ public class ColumbinaCorner {
         return BA.normVec().add(BC.normVec()).bearingRad();
     }
 }
+
+

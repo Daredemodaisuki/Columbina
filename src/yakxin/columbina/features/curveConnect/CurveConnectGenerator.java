@@ -3,7 +3,6 @@ package yakxin.columbina.features.curveConnect;
 import org.openstreetmap.josm.data.coor.EastNorth;
 import org.openstreetmap.josm.data.osm.Node;
 import org.openstreetmap.josm.data.osm.Way;
-import org.openstreetmap.josm.tools.I18n;
 import yakxin.columbina.abstractClasses.AbstractGenerator;
 import yakxin.columbina.data.ColumbinaCorner;
 import yakxin.columbina.data.ColumbinaEN;
@@ -49,7 +48,7 @@ public final class CurveConnectGenerator extends AbstractGenerator<CurveConnectP
                 );
             }
         }
-        throw new ColumbinaException(I18n.tr("No or wrong precomputed data received."));
+        throw new ColumbinaException("CurveConnectGenerator.getOutputForSingleInput: No or wrong precomputed data received.");
     }
 
     /**
@@ -74,7 +73,6 @@ public final class CurveConnectGenerator extends AbstractGenerator<CurveConnectP
             double enChainageLength,  // 每个桩（节点）之间的距离
             int dirMode, boolean ableToAdjustInputNode
     ) {
-        // UtilsUI.testMsgWindow("进入生成器了");
         /// 计算交点
         //   点startNode(x1, y1) + t·方向向量startDirVec(dx1, dy1) = 点endNode(x2, y2) + s·方向向量endDirVec(dx2, dy2)
         //   x1 + t * dx1 = x2 + s * dx2
@@ -92,7 +90,6 @@ public final class CurveConnectGenerator extends AbstractGenerator<CurveConnectP
         IntersectResult intersectResult = getIntersectResult(start, startDirVec, end, endDirVec); // 交点和是否平行
         
         /// 计算切距切点
-        // UtilsUI.testMsgWindow("开始计算切点了");
         ColumbinaCorner stdCorner;  // 起点在交点前、终点在交点后的标准拐角（不然拐角可能会倒过来）
         UtilsArc.TransArcStartResult transArcStarts;
         if (intersectResult.parallel) {  // 如果是平行的，切距就是切线增长
@@ -132,7 +129,6 @@ public final class CurveConnectGenerator extends AbstractGenerator<CurveConnectP
         }
 
         /// 计算圆心位置
-        // UtilsUI.testMsgWindow("开始计圆心了");
         ColumbinaEN center;
         if (intersectResult.parallel) {
             // 对于平行的，默认圆心就是起点终点之中点（intersect）
@@ -156,20 +152,16 @@ public final class CurveConnectGenerator extends AbstractGenerator<CurveConnectP
         ColumbinaEN beforeStart = new ColumbinaEN(beforeStartNode.getEastNorth()), startTan = new ColumbinaEN(transArcStarts.startA);
         ColumbinaEN afterEnd = new ColumbinaEN(afterEndNode.getEastNorth()), endTan = new ColumbinaEN(transArcStarts.startC);
         // 匹配切点策略
-        // UtilsUI.testMsgWindow("开始判断切距了\n" + isStartLastNode + " " + isEndFirstNode);
         TanNodeStrategyResult tanNodeStrategy = getTanNodeStrategyResult(
                 ableToAdjustInputNode,
                 beforeStart, startTan, start, isStartLastNode,
                 end, endTan, afterEnd, isEndFirstNode
         );
-        // UtilsUI.testMsgWindow(tanNodeStrategy.startMethod + " " + tanNodeStrategy.endMethod);
         if (tanNodeStrategy.startMethod == FAILED || tanNodeStrategy.endMethod == FAILED) return null;
         
         /// 绘制螺旋线
-        // UtilsUI.testMsgWindow("开始绘制了");
         int actualLeftRight = dirMode == COUNTER_CLOCKWISE_MODE ? UtilsArc.LEFT : UtilsArc.RIGHT;
         // TODO：缓和曲线长度太长导致回旋线部分的转角就大于了总偏转角，导致曲线直接绕了一圈
-        // TODO：回旋线移动有误：回旋弯应该向后移动
         // A侧螺旋线（从A侧直缓切点顺着画）
         UtilsArc.SingleEulerArcResult unrotatedTransArcA = UtilsArc.getUnrotatedEulerArc(  // 绘制
                 enCurveRadius, enTransArcLength,
@@ -227,7 +219,6 @@ public final class CurveConnectGenerator extends AbstractGenerator<CurveConnectP
         ColumbinaSingleOutput result = new ColumbinaSingleOutput(finalNodes, new ArrayList<>());
         result.extraData.put("startMethod", tanNodeStrategy.startMethod);
         result.extraData.put("endMethod", tanNodeStrategy.endMethod);
-        // UtilsUI.testMsgWindow("执行完拼接了");
         
         return result;
     }

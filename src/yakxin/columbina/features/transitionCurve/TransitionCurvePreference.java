@@ -61,3 +61,5 @@ public final class TransitionCurvePreference extends AbstractPreference<Transiti
         return newParams;
     }
 }
+
+

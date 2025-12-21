@@ -67,3 +67,5 @@ public final class ChamferPreference extends AbstractPreference<ChamferParams> {
         return newParams;
     }
 }
+
+

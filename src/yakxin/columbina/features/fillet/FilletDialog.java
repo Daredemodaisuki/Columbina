@@ -213,3 +213,5 @@ public final class FilletDialog extends ExtendedDialog {
     public boolean getIfDeleteOld() {return deleteOldWays.isSelected();}
     public boolean getIfSelectNew() {return selectNewWays.isSelected();}
 }
+
+

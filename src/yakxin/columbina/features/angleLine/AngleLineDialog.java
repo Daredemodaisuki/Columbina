@@ -73,3 +73,5 @@ public final class AngleLineDialog extends ExtendedDialog {
     }
     public boolean getIfSelectNew() { return selectNewWays.isSelected(); }
 }
+
+

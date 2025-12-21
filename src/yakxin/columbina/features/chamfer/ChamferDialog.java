@@ -137,3 +137,5 @@ public final class ChamferDialog extends ExtendedDialog {
     public boolean getIfSelectNew() { return selectNewWays.isSelected(); }
     public int getChamferMode() { return modeGroup.getButtonSelected(); }
 }
+
+

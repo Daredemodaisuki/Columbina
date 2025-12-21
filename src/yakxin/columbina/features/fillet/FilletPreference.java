@@ -24,7 +24,7 @@ public final class FilletPreference extends AbstractPreference<FilletParams> {
     public static final double DEFAULT_FILLET_MIN_ANGLE_DEG = 2.5;
     public static final double DEFAULT_FILLET_MAX_ANGLE_DEG = 177.5;
     
-    private static final ColumbinaPrefItem<Double>  RADIUS            = new ColumbinaPrefItem<>(PREF_NAME, "surfaceRadius", Double.class, DEFAULT_FILLET_RADIUS);
+    private static final ColumbinaPrefItem<Double>  RADIUS            = new ColumbinaPrefItem<>(PREF_NAME, "radius", Double.class, DEFAULT_FILLET_RADIUS);
     private static final ColumbinaPrefItem<Double>  CHAINAGE_LENGTH   = new ColumbinaPrefItem<>(PREF_NAME, "chainage-length", Double.class, DEFAULT_FILLET_CHAINAGE_LENGTH);
     private static final ColumbinaPrefItem<Integer> MAX_POINT_PER_ARC = new ColumbinaPrefItem<>(PREF_NAME, "max-num-of-point", Integer.class, DEFAULT_FILLET_MAX_POINT_PER_ARC);
     private static final ColumbinaPrefItem<Double>  MIN_ANGLE_DEG     = new ColumbinaPrefItem<>(PREF_NAME, "min-angle-deg", Double.class, DEFAULT_FILLET_MIN_ANGLE_DEG);
@@ -94,3 +94,5 @@ public final class FilletPreference extends AbstractPreference<FilletParams> {
         );
     }
 }
+
+

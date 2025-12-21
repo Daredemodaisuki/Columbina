@@ -22,3 +22,5 @@ public final class CurveConnectParams extends AbstractParams {
         this.ableToAdjustInputNode = ableToAdjustInputNode;
     }
 }
+
+

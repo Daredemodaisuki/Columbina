@@ -89,8 +89,9 @@ public class UtilsArc {
                 (enCurveRadius + enShiftDistance) * Math.tan(Math.abs(corner.deflectionRad) / 2) + directLoop * enTangleOffset;
 
         // 按照切距确定起点（这里不检查缓和曲线长度、切距是否超过拐角两侧距离，由调用者自己检查）
-        ColumbinaEN zhA = corner.B.walk(corner.BA.bearingRad(), enTangentLength);  // A侧直缓切点
-        ColumbinaEN zhC = corner.B.walk(corner.BC.bearingRad(), enTangentLength);  // C侧直缓切点
+        // 回旋弯向外角方向移动，直接弯向内角方向移动
+        ColumbinaEN zhA = corner.B.walk(directLoop == DIRECT ? corner.BA.bearingRad() : UtilsMath.reverseAngleRad(corner.BA.bearingRad()), enTangentLength);  // A侧直缓切点
+        ColumbinaEN zhC = corner.B.walk(directLoop == DIRECT ? corner.BC.bearingRad() : UtilsMath.reverseAngleRad(corner.BC.bearingRad()), enTangentLength);  // C侧直缓切点
 
         // 计算两侧的起点角（坐标角度：以东为0，北正南负）
         double startAngleARad = corner.AB.bearingRad();
