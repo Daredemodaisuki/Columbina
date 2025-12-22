@@ -7,22 +7,29 @@ import yakxin.columbina.abstractClasses.AbstractGenerator;
 import yakxin.columbina.data.ColumbinaCorner;
 import yakxin.columbina.data.ColumbinaEN;
 import yakxin.columbina.data.ColumbinaException;
-import yakxin.columbina.data.dto.ColumbinaSingleOutput;
+import yakxin.columbina.data.dto.outputs.ColumbinaOutputIntent;
+import yakxin.columbina.data.dto.outputs.ColumbinaSingleOutput;
 import yakxin.columbina.data.dto.inputs.ColumbinaSingleInput;
 import yakxin.columbina.utils.UtilsArc;
 import yakxin.columbina.utils.UtilsMath;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 
 public final class CurveConnectGenerator extends AbstractGenerator<CurveConnectParams> {
     // 模式常量，注意这个不是用来判断±1的！
     public static final int COUNTER_CLOCKWISE_MODE = 0;  // 逆时针左拐
     public static final int CLOCKWISE_MODE = 1;  // 顺时针右拐
+    // 切点位置
+    // public static final int START_TAN_ON_BS_S = 0;  // 起点端切点位于beforeStart和start之间（默认情况）
+    // public static final int START_TAN_ON_S_AS = 1;  // 起点端切点位于start和afterStart之间（默认失败时尝试）
+    // public static final int END_TAN_ON_E_AE = 2;  // 终点端切点位于end和afterEnd之间（默认情况）
+    // public static final int END_TAN_ON_BE_E = 3;  // 终点端切点位于beforeEnd和end之间（默认失败时尝试）
     // 切点策略
     public static final int FAILED = -1;
-    public static final int ADJUST_END_NODES = 0;
+    public static final int ADJUST_EXISTING_INPUT_WAY_END_NODES = 0;
     public static final int ADD_NODES = 1;
 
     @Override
@@ -158,6 +165,7 @@ public final class CurveConnectGenerator extends AbstractGenerator<CurveConnectP
                 beforeStart, startTan, start, isStartLastNode,
                 end, endTan, afterEnd, isEndFirstNode
         );
+        // TODO：return换成throw ex
         if (tanNodeStrategy.startMethod == FAILED || tanNodeStrategy.endMethod == FAILED) return null;
         
         /// 绘制螺旋线
@@ -209,6 +217,7 @@ public final class CurveConnectGenerator extends AbstractGenerator<CurveConnectP
         Collections.reverse(transArcC);  // 倒着画的原地逆序正回来
         transArcC.remove(0);  // 正序之后不要第一个点（=圆曲线最后一个点）
         
+        // 最终节点列表
         ArrayList<EastNorth> finalNodeEN = new ArrayList<>();
         finalNodeEN.addAll(transArcA);
         finalNodeEN.addAll(circularArc);
@@ -217,7 +226,36 @@ public final class CurveConnectGenerator extends AbstractGenerator<CurveConnectP
         for (EastNorth en : finalNodeEN)
             finalNodes.add(new Node(en));
         
-        ColumbinaSingleOutput result = new ColumbinaSingleOutput(finalNodes, new ArrayList<>());
+        // 画线
+        Way finalWay = new Way();
+        for (Node n : finalNodes) finalWay.addNode(n);
+        
+        // 添加为意图
+        List<ColumbinaOutputIntent<?>> intents = new ArrayList<>();
+        for (int i = 0; i < finalNodeEN.size(); i ++) {
+            if (i == 0) {
+                if (tanNodeStrategy.startMethod == ADJUST_EXISTING_INPUT_WAY_END_NODES) {
+                    intents.add(new ColumbinaOutputIntent.MergeExistToThisIfOK(startNode, finalNodes.get(0), List.of(finalWay), List.of(startWay)));
+                    // UtilsUI.testMsgWindow("i == 0");
+                }
+                else
+                    intents.add(new ColumbinaOutputIntent.InsertThisToWay(finalNodes.get(0), startWay, (startNodeIdx + startNodeNum - 1) % startNodeNum));
+            }
+            else if (i == finalNodes.size() - 1) {
+                if (tanNodeStrategy.endMethod == ADJUST_EXISTING_INPUT_WAY_END_NODES) {
+                    intents.add(new ColumbinaOutputIntent.MergeExistToThisIfOK(endNode, finalNodes.get(finalNodes.size() - 1), List.of(finalWay), List.of(endWay)));
+                    // UtilsUI.testMsgWindow("i == -1");
+                }
+                else
+                    intents.add(new ColumbinaOutputIntent.InsertThisToWay(finalNodes.get(finalNodes.size() - 1), endWay, (endNodeIdx + 1) % endNodeNum));
+            } else {
+                intents.add(new ColumbinaOutputIntent.AddThisNodeIfOK(finalNodes.get(i)));
+            }
+        }
+        intents.add(new ColumbinaOutputIntent.AddThisWayIfOK(finalWay));
+        
+        // ColumbinaSingleOutput result = new ColumbinaSingleOutput(finalNodes, new ArrayList<>());
+        ColumbinaSingleOutput result = new ColumbinaSingleOutput(intents, List.of(finalWay), new ArrayList<>(), new HashMap<>());
         result.extraData.put("startMethod", tanNodeStrategy.startMethod);
         result.extraData.put("endMethod", tanNodeStrategy.endMethod);
         
@@ -257,17 +295,27 @@ public final class CurveConnectGenerator extends AbstractGenerator<CurveConnectP
             ColumbinaEN beforeStart, ColumbinaEN startTan, ColumbinaEN start, boolean isStartLastNode,
             ColumbinaEN end, ColumbinaEN endTan, ColumbinaEN afterEnd, boolean isEndFirstNode
     ) {
-        // TODO：实测下来还需要补充的情况：
-        //  如果此时交点不是起点路径最后一个点，那么还可能需要尝试在交点与起点路径下一个点之间开始曲线，
-        //  如果此时交点不是终点路径第一个点，那么还可能需要尝试在终点路径上一个与交点之间结束曲线
+        //          ↑            |          ↑
+        //          o AS         |       AS o
+        //     AE   |            |    AE    | ↙IS
+        //    ←o----o IS (S/E)   |   ←o-----+-----o E
+        //         / \           |          o S    \
+        //        /   \          |         /        o BE
+        //    BS o     o BE      |        o BS      |
+        // 默认用BE→B作为起始方向、E→AE作为终点方向OK，但实测下来还需要补充的情况（不过这个确实是规则外，只是下面这样判断会更方便用户些，不慌）：
+        //  在判断完目前的情况后：
+        //  如果交点不是起点路径最后一个点，那么还可能需要尝试在交点与起点路径下一个点之间开始曲线，
+        //  如果交点不是终点路径第一个点，那么还可能需要尝试在终点路径上一个与交点之间结束曲线，
+        //  上俩图情况就该是需要在S到AS之间开始、BE到E之间结束，和S到AS开始、E到AE结束
+        // TODO：当只选了一个点，交点就是选定点时，形成T形（T下半部分为起点路径，向北），选择向左，起点端不会插入节点而是单纯addComment，需要检查原因。
         final int startMethod;
         final int endMethod;
         // 起点端
         if (ColumbinaEN.isBOnAC(beforeStart, startTan, start)) {
-            if (isStartLastNode && ableToAdjustInputNode) {/*裁切逻辑*/ startMethod = ADJUST_END_NODES;}
+            if (isStartLastNode && ableToAdjustInputNode) {/*裁切逻辑*/ startMethod = ADJUST_EXISTING_INPUT_WAY_END_NODES;}
             else /*直接加节点逻辑*/ startMethod = ADD_NODES;
         } else if (ColumbinaEN.isBOnAC(beforeStart, start, startTan)) {
-            if (isStartLastNode && ableToAdjustInputNode) {/*沿伸逻辑*/ startMethod = ADJUST_END_NODES;}
+            if (isStartLastNode && ableToAdjustInputNode) {/*沿伸逻辑*/ startMethod = ADJUST_EXISTING_INPUT_WAY_END_NODES;}
             else startMethod = FAILED;
         } else startMethod = FAILED;
         // 终点端
@@ -278,10 +326,10 @@ public final class CurveConnectGenerator extends AbstractGenerator<CurveConnectP
         //         + "end-after" + new ColumbinaEN(end, afterEnd).bearingRad() + "\n"
         // );
         if (ColumbinaEN.isBOnAC(end, endTan, afterEnd)) {
-            if (isEndFirstNode && ableToAdjustInputNode) {/*裁切逻辑*/ endMethod = ADJUST_END_NODES;}
+            if (isEndFirstNode && ableToAdjustInputNode) {/*裁切逻辑*/ endMethod = ADJUST_EXISTING_INPUT_WAY_END_NODES;}
             else /*直接加节点逻辑*/ endMethod = ADD_NODES;
         } else if (ColumbinaEN.isBOnAC(endTan, end, afterEnd)) {
-            if (isEndFirstNode && ableToAdjustInputNode) {/*沿伸逻辑*/ endMethod = ADJUST_END_NODES;}
+            if (isEndFirstNode && ableToAdjustInputNode) {/*沿伸逻辑*/ endMethod = ADJUST_EXISTING_INPUT_WAY_END_NODES;}
             else endMethod = FAILED;
         } else endMethod = FAILED;
         

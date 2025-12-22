@@ -6,7 +6,7 @@ import org.openstreetmap.josm.data.osm.Way;
 import yakxin.columbina.abstractClasses.AbstractGenerator;
 import yakxin.columbina.data.ColumbinaCorner;
 import yakxin.columbina.data.ColumbinaException;
-import yakxin.columbina.data.dto.ColumbinaSingleOutput;
+import yakxin.columbina.data.dto.outputs.ColumbinaSingleOutput;
 import yakxin.columbina.data.dto.inputs.ColumbinaSingleInput;
 import yakxin.columbina.data.ColumbinaEN;
 import yakxin.columbina.utils.UtilsMath;

@@ -3,7 +3,7 @@ package yakxin.columbina.features.angleLine;
 import org.openstreetmap.josm.data.osm.Node;
 import org.openstreetmap.josm.data.osm.Way;
 import yakxin.columbina.abstractClasses.AbstractGenerator;
-import yakxin.columbina.data.dto.ColumbinaSingleOutput;
+import yakxin.columbina.data.dto.outputs.ColumbinaSingleOutput;
 import yakxin.columbina.data.dto.inputs.ColumbinaSingleInput;
 import yakxin.columbina.data.ColumbinaEN;
 import yakxin.columbina.utils.UtilsData;
@@ -59,7 +59,7 @@ public final class AngleLineGenerator extends AbstractGenerator<AngleLineParams>
         newNodes.add(node);
         newNodes.add(new Node(destination));
 
-        return new ColumbinaSingleOutput(newNodes, new ArrayList<Long>());  // 无failed部分
+        return new ColumbinaSingleOutput(newNodes, new ArrayList<>());  // 无failed部分
     }
 }
 

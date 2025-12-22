@@ -21,8 +21,12 @@ public class UtilsData {
      * @param newNode 新节点
      */
     public static void wayReplaceNode(Way way, int index, Node newNode) {
-        way.removeNode(way.getNode(index));
-        way.addNode(index, newNode);
+        // way.removeNode(way.getNode(index));
+        // way.addNode(index, newNode);
+        // way.checkDataset();
+        List<Node> originalNodes = way.getNodes();
+        originalNodes.set(index, newNode);
+        way.setNodes(originalNodes);
     }
 
     /**

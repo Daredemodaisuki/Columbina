@@ -1,6 +1,6 @@
 package yakxin.columbina.abstractClasses;
 
-import yakxin.columbina.data.dto.ColumbinaSingleOutput;
+import yakxin.columbina.data.dto.outputs.ColumbinaSingleOutput;
 import yakxin.columbina.data.dto.inputs.ColumbinaSingleInput;
 
 public abstract class AbstractGenerator <ParamType extends AbstractParams> {

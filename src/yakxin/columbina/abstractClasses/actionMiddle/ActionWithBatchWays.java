@@ -1,6 +1,5 @@
 package yakxin.columbina.abstractClasses.actionMiddle;
 
-import org.openstreetmap.josm.command.AddCommand;
 import org.openstreetmap.josm.command.Command;
 import org.openstreetmap.josm.command.DeleteCommand;
 import org.openstreetmap.josm.data.osm.DataSet;
@@ -17,7 +16,8 @@ import yakxin.columbina.abstractClasses.AbstractGenerator;
 import yakxin.columbina.abstractClasses.AbstractParams;
 import yakxin.columbina.abstractClasses.AbstractPreference;
 import yakxin.columbina.data.ColumbinaException;
-import yakxin.columbina.data.dto.ColumbinaSingleOutput;
+import yakxin.columbina.data.dto.outputs.ColumbinaOutputIntent;
+import yakxin.columbina.data.dto.outputs.ColumbinaSingleOutput;
 import yakxin.columbina.data.dto.inputs.ColumbinaInput;
 import yakxin.columbina.data.dto.inputs.ColumbinaSingleInput;
 import yakxin.columbina.utils.UtilsData;
@@ -127,35 +127,40 @@ public abstract class ActionWithBatchWays<
             DataSet ds, List<ColumbinaSingleInput> singleInputs,
             boolean copyTag
     ) {
-        List<Command> commands = new ArrayList<>();
+        List<ColumbinaOutputIntent<?>> intents = new ArrayList<>();
         inputOutputPairs = new HashMap<>();  // 输入节点/路径k与新绘制的路径v的打包对
         Map<Way, List<Long>> failedNodeIds = new HashMap<>();  // 处理输入节点/路径k与处理时k上失败的节点v的打包对
         // 处理路径
         for (ColumbinaSingleInput singleInput : singleInputs) {  // 分别处理每个输入路径
-            try {  // 一条路径出错尽可能不影响其他的
-                NewNodeWayCommands newNWCmd = getAddCmd(ds, singleInput, generator, params, copyTag);  // 获取路径
-
-                if (newNWCmd != null) {  // 应该不会和已提交但未执行（进入ds）的重复提交
-                    commands.addAll(newNWCmd.addCommands);
-                    inputOutputPairs.put(singleInput.ways.get(0), newNWCmd.newWay);
-                    failedNodeIds.put(singleInput.ways.get(0), newNWCmd.failedNodeIds);
-                }
-                else UtilsUI.warnInfo(I18n.tr(
-                        "Algorithm did not return at least 2 nodes to form a way for way {0}, this way was not processed.",
-                        singleInput.ways.get(0).getUniqueId()
-                ));
-            } catch (Exception exAdd) {
-                UtilsUI.errorInfo(I18n.tr("Unexpected error occurred while processing way {0}: {1}",
-                        singleInput.ways.get(0).getUniqueId(), exAdd.getMessage()
-                ));
+            // 调用生成传入的函数计算路径
+            ColumbinaSingleOutput singleOutput = generator.getOutputForSingleInput(singleInput, params);
+            if (singleOutput == null) continue;
+            if (!singleOutput.isValid()) continue;
+            failedNodeIds.put(singleInput.ways.get(0), singleOutput.failedNodes);
+            
+            // 收集新线（目前假定singleOutput只输出一条新线）
+            Way newWay = (Way) singleOutput.representatives.get(0);
+            
+            // 复制原Way标签
+            if (copyTag) {
+                Map<String, String> wayTags = getNewWayTags(singleInput);
+                newWay.setKeys(wayTags);
             }
+            
+            // 转为指令
+            // for (ColumbinaOutputIntent<?> intent : singleOutput.outputIntents) intents.addAll(intent.resolveToCommand(ds));
+            
+            intents.addAll(singleOutput.outputIntents);
+            inputOutputPairs.put(singleInput.ways.get(0), newWay);
         }
+        
+        List<Command> commands = ColumbinaOutputIntent.toCommands(intents, ds);
 
-        if (commands.isEmpty()) {  // 未能成功生成一条线
+        if (commands.isEmpty())  // 未能成功生成一条线
             throw new ColumbinaException(I18n.tr("Failed to generate any new way."));
-        }
-        // 去重防止提交重复添加
-        commands = commands.stream().distinct().collect(Collectors.toList());
+        
+        // 去重防止提交重复添加（ColumbinaOutputIntent.toCommands已去重）
+        // commands = commands.stream().distinct().collect(Collectors.toList());
 
         // 提示失败信息
         showFailedProcessedCorner(failedNodeIds);
@@ -237,50 +242,6 @@ public abstract class ActionWithBatchWays<
 
     /// 特有方法
     /**
-     * 调用Generator获得绘制单条新路径所需指令
-     * <p>将会调用具体生成器的getNewNodeWayForSingleInput方法，由于输入要素为ColumbinaSingleInput类型，具体生成器类需要自行判断、转换为需要的类型
-     * @param ds 数据集
-     * @param singleInput 选定输入要素
-     * @param generator 生成器
-     * @param params 输入参数
-     * @param copyTag 是否复制标签
-     * @return 对于一组输入产生的、绘制单条路径所需的指令
-     */
-    private NewNodeWayCommands getAddCmd (
-            DataSet ds, ColumbinaSingleInput singleInput,
-            GeneratorType generator, ParamType params,
-            boolean copyTag) {
-        // 调用生成传入的函数计算路径
-        ColumbinaSingleOutput singleOutput = generator.getOutputForSingleInput(singleInput, params);
-        if (singleOutput == null) return null;
-        if (!singleOutput.ifCanMakeAWay()) return null;
-        List<Node> newNodes = singleOutput.wayNodes;
-        List<Long> failedNodeIds = singleOutput.failedNodes;
-        List<Command> addCommands = new LinkedList<>();
-
-        // 画新线
-        Way newWay = singleOutput.linkNodesToWay();
-
-        // 复制原Way标签
-        if (copyTag) {
-            Map<String, String> keys = getNewWayTags(singleInput);
-            if (newWay != null && keys != null)
-                newWay.setKeys(keys);
-        }
-
-        // 正式构建绘制命令
-        if (newWay != null) {
-            for (Node n : newNodes.stream().distinct().collect(Collectors.toList())) {  // 路径内部可能有节点复用（如闭合线），去重
-                if (!ds.containsNode(n))  // 新路径的节点在ds中未绘制（不是复用的）才准备绘制
-                    addCommands.add(new AddCommand(ds, n));  // 添加节点到命令序列
-            }
-            addCommands.add(new AddCommand(ds, newWay));  // 添加线到命令序列
-        }
-
-        return new NewNodeWayCommands(newWay, addCommands, failedNodeIds);
-    }
-
-    /**
      * 移除/替换一条旧路径及无用节点的指令，删多条把这个函数放在for里面一个个删
      * <p>移除/替换操作是ActionWithBatchWays里面3个功能统一的，所以统一这里实现
      * @param ds 当前数据库
@@ -343,28 +304,15 @@ public abstract class ActionWithBatchWays<
         // 如果有拐角处理失败，则提示
         if (failedNodeIds != null && !failedNodeIds.isEmpty()) {
             boolean hasFailedNodes = false;
-            String failedInfo = I18n.tr("The following corner nodes could not be rounded due to too short distance to adjacent nodes or not meeting the angle restrictions: ");
+            StringBuilder failedInfo = new StringBuilder(I18n.tr("The following corner nodes could not be rounded due to too short distance to adjacent nodes or not meeting the angle restrictions: "));
             for (Map.Entry<Way, List<Long>> failedEntry : failedNodeIds.entrySet()) {
                 if (failedEntry.getValue().isEmpty()) continue;
-                failedInfo = failedInfo
-                        + I18n.tr("\nWay") + failedEntry.getKey().getUniqueId()
-                        + I18n.tr(": ") + failedEntry.getValue();
+                failedInfo.append(
+                        I18n.tr("\nWay")).append(failedEntry.getKey().getUniqueId())
+                        .append(I18n.tr(": ")).append(failedEntry.getValue());
                 hasFailedNodes = true;
             }
-            if (hasFailedNodes) UtilsUI.warnInfo(failedInfo);
-        }
-    }
-
-    /// 内部类
-    private static final class NewNodeWayCommands {
-        public final Way newWay;
-        public final List<Command> addCommands;
-        public final List<Long> failedNodeIds;
-
-        public NewNodeWayCommands(Way newWay, List<Command> addCommands, List<Long> failedNodeIds) {
-            this.newWay = newWay;
-            this.addCommands = addCommands;
-            this.failedNodeIds = failedNodeIds;
+            if (hasFailedNodes) UtilsUI.warnInfo(failedInfo.toString());
         }
     }
 }

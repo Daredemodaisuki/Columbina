@@ -201,6 +201,15 @@
 * 【警告】`AbstractDrawingAction`的总流程中：对于需要`deleteOld`的功能，如果发现`concludeRemoveCommands`返回了null或空列表，抛出`ColumbinaException`，警告没有移除的路径；
 * 【部分】生成器类计算时：如果有内部意料之外的错误（如不知道怎么的就除以0了），由相关函数抛出`Exception`，由调用者`concludeAddCommands`在for内捕获。
 
+### 开发时部分异常记录
+
+* 由`org.openstreetmap.josm.data.osm.Way.checkNodes`报`org.openstreetmap.josm.data.osm.DataIntegrityProblemException: Nodes in way must be in the same dataset`：
+  * 多半是提交路径时没有先提交路径上的节点，尤其是存在提交前修改内存的Way实例节点的情况时尤其需要检查改上没有、改之后的节点是不是提交了；
+  * 首次见1.0.0开发时用了下`yakxin.columbina.utils.UtilsData.wayReplaceNode`，具体记不住了但是应该是改之后的节点没有加进来；
+  * 二次见1.0.3开发时`yakxin.columbina.data.dto.outputs.ColumbinaOutputIntent.toCommands`：
+    * 一是合并节点的部分，合并后需要迁移未提交路径的临时节点（`feature`）到移动后的现存节点（`existingFeature`），然后不再提交该临时节点；使用`feature.getReferrer`尝试找到引用其的路径并修改节点，但`getReferrer`是找不到未提交的参照者的，自然而然就没改上还没提交的路径的节点列表，执行命令时就会报错；
+    * 二是插入节点的部分，竟然只记得构建`ChangeNodesCommand`了，忘了为要插入的节点添加`AddCommand`，气笑了。
+
 ## 增加功能简明流程清单
 
 如果未来需要增加一个新功能（假如名为`xx`），且功能可以适应已有的中间层，可以遵循下面的流程：
