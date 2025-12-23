@@ -14,42 +14,48 @@ import java.util.Locale;
 public final class AngleLineDialog extends ExtendedDialog {
     private static final String[] BUTTON_TEXTS = new String[] {I18n.tr("Confirm"), I18n.tr("Cancel")};
     private static final String[] BUTTON_ICONS = new String[] {"ok", "cancel"};
-
+    
     // 窗体组件
-    protected final JPanel panel = new JPanel(new GridBagLayout());
     private final JFormattedTextField angleLineAngleDeg;
     private final JFormattedTextField angleLineLength;
-
+    
     private final JCheckBox selectNewWays;
-
-    protected AngleLineDialog() {
-        super(MainApplication.getMainFrame(),
-                I18n.tr("Columbina"),
-                BUTTON_TEXTS,
-                true);
-
+    
+    // 构建窗口
+    AngleLineDialog(AngleLineParams savedParams) {
+        super(MainApplication.getMainFrame(), I18n.tr("Columbina"), BUTTON_TEXTS, true);
         setButtonIcons(BUTTON_ICONS);
         setDefaultButton(1);  // ESC取消
-
+        
         // 窗体
+        JPanel panel = new JPanel(new GridBagLayout());
         UtilsUI.addHeader(panel, I18n.tr("Oriented Line"), "OrientedLine");
-
+        
         UtilsUI.addSection(panel, I18n.tr("Line Information"));
-        angleLineAngleDeg = UtilsUI.addInput(panel, I18n.tr("Angle (degrees°): "), String.valueOf(AngleLinePreference.getAngleLineAngleDeg()));
-        angleLineLength = UtilsUI.addInput(panel, I18n.tr("Length (m): "), String.valueOf(AngleLinePreference.getAngleLineLength()));
-
+        angleLineAngleDeg = UtilsUI.addInput(panel, I18n.tr("Angle (degrees°): "), savedParams.angleDeg);
+        angleLineLength = UtilsUI.addInput(panel, I18n.tr("Length (m): "), savedParams.surfaceLength);
+        
         UtilsUI.addSection(panel, I18n.tr("Other Operations"));
-        selectNewWays = UtilsUI.addCheckbox(panel, I18n.tr("Select new ways after drawing"), AngleLinePreference.isAngleLineSelectNewWays());
-
-        contentInsets = new Insets(5, 15, 5, 15);  // 内容边距
+        selectNewWays = UtilsUI.addCheckbox(panel, I18n.tr("Select new ways after drawing"), savedParams.selectNew);
+        
+        contentInsets = new Insets(5, 15, 5, 15);
         setContent(panel);
-
+        
         // 显示
         setupDialog();
         showDialog();
     }
-
-    // 获取数据
+    
+    /**
+     * 获取所有参数，用于从对话框中提取完整的参数对象
+     */
+    public AngleLineParams getParams() {
+        return new AngleLineParams(
+                getAngleLineAngleDeg(), getAngleLineLength(),
+                getIfSelectNew()
+        );
+    }
+    
     public double getAngleLineAngleDeg() {
         try {
             return NumberFormat.getInstance(Locale.US).parse(angleLineAngleDeg.getText()).doubleValue();
@@ -65,9 +71,7 @@ public final class AngleLineDialog extends ExtendedDialog {
             return AngleLinePreference.DEFAULT_ANGLE_LINE_LENGTH;
         }
     }
-    public boolean getIfSelectNew() {return selectNewWays.isSelected();}
-
-    public void setAngleLineAngleDeg(double angleDeg) {angleLineAngleDeg.setText(String.valueOf(angleDeg));}
+    public boolean getIfSelectNew() { return selectNewWays.isSelected(); }
 }
 
 

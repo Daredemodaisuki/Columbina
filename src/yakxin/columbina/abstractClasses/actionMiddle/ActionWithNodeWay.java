@@ -1,9 +1,7 @@
 package yakxin.columbina.abstractClasses.actionMiddle;
 
-import org.openstreetmap.josm.command.AddCommand;
 import org.openstreetmap.josm.command.Command;
 import org.openstreetmap.josm.data.osm.DataSet;
-import org.openstreetmap.josm.data.osm.Node;
 import org.openstreetmap.josm.data.osm.OsmPrimitive;
 import org.openstreetmap.josm.data.osm.Way;
 import org.openstreetmap.josm.tools.I18n;
@@ -13,7 +11,8 @@ import yakxin.columbina.abstractClasses.AbstractGenerator;
 import yakxin.columbina.abstractClasses.AbstractParams;
 import yakxin.columbina.abstractClasses.AbstractPreference;
 import yakxin.columbina.data.ColumbinaException;
-import yakxin.columbina.data.dto.ColumbinaSingleOutput;
+import yakxin.columbina.data.dto.outputs.ColumbinaOutputIntent;
+import yakxin.columbina.data.dto.outputs.ColumbinaSingleOutput;
 import yakxin.columbina.data.dto.inputs.ColumbinaInput;
 import yakxin.columbina.data.dto.inputs.ColumbinaSingleInput;
 
@@ -25,10 +24,6 @@ public abstract class ActionWithNodeWay<
         ParamType extends AbstractParams> // 输入参数泛型
         extends AbstractDrawingAction<GeneratorType, PreferenceType, ParamType>
 {
-    // private final int minNodeSelection;
-    // private final int maxNodeSelection;
-    // private final int minWaySelection;
-    // private final int maxWaySelection;
     private Way newWay = null;
 
     /**
@@ -44,34 +39,19 @@ public abstract class ActionWithNodeWay<
     public ActionWithNodeWay(
             String name, String iconName, String description, Shortcut shortcut,
             GeneratorType generator, PreferenceType preference
-            // int minNodeSelection, int maxNodeSelection, int minWaySelection, int maxWaySelection
     ) {
         super(name, iconName, description, shortcut, generator, preference);
-        // this.minNodeSelection = minNodeSelection;  // 这个模板下的操作没有批量的概念，暂时不要这些字段
-        // this.maxNodeSelection = maxNodeSelection;
-        // this.minWaySelection = minWaySelection;
-        // this.maxWaySelection = maxWaySelection;
-    }
-
-    @Override
-    public int checkInputNum(ColumbinaInput totalInput) {
-        // 检查是否是输入一个节点+一条路径，不检查节点是否在路径上（由生成器内部判断）
-        if (totalInput.getInputNum(Node.class) != 1)
-            throw new IllegalArgumentException(I18n.tr("No node or multiple nodes are selected."));
-        if (totalInput.getInputNum(Way.class) != 1)
-            throw new IllegalArgumentException(I18n.tr("No way or multiple ways are selected."));
-        // if (!inputs.getNodes().getFirst().getReferrers().contains(inputs.getWays().getFirst()))
-        //     throw new IllegalArgumentException(I18n.tr("The way selected doesn''t contain the node selected."));
-        return CHECK_OK;
     }
 
     // 暂时交由具体动作类实现
+    public abstract int checkInputNum(ColumbinaInput totalInput);
+
     public abstract int checkInputDetails(List<ColumbinaSingleInput> singleInputs);
 
     @Override
-    public List<ColumbinaSingleInput> splitBatchInputs(ColumbinaInput inputs) {
+    public List<ColumbinaSingleInput> splitBatchInputs(ColumbinaInput totalInput) {
         // 批量输入分包（这个模板不支持批量，所以直接将全部输入扔进去）
-        return new ArrayList<>(Collections.singleton(new ColumbinaSingleInput(inputs)));
+        return new ArrayList<>(Collections.singleton(new ColumbinaSingleInput(totalInput)));
     }
 
     @Override
@@ -81,40 +61,38 @@ public abstract class ActionWithNodeWay<
     ) {
         if (input == null || input.isEmpty())
             throw new ColumbinaException(I18n.tr("Empty or null input for concludeAddCommands()."));
-
-        List<Command> addCommands = new ArrayList<>();
-
+        
         // 调用生成传入的函数计算路径
-        ColumbinaSingleInput singleInput = input.getFirst();  // 这个模板不支持批量，所以直接getFirst
+        ColumbinaSingleInput singleInput = input.get(0);  // 这个模板不支持批量，所以直接getFirst
         ColumbinaSingleOutput singleOutput = generator.getOutputForSingleInput(singleInput, params);
         if (singleOutput == null) return null;
-        if (!singleOutput.ifCanMakeAWay()) return null;
-
-        // 画新线
-        newWay = singleOutput.linkNodesToWay();
-
+        if (!singleOutput.isValid()) return null;
+        
+        // 收集新线（目前假定只输出一条新线）
+        newWay = (Way) singleOutput.representatives.get(0);
+        
         // 复制原Way标签
         if (copyTag) {
-            Map<String, String> keys = getNewWayTags(singleInput);
-            if (newWay != null && keys != null)
-                newWay.setKeys(keys);
+            Map<String, String> wayTags = getNewWayTags(singleInput);
+            newWay.setKeys(wayTags);
         }
-
-        // 正式构建绘制命令
-        if (newWay != null) {
-            for (Node n : singleOutput.newNodes.stream().distinct().toList()) {  // 路径内部可能有节点复用（如闭合线），去重
-                if (!ds.containsNode(n))  // 新路径的节点在ds中未绘制（不是复用的）才准备绘制
-                    addCommands.add(new AddCommand(ds, n));  // 添加节点到命令序列
-            }
-            addCommands.add(new AddCommand(ds, newWay));  // 添加线到命令序列
-        }
-
-        return addCommands;
+        
+        // 转为指令
+        List<Command> commands = new ArrayList<>(ColumbinaOutputIntent.toCommands(singleOutput.outputIntents, ds));
+        // for (ColumbinaOutputIntent<?> intent : singleOutput.outputIntents) commands.addAll(intent.resolveToCommand(ds));
+        
+        if (commands.isEmpty())  // 未能成功生成一条线
+            throw new ColumbinaException(I18n.tr("Failed to generate any new way."));
+        
+        // 去重防止提交重复添加（ColumbinaOutputIntent.toCommands已去重）
+        // commands = commands.stream().distinct().collect(Collectors.toList());
+        
+        return commands;
     }
 
     @Override
     public List<Command> concludeRemoveCommands(DataSet ds) {
-        return new ArrayList<Command>();  // 这个模板下不需要移除，返回空列表即可
+        return new ArrayList<>();  // 这个模板下不需要移除，返回空列表即可
     }
 
     @Override

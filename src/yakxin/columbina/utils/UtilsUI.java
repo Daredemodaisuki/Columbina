@@ -35,7 +35,7 @@ public class UtilsUI {
     // 标题栏
     public static JPanel addHeader(JPanel panel, String headTitle, String iconName) {
         JPanel header = new JPanel(new FlowLayout(FlowLayout.LEFT));
-        if (iconName != null && iconName != "") {
+        if (iconName != null && !iconName.isEmpty()) {
             ImageIcon icon = new ImageProvider(iconName).setSize(24,24).get();
             header.add(new JLabel(icon));
         }
@@ -48,6 +48,12 @@ public class UtilsUI {
     // 输入框
     public static JFormattedTextField addInput(JPanel panel, String labelText) {
         return addInput(panel, labelText, "");
+    }
+    public static JFormattedTextField addInput(JPanel panel, String labelText, int intInput) {
+        return addInput(panel, labelText, String.valueOf(intInput));
+    }
+    public static JFormattedTextField addInput(JPanel panel, String labelText, double doubleInput) {
+        return addInput(panel, labelText, String.valueOf(doubleInput));
     }
     public static JFormattedTextField addInput(JPanel panel, String labelText, String initInput) {
         JFormattedTextField input = new JFormattedTextField(NumberFormat.getInstance(Locale.US));  // 强制美式数码格式，「.」为小数点

@@ -2,15 +2,20 @@ package yakxin.columbina.features.fillet;
 
 import org.openstreetmap.josm.data.coor.EastNorth;
 import org.openstreetmap.josm.data.osm.Node;
+import org.openstreetmap.josm.data.osm.OsmPrimitive;
 import org.openstreetmap.josm.data.osm.Way;
 import yakxin.columbina.abstractClasses.AbstractGenerator;
+import yakxin.columbina.data.ColumbinaCorner;
 import yakxin.columbina.data.ColumbinaException;
-import yakxin.columbina.data.dto.ColumbinaSingleOutput;
+import yakxin.columbina.data.dto.outputs.ColumbinaSingleOutput;
 import yakxin.columbina.data.dto.inputs.ColumbinaSingleInput;
+import yakxin.columbina.data.ColumbinaEN;
 import yakxin.columbina.utils.UtilsMath;
 
 import java.util.ArrayList;
 import java.util.List;
+
+import static yakxin.columbina.utils.UtilsArc.getCircleArc;
 
 
 // 圆角计算器
@@ -20,7 +25,7 @@ public final class FilletGenerator extends AbstractGenerator<FilletParams> {
     public ColumbinaSingleOutput getOutputForSingleInput(ColumbinaSingleInput input, FilletParams params) {
         if (input.ways != null && input.ways.size() == 1) {
             return buildSmoothPolyline(
-                    input.ways.getFirst(),
+                    input.ways.get(0),
                     params.surfaceRadius, params.surfaceChainageLength, params.maxPointNum,
                     params.minAngleDeg, params.maxAngleDeg
             );
@@ -28,25 +33,27 @@ public final class FilletGenerator extends AbstractGenerator<FilletParams> {
         return null;
     }
 
-    /// 圆角算法
-    // 绘制一个圆角（需要输入重算距离而不是直接的地表距离）
+    /**
+     * 绘制一个圆角
+     * @param corner 拐角
+     * @param enRadius 东北坐标倒角半径
+     * @param enChainageLength 桩距（节点间距，米）
+     * @param maxNumPoints 最大节点数
+     * @param minAngleDeg 最小允许倒角角度
+     * @param maxAngleDeg 最大允许倒角角度
+     * @return 这个拐角倒圆角包含的点
+     */
     private static ArrayList<EastNorth> getFilletArc(
-            EastNorth A, EastNorth B, EastNorth C,
+            ColumbinaCorner corner,
             double enRadius, double enChainageLength, int maxNumPoints,
             double minAngleDeg, double maxAngleDeg
     ) {
-        // 获取node坐标
-        double[] a = new double[]{A.getX(), A.getY()};  // A起点     B → C
-        double[] b = new double[]{B.getX(), B.getY()};  // B拐点     ↑
-        double[] c = new double[]{C.getX(), C.getY()};  // C终点     A
-
-        double[] BA = UtilsMath.sub(a, b);
-        double[] BC = UtilsMath.sub(c, b);
-        double[] AB = UtilsMath.mul(BA, -1.0);
-        // 拐点张角（方向向量点积取acos）和张角有效性
-        double theta = UtilsMath.getAngleRadBetweenVec(BA, BC);
+        double theta = corner.angleRad;  // 拐点张角
+        // 检查张角有效性、切距
         if (theta < Math.toRadians(minAngleDeg) || theta > Math.toRadians(maxAngleDeg)) return null;  // 自定义角度控制
-        if (theta < 1e-9 || theta > Math.PI - 1e-9) return null;  // θ为0说明成了发卡角，θ为π说明张角基本是直线
+        if (theta < UtilsMath.EPSILON_STRICT || theta > Math.PI - UtilsMath.EPSILON_STRICT) return null;  // θ为0说明成了发卡角，θ为π说明张角基本是直线
+        double tangentLength = enRadius / Math.tan(theta / 2.0);
+        if (corner.lenBA < tangentLength || corner.lenBC < tangentLength) return null;  // 切距不足
         // 节点数控制
         int arcSegments;  // 曲线有多少桩段，也就是不计首尾的节点数+1
         if (enChainageLength * (maxNumPoints + 1) < (Math.PI - theta) * enRadius)  // 如果最大段数*点距不足弧线长度（π-θ是圆心角或路径偏转角）
@@ -57,25 +64,15 @@ public final class FilletGenerator extends AbstractGenerator<FilletParams> {
         ));
         // 圆心
         double centerToB = enRadius / Math.sin(theta / 2.0);  // B到圆心的距离
-        double[] center = UtilsMath.walkAlongAngleDistance(  // 沿着ABC角平分线方向走B到圆心的距离
-                b, UtilsMath.getVecBearingRad(UtilsMath.add(
-                        UtilsMath.getUnitVec(BA),
-                        UtilsMath.getUnitVec(BC)
-                )), centerToB
-        );
-        EastNorth enCenter = new EastNorth(center[0], center[1]);
-        // 进出曲线方向角
-        double startBearingRad = UtilsMath.getVecBearingRad(AB);
-        double endBearingRad = UtilsMath.getVecBearingRad(BC);
-        int leftRight = UtilsMath.getLeftRight(AB, BC);
+        ColumbinaEN center = corner.B.walk(corner.getBisectorBearingRad(), centerToB);
 
         // 计算、返回
         return (ArrayList<EastNorth>)
-                UtilsMath.getCircleArcPointsWithBearingRad(
-                        enCenter, enRadius,
-                        startBearingRad, endBearingRad,
+                getCircleArc(
+                        center, enRadius,
+                        corner.AB.bearingRad(), corner.BC.bearingRad(),
                         arcSegments,
-                        leftRight
+                        corner.leftRight
                 );
     }
 
@@ -83,118 +80,78 @@ public final class FilletGenerator extends AbstractGenerator<FilletParams> {
         return buildSmoothPolyline(way, surfaceRadius, 20);
     }
     public static ColumbinaSingleOutput buildSmoothPolyline(Way way, double surfaceRadius, int maxPointNum) {
-        return buildSmoothPolyline(way, surfaceRadius, 1.0, maxPointNum, 1e-9, 180 - 1e-9);
+        return buildSmoothPolyline(way, surfaceRadius, 1.0, maxPointNum, UtilsMath.EPSILON_STRICT, 180 - UtilsMath.EPSILON_STRICT);
     }
-    // 汇总所有的圆角
+
+    /**
+     * 为整条路径倒圆角
+     * @param way 输入的路径
+     * @param surfaceRadius 圆曲线地表半径（米）
+     * @param surfaceChainageLength 桩距（节点间距，米）
+     * @param maxPointNum 最大节点数
+     * @param minAngleDeg 最小允许倒角角度
+     * @param maxAngleDeg 最大允许倒角角度
+     * @return 包含新节点列表和失败节点ID的ColumbinaSingleOutput
+     */
     public static ColumbinaSingleOutput buildSmoothPolyline(
             Way way,
             double surfaceRadius, double surfaceChainageLength, int maxPointNum,
             double minAngleDeg, double maxAngleDeg
     ) {
-        List<Long> failedNodes = new ArrayList<>();
+        List<OsmPrimitive> failedNodes = new ArrayList<>();
         // 获取路径的所有节点
         List<Node> nodes = new ArrayList<>(way.getNodes());
-        int nPts = nodes.size();
-        if (nPts < 3) return null;  // 路径至少需要3个点
+        int numNode = way.isClosed() ? way.getNodesCount() - 1 : way.getNodesCount();  // 实际节点数（去除闭合点）
+        if (numNode < 3) return null;  // 路径至少需要3个点
+        int numCorner = way.isClosed() ? numNode : numNode - 2;
 
-        // 将所有节点转换为平面坐标
-        List<EastNorth> nodesEN = new ArrayList<>();
-        for (Node n : nodes) nodesEN.add(UtilsMath.toEastNorth(n.getCoor()));
+        // 存储每个拐角的过渡曲线结果
+        List<List<EastNorth>> filletCurves = new ArrayList<>();
 
-        // 为每个拐角预计算圆角
-        List<double[]> T1s = new ArrayList<>();  // 存储每个拐角的第一个切点
-        List<List<EastNorth>> arcs = new ArrayList<>();  // 存储每个拐角的圆弧
-        for (int i = 0; i < nPts - 2; i ++) {
-            EastNorth A = nodesEN.get(i);      // 起点    B → C
-            EastNorth B = nodesEN.get(i + 1);  // 拐点    ↑
-            EastNorth C = nodesEN.get(i + 2);  // 终点    A
-
-            // JOSM用Mercator投影的NorthEast坐标等角不等距，需要重算距离，以拐点B取维度计算
+        // 为路径计算所有拐角
+        for (int i = 0; i < numCorner; i ++) {
             try {
-                double latB = nodes.get(i + 1).getCoor().lat();
+                ColumbinaCorner corner = ColumbinaCorner.create(way, i);
+                double latB = corner.latB;
                 double enRadius = UtilsMath.surfaceDistanceToEastNorth(surfaceRadius, latB);
                 double enChainageLength = UtilsMath.surfaceDistanceToEastNorth(surfaceChainageLength, latB);
                 // 有EN长度之后继续算圆弧
                 List<EastNorth> arc = getFilletArc(  // 为每个拐角生成PNum个点的圆弧
-                        A, B, C,
+                        corner,
                         enRadius, enChainageLength, maxPointNum,
                         minAngleDeg, maxAngleDeg
                 );
-
-                if (arc == null) {  // 该拐角没有生成圆角（半径过大或角度问题）
-                    T1s.add(null);
-                    arcs.add(null);
-                    failedNodes.add(nodes.get(i).getUniqueId());
-                } else {  // 存储切点和圆弧
-                    EastNorth t1 = arc.getFirst();
-                    T1s.add(new double[]{t1.getX(), t1.getY()});
-                    arcs.add(arc);
+                if (arc == null || arc.size() < 2) {  // 该拐角没有生成圆角（半径过大或角度问题）
+                    filletCurves.add(null);
+                    failedNodes.add(nodes.get(i + 1));
+                }
+                else {
+                    filletCurves.add(arc);
                 }
             } catch (ColumbinaException exSurToEN) {
                 // 如果纬度接近90度，使用一个很小的正数，避免除0，但这样不准确，所以直接失败跳过这个圆弧吧
-                T1s.add(null);
-                arcs.add(null);
-                failedNodes.add(nodes.get(i).getUniqueId());
-            }
-        }
-        if (way.isClosed()) {  // 闭合曲线首尾相连的首末点曲线
-            try {
-                double latB = nodes.getFirst().getCoor().lat();
-                double enRadius = UtilsMath.surfaceDistanceToEastNorth(surfaceRadius, latB);
-                double enChainageLength = UtilsMath.surfaceDistanceToEastNorth(surfaceChainageLength, latB);
-                List<EastNorth> arcEnd = getFilletArc(
-                        nodesEN.get(nPts - 2), nodesEN.get(0), nodesEN.get(1),  // nodesEN.get(0) = getFirst() == nodesEN.get(-1)
-                        enRadius, enChainageLength, maxPointNum,
-                        minAngleDeg, maxAngleDeg
-                );
-                if (arcEnd == null) {
-                    T1s.add(null);
-                    arcs.add(null);
-                    failedNodes.add(nodes.getFirst().getUniqueId());
-                } else {
-                    EastNorth t1End = arcEnd.getFirst();
-                    T1s.add(new double[]{t1End.getX(), t1End.getY()});
-                    arcs.add(arcEnd);
-                }
-            } catch (ColumbinaException exSurToEN) {
-                T1s.add(null);
-                arcs.add(null);
-                failedNodes.add(nodes.getFirst().getUniqueId());
+                filletCurves.add(null);
+                failedNodes.add(nodes.get(i + 1));
             }
         }
 
-        // 最终的经纬度坐标序列
+        // 最终的节点经纬度坐标序列
         List<Node> finalNodes = new ArrayList<>();
-        // 添加起始点：如果原路径闭合，且首末点有曲线，则以首末点曲线（arcs最后一个）终点为整个新路径起点；否则使用原路径第一个节点
-        boolean useLastArcLastNode = way.isClosed() && arcs.getLast() != null;
-        if (useLastArcLastNode) finalNodes.add(new Node(UtilsMath.toLatLon(arcs.getLast().getLast())));
-        else finalNodes.add(way.getNode(0));
-        // 遍历除最后一个节点以外所有路径节点，用圆弧替换拐角
-        for (int i = 0; i < nPts - 2; i ++) {
-            if (arcs.get(i) != null) {  // 检查本次的拐角B（i+1）是否有有效圆角（圆角编号=A编号=i），圆弧存在则使用圆角路径
-                double[] T1 = T1s.get(i);
-                // 添加圆弧上第一个切点（如果与上个点不同）
-                Node curveFirst = new Node(UtilsMath.toLatLon(new EastNorth(T1[0], T1[1])));
-                if (!finalNodes.getLast().equals(curveFirst)) finalNodes.add(curveFirst);
-                // 添加圆弧上其余点（跳过第一个点，避免重复）
-                List<EastNorth> arc = arcs.get(i);
-                for (int k = 1; k < arc.size(); k ++)
-                    finalNodes.add(new Node(UtilsMath.toLatLon(arc.get(k))));
-            } else {  // 圆弧不存在则直接将拐点B加进来
-                finalNodes.add(way.getNode(i + 1));
-            }
+        // 对于非闭合路径（或闭合点没有曲线的闭合路径），从第一个节点开始；
+        // 对于闭合路径且闭合点有曲线，从第一条曲线第一个点开始（下面for中添加）
+        if (!way.isClosed() || (way.isClosed() && filletCurves.get(filletCurves.size() - 1) == null))
+            finalNodes.add(nodes.get(0));
+        // 遍历所有拐角
+        for (int i = 0; i < numCorner; i ++) {
+            if (filletCurves.get(i) != null) {  // 有过渡曲线就添加曲线上的所有点
+                List<EastNorth> curve = filletCurves.get(i);
+                for (EastNorth eastNorth : curve)
+                    finalNodes.add(new Node(UtilsMath.toLatLon(eastNorth)));
+            } else finalNodes.add(nodes.get(i + 1));  // 没有过渡曲线，添加原始拐点
         }
-        // 终点处理
-        if (way.isClosed()) {
-            if (arcs.getLast() != null) {  // 如果原路径闭合，且首末点有曲线，拼上最后一条曲线并连上起点
-                List<EastNorth> arcClosedEnd = arcs.getLast();  // 对于闭合路径nPts-2倒数第2个点，nPts-1最后一个点=0起点，1表示第2个点
-                for (int k = 0; k < arcClosedEnd.size(); k ++)
-                    finalNodes.add(new Node(UtilsMath.toLatLon(arcClosedEnd.get(k))));
-                finalNodes.add(finalNodes.getFirst());
-            } else finalNodes.add(way.getNode(0));
-        } else {
-            finalNodes.add(way.getNode(way.getNodesCount() - 1));
-        }
+        // 添加最后一个节点
+        if (way.isClosed()) finalNodes.add(finalNodes.get(0));
+        else finalNodes.add(nodes.get(nodes.size() - 1));
 
         return new ColumbinaSingleOutput(finalNodes, failedNodes);
         // 正式绘制前注意去重

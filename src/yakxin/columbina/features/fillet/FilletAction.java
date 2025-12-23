@@ -8,6 +8,7 @@ import yakxin.columbina.abstractClasses.actionMiddle.ActionWithBatchWays;
 import yakxin.columbina.data.dto.inputs.ColumbinaInput;
 
 import java.awt.event.KeyEvent;
+import java.util.stream.Collectors;
 
 public final class FilletAction extends
         ActionWithBatchWays<FilletGenerator, FilletPreference, FilletParams>
@@ -26,7 +27,7 @@ public final class FilletAction extends
         super(
                 name, iconName, description, shortcut,
                 generator, preference,
-                AbstractDrawingAction.NO_LIMITATION_ON_INPUT_NUM, AbstractDrawingAction.NO_LIMITATION_ON_INPUT_NUM
+                1, AbstractDrawingAction.NO_LIMITATION_ON_INPUT_NUM
         );
     }
 
@@ -52,8 +53,8 @@ public final class FilletAction extends
     @Override
     public String getUndoRedoInfo(ColumbinaInput inputs, FilletParams params) {
         String undoRedoInfo;
-        if (inputs.getInputNum(Way.class) == 1) undoRedoInfo = I18n.tr("Round corners of way {0}: {1}m", inputs.getWays().getFirst().getUniqueId(), params.surfaceRadius);
-        else if (inputs.getInputNum(Way.class) <= 5) undoRedoInfo = I18n.tr("Round corners of way {0}: {1}m", inputs.getWays().stream().map(Way::getUniqueId).toList(), params.surfaceRadius);
+        if (inputs.getInputNum(Way.class) == 1) undoRedoInfo = I18n.tr("Round corners of way {0}: {1}m", inputs.getWays().get(0).getUniqueId(), params.surfaceRadius);
+        else if (inputs.getInputNum(Way.class) <= 5) undoRedoInfo = I18n.tr("Round corners of way {0}: {1}m", inputs.getWays().stream().map(Way::getUniqueId).collect(Collectors.toList()), params.surfaceRadius);
         else undoRedoInfo = I18n.tr("Round corners of {0} ways: {1}m", inputs.getInputNum(Way.class), params.surfaceRadius);
         return undoRedoInfo;
     }

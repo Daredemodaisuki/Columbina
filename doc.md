@@ -1,5 +1,9 @@
 # Columbina开发文档
 
+本文档用于记录插件的结构和一些注意事项，从1.0.2版本开始产生抽象层时开始记录。
+
+〔自1.0.3起〕Columbina从Java21降至Java11以兼容JOSM最低Java版本。
+
 ## 总业务流程
 
 1. JOSM在启动新建`Columbina`主类实体，主类构造函数通过具体操作类的`create`函数新建实体、注册菜单；
@@ -7,10 +11,21 @@
 3. 流程走完后，功能结束。
 
 目前有以下功能：
-* Round Corners（倒圆角）
-* Chamfer Corners（倒斜角）
-* Transition Curve（过渡曲线）
-* Oriented Line（定向画线）
+* 〔自1.0.0起〕【R】Round Corners（倒圆角）（半径模式）
+  * 〔自1.0.2起〕改进了用于控制倒出的圆角节点密度的参数，并提供推荐半径显示
+* 〔自1.0.1起〕【C】Chamfer Corners（倒斜角）
+  * 切距模式
+  * 角A模式
+* 〔自1.0.2起〕【T】Transition Curve（过渡曲线）
+* 〔自1.0.2起〕【A】Oriented Line（定向画线）（相对角度模式）
+
+正在 · 计划开发：
+* 倒圆角的切距模式
+* 定向画线的绝对角度模式
+* 〔计划1.0.3〕【W】Curve Connect（曲线连接）
+* 【P】Regular Polygon（产生正多边形）
+* 【V】Voronoi Line（计算Voronoi中线）
+* 【B】Buffer（绘制缓冲区）
 
 ## 重要的类
 
@@ -22,7 +37,7 @@
   <del>→ <a href="src/yakxin/columbina/Columbina.java">月之门由此进</a> ←</del>
 </p>
 
-### 抽象基类
+### 抽象五大基类
 
 #### 抽象绘图操作类（`yakxin.columbina.abstractClasses.AbstractDrawingAction`）
 
@@ -32,11 +47,10 @@
 
 > * 获取输入（选择的要素和输入参数）
 > * 调用具体的生成器计算
-> * 获取计算结果和失败结果
-> * 产生绘制命令
-> * 绘制（提交到撤销重做栈）
-> * 产生移除旧输入命令
-> * 移除（提交到撤销重做栈）
+> * 获取计算结果和失败输入记录
+> * 产生绘制命令并绘制（提交到撤销重做栈）
+> * 产生移除旧输入命令并移除（提交到撤销重做栈）
+> * 善后工作
 > 
 > 现确定上述流程为最基本的一个绘图功能所需之模板流程。
 
@@ -56,9 +70,12 @@
       * 如果合法，首选项类保存参数并返回参数对象；
       * 如果有小问题，首选项类修正，随后弹警告、保存参数并返回参数对象；
 5. 调用`concludeAddCommands`方法（在中间层或具体动作类中实现）生成添加新路径的命令，这个方法包括：
-   1. 对每个单组输入调用传入的具体生成器的`getOutputForSingleInput`方法，获取单组输入的输出，这个方法将进行数学计算，并获取对于单组输入的输出节点、单组内的部分失败记录（如需要），打包为`getOutputForSingleInput`；
-   2. 汇总各个单组输出，将输出连成路径，并汇总、显示单组内的部分失败的记录（如需要），同时在中间层或具体动作类中记录输入输出对或只记录输出（用于后续选中新路径时返回新路径是什么）；
-   3. 构建、返回绘制新路径所需的命令列表和新绘制的要素；
+   1. 对每个单组输入调用传入的具体生成器的`getOutputForSingleInput`方法，获取单组输入的输出（生成器打包为`ColumbinaSingleOutput`）：
+      * 生成器将进行数学计算，并得到对于单组输入的输出操作意图；
+      * 如需要，生成器还将记录单组内的部分失败记录；
+      * 生成器会选择具有代表性的要`representatives`要素，提供用于后续选中结果、记录id等；
+   2. 汇总各个单组输出操作意图，通过解释器集中解释为`Command`列表，并汇总、显示单组内的部分失败的记录（如需要），同时在中间层或具体动作类中记录输入输出对或只记录输出（用于后续选中新路径时返回新路径是什么）；
+   3. 构建最终提交到JOSM撤销重做栈的`SequenceCommand`，并正式予以执行（新绘制的要素、修改输入等）；
 6. 调用`concludeRemoveCommands`方法（在中间层或具体动作类中实现）生成移除输入旧路径的命令，其中：
    * 对于已上传的路径，使用UtilsPlugin2的`ReplaceGeometryCommand`替换旧路径；
    * 对于本地新绘制的、未上传的路径，检查后直接删除；
@@ -89,26 +106,16 @@
             * `List<Node>`：处理这条路径时没有成功的节点列表
     2. 因为是细化原有路径，所以输入路径的操作往往需要移除或替换输入的旧路径。
 
-> [!NOTE]
-> 
-> 正在考虑调整这个模板为「批量输入模板」
-
 * 面向一条路径 + 一个节点输入的抽象绘图操作类（`yakxin.columbina.abstractClasses.ActionWithNodeWay`）
 
     导向直线（相对角度模式）、路径切圆功能由此派生，这些操作有下面的共同性：
     1. 对于这些功能而言，因为不是「分别计算的」，其失败就是整个失败，失败结果使用`List<Node>`即可；
-    2. 因为输入的节点就是新绘制路径的起点，所以不可以删除输入节点；在相对角度下也无需删除原有线段，产生空命令列表交给抽象类执行西北风即可。
+    2. 因为输入的节点就是新绘制路径的起点，所以不可以删除输入节点；在相对角度下也无需删除原有路径，产生空命令列表交给抽象类执行西北风即可。
     注意：导向直线功能可以只输入一个节点（绝对角度模式），相当于传入的Way是空的。
 
 > [!NOTE]
->
-> 正在考虑调整这个模板为「非批量输入模板」
-
-> [!NOTE]
 > 
-> 未来如果还需要更多种类型输入，如果不涉及复用（比如就某个功能使用这种输入，可以考虑直接从`AbstractDrawingAction`继承）
-> 
-> 如果涉及复用，还可以继续开中间层
+> 正在考虑整合取消中间层，详见文末之「未来重构计划」第1点。
 
 #### 抽象生成器类（`yakxin.columbina.abstractClasses.AbstractGenerator`）
 
@@ -124,20 +131,65 @@
 
 和抽象参数类差不多，主要是起到明确泛型的作用，当然，每个抽象首选项类也需要负责弹出参数设置对话框、获取参数、保存到自身并返回给动作类，有一个统一的抽象函数`getParamsAndUpdatePreference`。
 
+〔自1.0.3起〕先前窗口直接从`Config`读取存储的首选项，而首选项类又从窗口组件读取内容更新自身、`Config`并传出参数实体，比较耦合，故优化了首选项的写法：
+* 改版的抽象首选项参考了枚举的实现，提供`ColumbinaPrefItem<?>[] ALL`集中所有配置项，并提供与JOSM的`Config`的交互方法，其中会自动遍历每个配置项，不用具体类重复抄写；
+* 具体类只需要声明所需的各种`static final ColumbinaPrefItem<Intager/Double/Boolean>`，在构造时传入配置项列表即可；
+* 现在起窗口读取参数不再直接从`Config`读取，而是具体类在`getParamsAndUpdatePreference`汇总当前参数的快照实体并传给窗口（弹窗前需要手动`readPreference`一次），窗口从参数中读取，新参数也通过新的参数实体返回；
+* 具体类在得到新参数后拆包校验，并直接（如果需要静默调整参数，则拆包后重新将检查后的值打包新的参数实体）并向外返回。
+
 ### 工具类
 
+* `yakxin.columbina.utils.UtilsArc`〔自1.0.3起〕：曲线相关的计算（包括根据圆心和角度画圆弧、画螺旋线等）：考虑到多个功能都要用，就整合在一起了；
 * `yakxin.columbina.utils.UtilsData`：数据处理（包含从序列命令中提取命令列表等）；
-* `yakxin.columbina.utils.UtilsMath`：数学计算（包含坐标转换、向量运算、几何计算、级数求和等）；
+* `yakxin.columbina.utils.UtilsMath`：数学计算（包含坐标转换、角度反转和归一化、级数求和等）：
+  * 〔自1.0.3起〕完全弃用`double[]`的坐标转换、向量运算，使用`ColumbinaEN`提供的方法；
 * `yakxin.columbina.utils.UtilsUI`：用户界面组件（包含添加各种组件、消息弹窗、测试用调试输出窗口等）。
 
 ### 数据类
 
+#### 输入输出
+
 * `yakxin.columbina.data.dto.inputs.ColumbinaInput`：总输入类，打包用户选择的所有要素；
-* `yakxin.columbina.data.dto.inputs.ColumbinaSingleInput`：单组输入，用于传递给生成器；
-* `yakxin.columbina.data.dto.ColumbinaSingleOutput`：单组输出，包含新节点和部分失败记录；
+* `yakxin.columbina.data.dto.inputs.ColumbinaSingleInput`：单组输入，用于传递给生成器生成结果、和参数窗口计算推荐参数；
+  * 〔自1.0.3起〕`public Map<String, Object> quickPrecomputedData`：快捷传递中间量公共字段：
+    * 如果在检查期间就预计算了一些内容（比如路径上的节点索引），可以赋值扔这里方便的给到生成器减少重复计算，生成器需要自己拆包；
+    * 也考虑弹窗的推荐参数提前算好，通过这里直接传递到窗口；
+* `yakxin.columbina.data.dto.outputs.ColumbinaSingleOutput`：单组输出，包含操作意图、部分失败记录、输出中的代表性要素：
+  * 〔自1.0.3起〕由于新功能不止会生成新路径，故不再单纯记录输出路径上的节点，但为兼容老生成器，没有移除原构造函数签名，仅传入生成节点将自动转为绘制节点、绘制路径的意图并储存到类实体中；
+* `yakxin.columbina.data.dto.outputs.ColumbinaOutputIntent`：〔自1.0.3起〕输出意图，为生成器所用，新生成器应当直接给出意图：
+  * 意图不等同于`Command`，原先的做法是生成器通过`ColumbinaSingleOutput`向操作类提交节点，操作类判断节点是新绘制的还是复用已有的，并只对新节点产生`AddCommand`，相当于是一种添加意图，且原先根据数据集内容确定最终命令是在操作类中完成的；
+  * 现在不止添加意图，判断逻辑变复杂了，不适合由操作类执行，故新意图类提供`toCommands`方法根据当前数据集内容集中解释意图为合适的命令列表，供操作类打包提交；
+  * 目前提供4种具体意图，未来有需要时再继续添加（如移除现有要素意图）：
+    * `ColumbinaOutputIntent.AddThisNodeIfOK`：如果数据集中不存在则添加此节点；
+    * `ColumbinaOutputIntent.AddThisWayIfOK`：如果数据集中不存在则添加此路径；
+    * `ColumbinaOutputIntent.InsertThisToExistWay`：向已有输入路径添加节点；
+    * `ColumbinaOutputIntent.MergeExistToThisIfOK`：尝试移动已有输入路径中的已有节点到新位置，并且合并。
+
+#### 计算用数据
+
+* `yakxin.columbina.data.ColumbinaCorner`〔自1.0.3起〕：拐角类：
+  * 先前每个生成器都是手动存储拐角ABC节点又手动构建BA、BC等向量，这个类把它们统合在了一起，直接访问成员即可知道各种向量、长度、角度，还支持算角平分线方向角等；
+  * `public static ColumbinaCorner create(Way way, int indexA)`这个方法可以轻松从路径中直接提取对应节点（做了闭合路径的循环索引）并产生拐角，无需手动储存ABC三个点再构建；
+* `yakxin.columbina.data.ColumbinaEN`〔自1.0.3起〕：自定义东北坐标类：
+  * JOSM墨卡托投影的坐标是`EastNorth`类，但是早期没有注意到里面有加减乘除方法，相关的加减乘除先前每个生成器都需要调用`UtilsMath`中的各种静态`double[]`函数进行向量计算，需要额外存储很多变量，很繁琐；
+  * `EastNorth`类本身有加减乘除，但是基于下面的原因，还是自行继承、实现了这个类；
+    * `EastNorth`类的角度系统和本插件所用的「东为0，逆时针（左转、北）正角度，顺时针（右转、南）负角度」不一致，比如`rotate`方法的旋转方向和本插件预期相反（需要注意的是，`ColumbinaEN`还没有重写这个方法）；
+    * `EastNorth`还差比如取得自己的方向角之类的方法；
+  * 下面是一些非常方便的特有方法：
+    * `public ColumbinaEN(EastNorth a, EastNorth b)`和`public ColumbinaEN(Node a, Node b)`：从两个`EastNorth`（或`ColumbinaEN`）或`Node`直接构造`ColumbinaEN`，获取从A到B的向量；
+    * `public double bearingRad()`：获取向量相对于原点的方向角；
+    * `public double deflectionRadTo(ColumbinaEN other)`：获取从`this`（vecA）到`other`（vecB）的偏转角；
+    * `public double angleRadBetween(ColumbinaEN other)`：获取`this`（vecA）和`other`（vecB）的夹角；
+    * `public int turnLeftRightTo(ColumbinaEN other)`：判断从`this`（vecA）到`other`（vecB）是左拐（逆时针偏）还是右拐（顺时针偏）；
+    * `public ColumbinaEN walk(double bearingRad, double enDistance)`：从`this`出发，沿指定角度行进指定距离，得到新的点；
+    * `public static boolean isBOnAC(ColumbinaEN a, ColumbinaEN b, ColumbinaEN c)`：判断B是否在AC连线上且在AC中间。
+
+#### 其他
+
+* `yakxin.columbina.data.dto.PanelSectionResult`：UI面板之分隔线+小栏目标题打包；
+* `yakxin.columbina.data.ColumbinaPrefItem`：〔自1.0.3起〕自定义首选项配置项类，主要用于与`Config`的交互，通过在构造时指定JOSM中的键名，首选项读写不用再抄写多次键名（防止抄错）；
 * `yakxin.columbina.data.ColumbinaException`：自定义异常类，主要起类型标识符作用；
-* `yakxin.columbina.data.ColumbinaSeqCommand`：自定义命令序列（主要是改图标和重写描述），用于撤销/重做栈；
-* `yakxin.columbina.data.dto.PanelSectionResult`：UI面板之分隔线+小栏目标题打包。
+* `yakxin.columbina.data.ColumbinaSeqCommand`：自定义命令序列（主要是改图标和重写描述），用于撤销/重做栈。
 
 ## 异常处理
 
@@ -148,12 +200,15 @@
 
 对于不支持批量的操作，由于只有一组输入和输出，部分异常即整个的关键异常。
 
+〔自1.0.3起〕抛出异常时，面向用户的的提示需要使用`I18n`；非面向用户的异常则不用，格式为`函数名: 异常信息`。
+
 ### 对无效返回值的约定
 
 插件中因计算失败等需要返回无效值，为了方便，在此记下一些比较重要的地方的无效返回值是什么，以方便统一管理和调用者的异常处理：
 * 各个生成器类中，如果因为内部问题导致的输入类型不正确、或几何限制无法产生计算结果，向调用`getOutputForSingleInput`的动作类返回`null`；
 * 倒角等需要对单组输入内每个子部分（拐角）单独计算的生成器类中，如果因为几何限制无法产生计算子结果，向子结果列表中添加`null`；
 * 各个动作类的`concludeAddCommands`、`concludeRemoveCommands`中：如果不需要产生添加或移除指令，或计划内没有产生添加或移除指令的，返回空`ArrayList<Command>`；
+* 首选项类的`getParamsAndUpdatePreference`中：如果用户在输入参数窗口取消操作，返回`null`。
 
 ### 抛出异常的地方
 
@@ -164,7 +219,16 @@
 * 【关键】动作类的`concludeAddCommands`：如果最终发现生成器没有产生任何需要添加的结果，抛出`ColumbinaException`；
 * 【关键】`AbstractDrawingAction`的总流程中：如果发现`concludeAddCommands`返回了`null`或空列表，抛出`ColumbinaException`（考虑与上一条合并）；
 * 【警告】`AbstractDrawingAction`的总流程中：对于需要`deleteOld`的功能，如果发现`concludeRemoveCommands`返回了null或空列表，抛出`ColumbinaException`，警告没有移除的路径；
-* 【部分】生成器类计算时：如果有内部意料之外的错误（如不知道怎么的就除以0了），由相关函数抛出`Exception`，由调用者`concludeAddCommands`在for内捕获；
+* 【部分】生成器类计算时：如果有内部意料之外的错误（如不知道怎么的就除以0了），由相关函数抛出`Exception`，由调用者`concludeAddCommands`在for内捕获。
+
+### 开发时部分异常记录
+
+* 由`org.openstreetmap.josm.data.osm.Way.checkNodes`报`org.openstreetmap.josm.data.osm.DataIntegrityProblemException: Nodes in way must be in the same dataset`：
+  * 多半是提交路径时没有先提交路径上的节点，尤其是存在提交前修改内存的Way实例节点的情况时尤其需要检查改上没有、改之后的节点是不是提交了；
+  * 首次见1.0.0开发时用了下`yakxin.columbina.utils.UtilsData.wayReplaceNode`，具体记不住了但是应该是改之后的节点没有加进来；
+  * 二次见1.0.3开发时`yakxin.columbina.data.dto.outputs.ColumbinaOutputIntent.toCommands`：
+    * 一是合并节点的部分，合并后需要迁移未提交路径的临时节点（`feature`）到移动后的现存节点（`existingFeature`），然后不再提交该临时节点；使用`feature.getReferrer`尝试找到引用其的路径并修改节点，但`getReferrer`是找不到未提交的参照者的，自然而然就没改上还没提交的路径的节点列表，执行命令时就会报错；
+    * 二是插入节点的部分，竟然只记得构建`ChangeNodesCommand`了，忘了为要插入的节点添加`AddCommand`，气笑了。
 
 ## 增加功能简明流程清单
 
@@ -173,18 +237,21 @@
 2. 根据调用和泛型使用的顺序，从后往前，先完成`xxParams`：
    * 继承`AbstractParams`
    * 添加功能特定的参数字段
-3. 完成`xxPreference`（与4直接有相互调用，应当同步进行）：
-   * 继承`AbstractPreference<xxParams>`
-   * 实现`getParamsAndUpdatePreference`方法（调用`xxDialog`并检查数值）
-   * 管理用户首选项的读写
-4. 完成`xxDialog`：
+3. 完成`xxDialog`：
    * 继承`ExtendedDialog`
    * 创建参数输入界面
-   * 实现获取参数的方法（getter）
+   * 构造函数中从参数读入已存首选项，并实现输出参数的方法（`getParams`）
+   * 如果需要计算推荐参数，需要提前实现在Action类的检查部分，并把参数提交到`ColumbinaSingleInput`的`quickPrecomputedData`中；创建界面时提取相关推荐参数
+   * 〔自1.0.3起〕无需同时与4进行，现在已基本解耦，3仅会引用4的默认值常量
+4. 完成`xxPreference`：
+   * 继承`AbstractPreference<xxParams>`，并定义所需的配置项`ColumbinaPrefItem`常量
+   * 实现`getParamsAndUpdatePreference`方法（调用`xxDialog`的`getParams`并检查数值）
+   * 〔自1.0.3起〕无需再手动管理用户首选项的读写，现在的抽象类已提供方法，支持自动遍历
 5. 完成`xxGenerator`：
    * 继承`AbstractGenerator<xxParams>`
    * 实现数学上的具体算法（输入应为地面长度，实现数学计算时应在生成器内部转为东北坐标下的长度）
    * 实现`getOutputForSingleInput`方法（调用数学上的算法）
+   * 如果预估Action类检查期间预计算的东西有用，需要提前实现这个检查部分，并把预计算内容提交到`ColumbinaSingleInput`的`quickPrecomputedData`中；实现`getOutputForSingleInput`时，提取预计算内容
 6. 最后完成`xxAction`：
    * 继承`中间层<xxGenerator, xxPreference, xxParams>`
    * 在静态工厂的`create`函数中填入功能信息
@@ -194,3 +261,16 @@
 8. 使用`I18n`目录下的脚本提取文本并进行国际化。
 
 如果需要新创建中间层或直接从`AbstractDrawingAction`继承，参考前文中的抽象模板大致流程。
+
+## 未来重构计划
+
+可能目前写得有点复杂了，慢慢改吧~
+
+1. 目前抽象层数貌似有点多了，考虑逐步整合：
+   * 第一阶段：两个中间层可以考虑重新定义为「对于批量输入的（现在的`ActionWithBatchWays`）」和「非批量输入的（现在的`ActionWithNodeWay`）」；
+   * 第二阶段：随后非批量输入等同于批量输入一组，最终合并到一起并移动至最底层、取消中间层；
+   * 现在两个中间层除了前面的输入不同，主要就是二者失败记录的类型不同、处理不一样，但其实可以考虑改作`Map<ColumbinaSingleInput, Object>`，其中：
+     * `ColumbinaSingleInput`是失败或者部分失败的输入，需要给到一个`toString`的方法显示输入具体是什么；
+     * `Object`是部分失败记录，具体的动作类定义一个根据`Object`自行输出`String`的方法（`Object`也可以是`null`表示这组输入都失败了）；
+     * 两个拼在一起就是现状`ActionWithBatchWays`输出部分失败消息的逻辑；
+2. Preference弹窗时会向Dialog传入input以便窗口显示推荐参数（如果需要），现状推荐参数由Dialog自行计算，窗口负责了数据计算，职责不太明晰，现在`ColumbinaSingleInput`有了「快捷传递中间量（`quickPrecomputedData`）」后，也许可以在action类具体检查时计算推荐参数并送入这里，窗口直接读取？

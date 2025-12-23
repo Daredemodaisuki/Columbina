@@ -8,9 +8,9 @@ import yakxin.columbina.abstractClasses.actionMiddle.ActionWithNodeWay;
 import yakxin.columbina.data.ColumbinaException;
 import yakxin.columbina.data.dto.inputs.ColumbinaInput;
 import yakxin.columbina.data.dto.inputs.ColumbinaSingleInput;
+import yakxin.columbina.utils.UtilsData;
 
 import java.awt.event.KeyEvent;
-import java.util.ArrayList;
 import java.util.List;
 
 public final class AngleLineAction extends
@@ -56,44 +56,46 @@ public final class AngleLineAction extends
     @Override
     public String getUndoRedoInfo(ColumbinaInput inputs, AngleLineParams params) {
         return I18n.tr("Make oriented line: from node {0}, {1} {2}°, {3}m",
-                inputs.getWays().getFirst().getUniqueId(),
+                inputs.getWays().get(0).getUniqueId(),
                 params.angleDeg < 0 ? I18n.tr("left") : I18n.tr("right"),
                 params.angleDeg,
                 params.surfaceLength);
     }
 
     @Override
+    public int checkInputNum(ColumbinaInput totalInput) {
+        // 检查是否是输入一个节点+一条路径，不检查节点是否在路径上（由checkInputDetails判断）
+        UtilsData.checkInputNum(totalInput, 1, 1, 1, 1);
+        return CHECK_OK;
+    }
+
+    @Override
     public int checkInputDetails(List<ColumbinaSingleInput> singleInputs) {
         // 这个操作不支持批量，前面经过了数量检查，所以只有一组输入
-        ColumbinaSingleInput singleInput = singleInputs.getFirst();
-        Way way = singleInput.ways.getFirst();
-        Node node = singleInput.nodes.getFirst();
-        // 闭合曲线过滤闭合点，顺便查重
-        int count = 0, nodeNum = way.isClosed() ? way.getNodes().size() - 1 : way.getNodes().size();
-        List<Node> wayNodes = new ArrayList<>();
-        for (int i = 0; i < nodeNum; i ++) {
-            if (way.getNode(i) == node) {
-                count ++;
-            }
-            wayNodes.add(way.getNode(i));
+        ColumbinaSingleInput singleInput = singleInputs.get(0);
+        Way way = singleInput.ways.get(0);
+        Node node = singleInput.nodes.get(0);
+
+        // 检查节点是否在路径上且不是自交节点
+        int nodeIndex = UtilsData.getNodeIndex(node, way);
+        switch (nodeIndex) {
+            case UtilsData.NODE_NOT_FOUND:  // 节点不在路径上
+                throw new ColumbinaException(I18n.tr("The way selected doesn''t contain the node selected."));
+            case UtilsData.SELF_INTERSECTION:  // 自交路径的自交节点
+                throw new ColumbinaException(
+                        I18n.tr("The node is the self-intersection point of a self-intersecting way. ")
+                                + I18n.tr("The bearing angle into this node cannot be determined.")
+                );
+            case 0:  // 非闭合路径第一个点
+                if (!way.isClosed())
+                    throw new ColumbinaException(
+                        I18n.tr("The selected node is the first node of the way. ")
+                                + I18n.tr("The bearing angle into this node cannot be determined.")
+                    );
         }
 
-        // 检查路径是否包含节点
-        if (count == 0)
-            throw new ColumbinaException(I18n.tr("The way selected doesn''t contain the node selected."));
-        // 检查路径是否多次包含该节点（自交路径的自交点）
-        if (count > 1)
-            throw new ColumbinaException(
-                    I18n.tr("The node is the self-intersection point of a self-intersecting way. ")
-                            + I18n.tr("The bearing angle into this node cannot be determined.")
-            );
-
-        // 检查路径是否是非闭合路径第一个点
-        if (node == wayNodes.getFirst() && !way.isClosed())
-            throw new ColumbinaException(
-                    I18n.tr("The selected node is the first node of the way. ")
-                            + I18n.tr("The bearing angle into this node cannot be determined.")
-            );
+        // 快捷传递中间量
+        singleInputs.get(0).quickPrecomputedData.put("nodeIndex", nodeIndex);
 
         return CHECK_OK;
     }

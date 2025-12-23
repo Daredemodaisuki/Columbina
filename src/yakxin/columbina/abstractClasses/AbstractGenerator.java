@@ -1,6 +1,6 @@
 package yakxin.columbina.abstractClasses;
 
-import yakxin.columbina.data.dto.ColumbinaSingleOutput;
+import yakxin.columbina.data.dto.outputs.ColumbinaSingleOutput;
 import yakxin.columbina.data.dto.inputs.ColumbinaSingleInput;
 
 public abstract class AbstractGenerator <ParamType extends AbstractParams> {
@@ -8,6 +8,7 @@ public abstract class AbstractGenerator <ParamType extends AbstractParams> {
     /**
      * 对于一组输入要素，调用具体算法产生绘制单条新路径所需指令
      * <p>将由action类调用，注意由于输入要素为ColumbinaSingleInput，具体生成器类实现时需要自行判断、提取需要的要素
+     * <p>ColumbinaSingleInput可能包含快捷传递中间量，如有需要，具体生成器是现实时需要自行判断、提取
      * <p>如果从ColumbinaSingleInput提取的内容发现不对，暂定和没有生成指令一样先返回null
      * @param input 输入要素
      * @param params 输入参数（extends AbstractGenerator时指定的参数类）
