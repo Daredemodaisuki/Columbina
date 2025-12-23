@@ -16,7 +16,7 @@ public final class ColumbinaSingleOutput {
     public final List<ColumbinaOutputIntent<?>> outputIntents;
     public final List<OsmPrimitive> representatives;  // 这组输出中的代表性要素，可用于选中、字符串显示等
     
-    public final List<Long> failedNodes;  // TODO：日后需要逐步改为List<OsmPrimitive>
+    public final List<OsmPrimitive> partialFailureInputs;
     public Map<String, Object> extraData;
 
     /**
@@ -25,7 +25,7 @@ public final class ColumbinaSingleOutput {
      * @param wayNodesInSingleOutput 单组输入产生的一条新路径的所有节点（包括数据集中已有的节点，由ColumbinaOutputIntent转命令时去除已有，由action类创建命令序列时去重）
      * @param failedNodeIdsInSingleInput 单组输入中部分失败的输入节点
      */
-    public ColumbinaSingleOutput(List<Node> wayNodesInSingleOutput, List<Long> failedNodeIdsInSingleInput) {
+    public ColumbinaSingleOutput(List<Node> wayNodesInSingleOutput, List<OsmPrimitive> failedNodeIdsInSingleInput) {
         // 转为添加节点意图
         this.outputIntents = new ArrayList<>();
         for (Node newNode : wayNodesInSingleOutput)
@@ -36,23 +36,23 @@ public final class ColumbinaSingleOutput {
         this.outputIntents.add(new ColumbinaOutputIntent.AddThisWayIfOK(newWay));
         this.representatives = List.of(newWay);  // 默认以新产生的路径为代表
         
-        this.failedNodes = failedNodeIdsInSingleInput;
+        this.partialFailureInputs = failedNodeIdsInSingleInput;
         this.extraData = new HashMap<>();  // 老功能不需要
     }
     /**
      * 构造函数（新API）
      * @param outputIntents 输出修改意图列表
      * @param representatives 用于选中、显示id的代表性要素（应当保证其最后必须会留在数据集中）
-     * @param failedNodeIdsInSingleInput 单组输入中部分失败的输入节点
+     * @param failedNodeIdsInSingleInput 单组输入中部分失败的输入（比如输入整条路径，并对路径每个节点操作，那么某个节点失败就是部分失败）
      * @param extraData 额外数据
      */
     public ColumbinaSingleOutput(
             List<ColumbinaOutputIntent<?>> outputIntents, List<OsmPrimitive> representatives,
-            List<Long> failedNodeIdsInSingleInput, Map<String, Object> extraData
+            List<OsmPrimitive> failedNodeIdsInSingleInput, Map<String, Object> extraData
     ) {
         this.outputIntents = outputIntents;
         this.representatives = representatives;
-        this.failedNodes = failedNodeIdsInSingleInput;
+        this.partialFailureInputs = failedNodeIdsInSingleInput;
         this.extraData = extraData;
     }
 

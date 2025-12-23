@@ -2,6 +2,7 @@ package yakxin.columbina.features.transitionCurve;
 
 import org.openstreetmap.josm.data.coor.EastNorth;
 import org.openstreetmap.josm.data.osm.Node;
+import org.openstreetmap.josm.data.osm.OsmPrimitive;
 import org.openstreetmap.josm.data.osm.Way;
 import yakxin.columbina.abstractClasses.AbstractGenerator;
 import yakxin.columbina.data.ColumbinaCorner;
@@ -128,7 +129,7 @@ public final class TransitionCurveGenerator extends AbstractGenerator<Transition
             Way way,
             double surfaceRadius, double surfaceLength, double surfaceChainageLength
     ) {
-        List<Long> failedNodes = new ArrayList<>();
+        List<OsmPrimitive> failedNodes = new ArrayList<>();
         // 获取路径的所有节点
         List<Node> nodes = new ArrayList<>(way.getNodes());  // 获取节点（包含重复的首末点）
         int numNode = way.isClosed() ? way.getNodesCount() - 1 : way.getNodesCount();  // 实际节点数（去除闭合点）
@@ -155,14 +156,14 @@ public final class TransitionCurveGenerator extends AbstractGenerator<Transition
 
                 if (transCurve == null || transCurve.size() < 2) {  // 该拐角没有生成缓和曲线
                     transCurves.add(null);
-                    failedNodes.add(nodes.get(i + 1).getUniqueId());  // 记录失败拐角
+                    failedNodes.add(nodes.get(i + 1));  // 记录失败拐角
                 } else {
                     transCurves.add(transCurve);
                 }
             } catch (ColumbinaException | IllegalArgumentException e) {
                 // 如果纬度接近90度，使用一个很小的正数，避免除0，但这样不准确，所以直接失败跳过这个圆弧吧
                 transCurves.add(null);
-                failedNodes.add(nodes.get(i + 1).getUniqueId());
+                failedNodes.add(nodes.get(i + 1));
             }
         }
         if (transCurves.isEmpty()) {  // 没有曲线，返回原始路径

@@ -2,6 +2,7 @@ package yakxin.columbina.features.chamfer;
 
 import org.openstreetmap.josm.data.coor.EastNorth;
 import org.openstreetmap.josm.data.osm.Node;
+import org.openstreetmap.josm.data.osm.OsmPrimitive;
 import org.openstreetmap.josm.data.osm.Way;
 import yakxin.columbina.abstractClasses.AbstractGenerator;
 import yakxin.columbina.data.ColumbinaCorner;
@@ -80,7 +81,7 @@ public final class ChamferGenerator extends AbstractGenerator<ChamferParams> {
             double surfaceDistanceA, double surfaceDistanceC,
             double angleADeg
     ) {
-        List<Long> failedNodes = new ArrayList<>();
+        List<OsmPrimitive> failedNodes = new ArrayList<>();
 
         // 获取路径的所有节点
         List<Node> nodes = new ArrayList<>(way.getNodes());
@@ -107,7 +108,7 @@ public final class ChamferGenerator extends AbstractGenerator<ChamferParams> {
                 } catch (ColumbinaException exSurToEn) {
                     // 如果纬度接近90度，直接失败跳过这个斜角
                     chamfers.add(null);
-                    failedNodes.add(nodes.get(i + 1).getUniqueId());
+                    failedNodes.add(nodes.get(i + 1));
                     continue;
                 }
 
@@ -119,14 +120,14 @@ public final class ChamferGenerator extends AbstractGenerator<ChamferParams> {
 
                 if (chamfer == null) {  // 该拐角没有生成斜角（半径过大或角度问题）
                     chamfers.add(null);
-                    failedNodes.add(nodes.get(i + 1).getUniqueId());
+                    failedNodes.add(nodes.get(i + 1));
                 } else {
                     chamfers.add(chamfer);
                 }
             } catch (ColumbinaException exCorner) {
                 // 创建拐角失败
                 chamfers.add(null);
-                failedNodes.add(nodes.get(i + 1).getUniqueId());
+                failedNodes.add(nodes.get(i + 1));
             }
         }
 

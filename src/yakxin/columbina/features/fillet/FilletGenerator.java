@@ -2,6 +2,7 @@ package yakxin.columbina.features.fillet;
 
 import org.openstreetmap.josm.data.coor.EastNorth;
 import org.openstreetmap.josm.data.osm.Node;
+import org.openstreetmap.josm.data.osm.OsmPrimitive;
 import org.openstreetmap.josm.data.osm.Way;
 import yakxin.columbina.abstractClasses.AbstractGenerator;
 import yakxin.columbina.data.ColumbinaCorner;
@@ -97,7 +98,7 @@ public final class FilletGenerator extends AbstractGenerator<FilletParams> {
             double surfaceRadius, double surfaceChainageLength, int maxPointNum,
             double minAngleDeg, double maxAngleDeg
     ) {
-        List<Long> failedNodes = new ArrayList<>();
+        List<OsmPrimitive> failedNodes = new ArrayList<>();
         // 获取路径的所有节点
         List<Node> nodes = new ArrayList<>(way.getNodes());
         int numNode = way.isClosed() ? way.getNodesCount() - 1 : way.getNodesCount();  // 实际节点数（去除闭合点）
@@ -122,7 +123,7 @@ public final class FilletGenerator extends AbstractGenerator<FilletParams> {
                 );
                 if (arc == null || arc.size() < 2) {  // 该拐角没有生成圆角（半径过大或角度问题）
                     filletCurves.add(null);
-                    failedNodes.add(nodes.get(i + 1).getUniqueId());
+                    failedNodes.add(nodes.get(i + 1));
                 }
                 else {
                     filletCurves.add(arc);
@@ -130,7 +131,7 @@ public final class FilletGenerator extends AbstractGenerator<FilletParams> {
             } catch (ColumbinaException exSurToEN) {
                 // 如果纬度接近90度，使用一个很小的正数，避免除0，但这样不准确，所以直接失败跳过这个圆弧吧
                 filletCurves.add(null);
-                failedNodes.add(nodes.get(i + 1).getUniqueId());
+                failedNodes.add(nodes.get(i + 1));
             }
         }
 

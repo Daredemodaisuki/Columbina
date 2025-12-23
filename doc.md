@@ -70,9 +70,12 @@
       * 如果合法，首选项类保存参数并返回参数对象；
       * 如果有小问题，首选项类修正，随后弹警告、保存参数并返回参数对象；
 5. 调用`concludeAddCommands`方法（在中间层或具体动作类中实现）生成添加新路径的命令，这个方法包括：
-   1. 对每个单组输入调用传入的具体生成器的`getOutputForSingleInput`方法，获取单组输入的输出，这个方法将进行数学计算，并获取对于单组输入的输出节点、单组内的部分失败记录（如需要），打包为`getOutputForSingleInput`；
-   2. 汇总各个单组输出，将输出连成路径，并汇总、显示单组内的部分失败的记录（如需要），同时在中间层或具体动作类中记录输入输出对或只记录输出（用于后续选中新路径时返回新路径是什么）；
-   3. 构建、返回绘制新路径所需的命令列表和新绘制的要素；
+   1. 对每个单组输入调用传入的具体生成器的`getOutputForSingleInput`方法，获取单组输入的输出（生成器打包为`ColumbinaSingleOutput`）：
+      * 生成器将进行数学计算，并得到对于单组输入的输出操作意图；
+      * 如需要，生成器还将记录单组内的部分失败记录；
+      * 生成器会选择具有代表性的要`representatives`要素，提供用于后续选中结果、记录id等；
+   2. 汇总各个单组输出操作意图，通过解释器集中解释为`Command`列表，并汇总、显示单组内的部分失败的记录（如需要），同时在中间层或具体动作类中记录输入输出对或只记录输出（用于后续选中新路径时返回新路径是什么）；
+   3. 构建最终提交到JOSM撤销重做栈的`SequenceCommand`，并正式予以执行（新绘制的要素、修改输入等）；
 6. 调用`concludeRemoveCommands`方法（在中间层或具体动作类中实现）生成移除输入旧路径的命令，其中：
    * 对于已上传的路径，使用UtilsPlugin2的`ReplaceGeometryCommand`替换旧路径；
    * 对于本地新绘制的、未上传的路径，检查后直接删除；
@@ -144,13 +147,26 @@
 
 ### 数据类
 
+#### 输入输出
+
 * `yakxin.columbina.data.dto.inputs.ColumbinaInput`：总输入类，打包用户选择的所有要素；
 * `yakxin.columbina.data.dto.inputs.ColumbinaSingleInput`：单组输入，用于传递给生成器生成结果、和参数窗口计算推荐参数；
   * 〔自1.0.3起〕`public Map<String, Object> quickPrecomputedData`：快捷传递中间量公共字段：
     * 如果在检查期间就预计算了一些内容（比如路径上的节点索引），可以赋值扔这里方便的给到生成器减少重复计算，生成器需要自己拆包；
     * 也考虑弹窗的推荐参数提前算好，通过这里直接传递到窗口；
-* `yakxin.columbina.data.dto.ColumbinaSingleOutput`：单组输出，包含新节点和部分失败记录；
-* `yakxin.columbina.data.dto.PanelSectionResult`：UI面板之分隔线+小栏目标题打包；
+* `yakxin.columbina.data.dto.outputs.ColumbinaSingleOutput`：单组输出，包含操作意图、部分失败记录、输出中的代表性要素：
+  * 〔自1.0.3起〕由于新功能不止会生成新路径，故不再单纯记录输出路径上的节点，但为兼容老生成器，没有移除原构造函数签名，仅传入生成节点将自动转为绘制节点、绘制路径的意图并储存到类实体中；
+* `yakxin.columbina.data.dto.outputs.ColumbinaOutputIntent`：〔自1.0.3起〕输出意图，为生成器所用，新生成器应当直接给出意图：
+  * 意图不等同于`Command`，原先的做法是生成器通过`ColumbinaSingleOutput`向操作类提交节点，操作类判断节点是新绘制的还是复用已有的，并只对新节点产生`AddCommand`，相当于是一种添加意图，且原先根据数据集内容确定最终命令是在操作类中完成的；
+  * 现在不止添加意图，判断逻辑变复杂了，不适合由操作类执行，故新意图类提供`toCommands`方法根据当前数据集内容集中解释意图为合适的命令列表，供操作类打包提交；
+  * 目前提供4种具体意图，未来有需要时再继续添加（如移除现有要素意图）：
+    * `ColumbinaOutputIntent.AddThisNodeIfOK`：如果数据集中不存在则添加此节点；
+    * `ColumbinaOutputIntent.AddThisWayIfOK`：如果数据集中不存在则添加此路径；
+    * `ColumbinaOutputIntent.InsertThisToExistWay`：向已有输入路径添加节点；
+    * `ColumbinaOutputIntent.MergeExistToThisIfOK`：尝试移动已有输入路径中的已有节点到新位置，并且合并。
+
+#### 计算用数据
+
 * `yakxin.columbina.data.ColumbinaCorner`〔自1.0.3起〕：拐角类：
   * 先前每个生成器都是手动存储拐角ABC节点又手动构建BA、BC等向量，这个类把它们统合在了一起，直接访问成员即可知道各种向量、长度、角度，还支持算角平分线方向角等；
   * `public static ColumbinaCorner create(Way way, int indexA)`这个方法可以轻松从路径中直接提取对应节点（做了闭合路径的循环索引）并产生拐角，无需手动储存ABC三个点再构建；
@@ -166,7 +182,11 @@
     * `public double angleRadBetween(ColumbinaEN other)`：获取`this`（vecA）和`other`（vecB）的夹角；
     * `public int turnLeftRightTo(ColumbinaEN other)`：判断从`this`（vecA）到`other`（vecB）是左拐（逆时针偏）还是右拐（顺时针偏）；
     * `public ColumbinaEN walk(double bearingRad, double enDistance)`：从`this`出发，沿指定角度行进指定距离，得到新的点；
-    * `public static boolean isBOnAC(ColumbinaEN a, ColumbinaEN b, ColumbinaEN c)`：判断B是否在AC连线上且在AC中间；
+    * `public static boolean isBOnAC(ColumbinaEN a, ColumbinaEN b, ColumbinaEN c)`：判断B是否在AC连线上且在AC中间。
+
+#### 其他
+
+* `yakxin.columbina.data.dto.PanelSectionResult`：UI面板之分隔线+小栏目标题打包；
 * `yakxin.columbina.data.ColumbinaPrefItem`：〔自1.0.3起〕自定义首选项配置项类，主要用于与`Config`的交互，通过在构造时指定JOSM中的键名，首选项读写不用再抄写多次键名（防止抄错）；
 * `yakxin.columbina.data.ColumbinaException`：自定义异常类，主要起类型标识符作用；
 * `yakxin.columbina.data.ColumbinaSeqCommand`：自定义命令序列（主要是改图标和重写描述），用于撤销/重做栈。

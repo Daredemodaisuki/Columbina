@@ -15,15 +15,12 @@ public class UtilsData {
 
     /// 数据相关
     /**
-     * 替换路径上的节点
+     * 替换路径上的节点（仅供未提交对象使用）
      * @param way 路径
      * @param index 欲替换的节点的索引
      * @param newNode 新节点
      */
     public static void wayReplaceNode(Way way, int index, Node newNode) {
-        // way.removeNode(way.getNode(index));
-        // way.addNode(index, newNode);
-        // way.checkDataset();
         List<Node> originalNodes = way.getNodes();
         originalNodes.set(index, newNode);
         way.setNodes(originalNodes);

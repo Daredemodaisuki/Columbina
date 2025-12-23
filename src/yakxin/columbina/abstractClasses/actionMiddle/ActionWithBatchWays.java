@@ -129,14 +129,14 @@ public abstract class ActionWithBatchWays<
     ) {
         List<ColumbinaOutputIntent<?>> intents = new ArrayList<>();
         inputOutputPairs = new HashMap<>();  // 输入节点/路径k与新绘制的路径v的打包对
-        Map<Way, List<Long>> failedNodeIds = new HashMap<>();  // 处理输入节点/路径k与处理时k上失败的节点v的打包对
+        Map<Way, List<OsmPrimitive>> failedNodeIds = new HashMap<>();  // 处理输入节点/路径k与处理时k上失败的节点v的打包对
         // 处理路径
         for (ColumbinaSingleInput singleInput : singleInputs) {  // 分别处理每个输入路径
             // 调用生成传入的函数计算路径
             ColumbinaSingleOutput singleOutput = generator.getOutputForSingleInput(singleInput, params);
             if (singleOutput == null) continue;
             if (!singleOutput.isValid()) continue;
-            failedNodeIds.put(singleInput.ways.get(0), singleOutput.failedNodes);
+            failedNodeIds.put(singleInput.ways.get(0), singleOutput.partialFailureInputs);
             
             // 收集新线（目前假定singleOutput只输出一条新线）
             Way newWay = (Way) singleOutput.representatives.get(0);
@@ -147,22 +147,17 @@ public abstract class ActionWithBatchWays<
                 newWay.setKeys(wayTags);
             }
             
-            // 转为指令
-            // for (ColumbinaOutputIntent<?> intent : singleOutput.outputIntents) intents.addAll(intent.resolveToCommand(ds));
-            
             intents.addAll(singleOutput.outputIntents);
             inputOutputPairs.put(singleInput.ways.get(0), newWay);
         }
-        
+        // 转为指令（toCommands已去重）
         List<Command> commands = ColumbinaOutputIntent.toCommands(intents, ds);
 
         if (commands.isEmpty())  // 未能成功生成一条线
             throw new ColumbinaException(I18n.tr("Failed to generate any new way."));
-        
-        // 去重防止提交重复添加（ColumbinaOutputIntent.toCommands已去重）
-        // commands = commands.stream().distinct().collect(Collectors.toList());
 
         // 提示失败信息
+        // TODO：汇总生成器和解释器的错误信息
         showFailedProcessedCorner(failedNodeIds);
 
         return commands;
@@ -298,18 +293,21 @@ public abstract class ActionWithBatchWays<
 
     /**
      * 弹出消息提示处理失败的节点
-     * @param failedNodeIds 存在失败情况的路径和具体失败的节点列表组成的打包对
+     * @param failedNodes 存在失败情况的路径和具体失败的节点列表组成的打包对
      */
-    public void showFailedProcessedCorner(Map<Way, List<Long>> failedNodeIds) {
+    public void showFailedProcessedCorner(Map<Way, List<OsmPrimitive>> failedNodes) {
         // 如果有拐角处理失败，则提示
-        if (failedNodeIds != null && !failedNodeIds.isEmpty()) {
+        if (failedNodes != null && !failedNodes.isEmpty()) {
             boolean hasFailedNodes = false;
-            StringBuilder failedInfo = new StringBuilder(I18n.tr("The following corner nodes could not be rounded due to too short distance to adjacent nodes or not meeting the angle restrictions: "));
-            for (Map.Entry<Way, List<Long>> failedEntry : failedNodeIds.entrySet()) {
+            StringBuilder failedInfo = new StringBuilder(I18n.tr("The following corner nodes could not be processed due to too short distance to adjacent nodes or not meeting the angle restrictions: "));
+            for (Map.Entry<Way, List<OsmPrimitive>> failedEntry : failedNodes.entrySet()) {
                 if (failedEntry.getValue().isEmpty()) continue;
                 failedInfo.append(
                         I18n.tr("\nWay")).append(failedEntry.getKey().getUniqueId())
-                        .append(I18n.tr(": ")).append(failedEntry.getValue());
+                        .append(I18n.tr(": ")).append(
+                                failedEntry.getValue().stream().map(OsmPrimitive::getUniqueId).map(String::valueOf)
+                                        .collect(Collectors.joining(",", "[", "]"))
+                        );
                 hasFailedNodes = true;
             }
             if (hasFailedNodes) UtilsUI.warnInfo(failedInfo.toString());
