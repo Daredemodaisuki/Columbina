@@ -1,12 +1,12 @@
 # <img src="/images/Columbina.png" alt="Chamfer Corner Menu" width="40px"> Corner-Optimal Line Utility Modifier for Better Inflection and Node Adjustment (*Columbina*) <br> 用于改进弯折与节点调整的转角优化线型之实用修改器
 
-A Java OpenStreetMap (JOSM) pulgin providing convenient Fillet (round corner), Chamfer, Transition Curve drawing, and … <br> might provide more features in the future.
+A Java OpenStreetMap (JOSM) plugin providing convenient Fillet (round corner), Chamfer, Transition Curve drawing, and … <br> might provide more features in the future.
 <br> 一个提供倒圆角、倒斜角、缓和曲线工具的Java OpenStreetMap（JOSM）插件，未来计划开发更多功能。
 
 ![Downloads](https://img.shields.io/github/downloads/Daredemodaisuki/Columbina/total)
 
 <p align="right">
-  <img src="ColumbinaRC.png" alt="Usage example and Dialog example with rounding Columbina Hyposelenia's Kuuhenki's corners" width="60%">
+  <img src="doc/ColumbinaRC.png" alt="Usage example and Dialog example with rounding Columbina Hyposelenia's Kuuhenki's corners" width="60%">
 </p>
 <p align="right">
   <small><sub><s>The name of this plugin has absolutely no relationship with Kuutar or Columbina Hyposelenia, and it's definitely not an attempt to fit the meme. xd
@@ -95,6 +95,12 @@ When enabled and if the selected S is the last node of the SW and the E is the f
 However, if S or E is used by other ways, they will not be moved, and the curve's start and end nodes will remain being independently added.
 <br> 插件提供「允许裁切或延长现有路径端头」选项。当所选的S是SW的最后一个节点，且E是EW的第一个节点时，启用此选项后，插件会尝试将S和E移动到曲线的实际起点和终点。但若S或E同时被其他路径使用，则不会移动，而是保持独立添加曲线起点和终点。
 
+The usage example below demonstrates how to use this tool to sketch curve connection like the right-turn ramps (direct ramps with angles less than 90°) and left-turn ramps (loop ramps with angles greater than 180°) for a cloverleaf interchange,
+illustrating the relationship between input elements, direction, and the final result.
+<br> 以下使用示例展示了如何利用此工具绘制类似于苜蓿叶立交的右转匝道（角度小于90°的直接匝道）和左转匝道（角度大于180°的环形匝道）的曲线连接，说明了输入要素、行进方向与最终结果之间的关系。
+
+<p align="middle"><img src="/doc/CurveConnectExample.png" alt="Input example of Curve Connect" width="50%"></p>
+
 ### Note · 注意
 
 When " <img src="/images/RemoveOldWays.png" alt="Remove Old Ways" width="10px"> Remove original way after drawing" is enabled:
@@ -137,8 +143,8 @@ Since the plugin also uses Utilsplugin2, you will need to add the Utilsplugin2.j
 The JAR file for JOSM's core can be downloaded from [its official website](https://josm.openstreetmap.de/). The JAR for Utilsplugin2 can be found in the aforementioned plugin directory.
 <br> JOSM本体的JAR文件可以在其[官网](https://josm.openstreetmap.de/)下载到，Utilsplugin2的JAR可在前述插件文件夹下找到。
 
-Some helpful documents could be found at [`doc.md`](doc.md), but now it is in Chinese.
-<br> 请查看[`doc.md`](doc.md)获取更多有用的信息。
+Some helpful documents could be found at [`doc.md`](doc/doc.md), but now it is in Chinese.
+<br> 请查看[`doc.md`](doc/doc.md)获取更多有用的信息。
 
 This project currently has no plans to be integrated into JOSM's SVN system, which means localization for various languages must be handled independently.
 The plugin's native language is Chinese, and an English translation is already provided (as JOSM requires English to be used within the I18n functions).

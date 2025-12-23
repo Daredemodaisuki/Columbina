@@ -34,7 +34,7 @@
 根据JOSM插件要求提供的插件入口点（定义在`build.xml`中的必需的清单属性之`Plugin-Class`），通过新建动作类的实体来在JOSM菜单中注册功能项。
 
 <p align="center">
-  <del>→ <a href="src/yakxin/columbina/Columbina.java">月之门由此进</a> ←</del>
+  <del>→ <a href="../src/yakxin/columbina/Columbina.java">月之门由此进</a> ←</del>
 </p>
 
 ### 抽象五大基类
