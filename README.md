@@ -1,12 +1,12 @@
 # <img src="/images/Columbina.png" alt="Chamfer Corner Menu" width="40px"> Corner-Optimal Line Utility Modifier for Better Inflection and Node Adjustment (*Columbina*) <br> 用于改进弯折与节点调整的转角优化线型之实用修改器
 
-A Java OpenStreetMap (JOSM) pulgin providing convenient Fillet (round corner), Chamfer, Transition Curve drawing, and … <br> might provide more features in the future.
+A Java OpenStreetMap (JOSM) plugin providing convenient Fillet (round corner), Chamfer, Transition Curve drawing, and … <br> might provide more features in the future.
 <br> 一个提供倒圆角、倒斜角、缓和曲线工具的Java OpenStreetMap（JOSM）插件，未来计划开发更多功能。
 
 ![Downloads](https://img.shields.io/github/downloads/Daredemodaisuki/Columbina/total)
 
 <p align="right">
-  <img src="ColumbinaRC.png" alt="Usage example and Dialog example with rounding Columbina Hyposelenia's Kuuhenki's corners" width="60%">
+  <img src="doc/ColumbinaRC.png" alt="Usage example and Dialog example with rounding Columbina Hyposelenia's Kuuhenki's corners" width="60%">
 </p>
 <p align="right">
   <small><sub><s>The name of this plugin has absolutely no relationship with Kuutar or Columbina Hyposelenia, and it's definitely not an attempt to fit the meme. xd
@@ -76,24 +76,33 @@ A positive deflection angle indicates a turn to the left, and a negative angle i
 This feature allows users to connect specified segments between two ways with smooth curves.
 <br> 该功能允许用户使用平滑曲线连接两条路径上的指定节点段。
 
-Users need to select the start way (BW), start reference node (S), end way (EW), and end reference node (E).
+Users need to select the start way (SW), start reference node (S), end way (EW), and end reference node (E).
+The first selected way is designated as SW, and the second as EW; the order in which S and E are selected does not matter, as the plugin will automatically match them to SW and EW as best as possible.
 The plugin will draw a curve starting from the tangent node between the previous node (before start, BS) of S on the SW to S, at the direction of BS → S.
 Similarly, it will end on the tangent node between E and its next node (after end, AE) on the EW, at the direction of E → AE.
-<br> 您需要选择起点路径（BW）、参考起点（S）、终点路径（EW）、参考终点（E），插件会尝试在您选择的S和其在BW上的前一个节点（BS）之间找到切点以BS→S的方向引出一条曲线，连接至您选择的E和其在EW上的后一个节点（AE）之间的切点，以E→AE的方向结束。
+<br> 您需要选择起点路径（SW）、参考起点（S）、终点路径（EW）、参考终点（E），其中先选择的路径是SW，后选择的路径是EW；S和E的选择顺序无要求，会尽可能自动匹配到SW和EW上。插件会尝试在您选择的S和其在SW上的前一个节点（BS）之间找到切点以BS→S的方向引出一条曲线，连接至您选择的E和其在EW上的后一个节点（AE）之间的切点，以E→AE的方向结束。
 
-The first selected way is designated as SW, and the second as EW; the order in which S and E are selected does not matter, as the plugin will automatically match them to SW and EW as best as possible.
-To define the curve's starting and ending directions, the start node S cannot be the first node of the start way, and the end node E cannot be the last node of the end way.
-The S and E can be the same node when shared by both SW and EW.
-<br> 先选择的路径是SW，后选择的路径是EW；S和E的选择顺序无要求，会尽可能自动匹配到SW和EW上。为了获得曲线开始和结束的方向，S不能是SW上第一个节点，E不能是EW上最后一个节点。S和E可以是一个节点，但此时其必须同时在BW和EW上。
+The selections need to meet the following requirements:
+<br> 选定要素需要满足：
+
+* SW and EW can't be parallel (please use two 90° corner); <br> SW和EW不能平行（请使用两个90°拐角）；
+* To define the curve's starting and ending directions, the start node S cannot be the first node of the start way, and the end node E cannot be the last node of the end way; and <br> 为了获得曲线开始和结束的方向，S不能是SW上第一个节点，E不能是EW上最后一个节点；
+* The S and E can be the same node when shared by both SW and EW. <br> S和E可以是一个节点，但此时其必须同时在SW和EW上。
 
 Users can choose the curve direction: left (counter-clockwise) or right (clockwise). The curve radius must be specified,
-and if desired, a transition curve can be added by providing its length.
-<br> 用户可以选择曲线的行进方向：向左（逆时针）或向右（顺时针）。需要指定曲线半径；并可选择添加缓和曲线，此时需提供缓和曲线长度。
+and if desired, a transition curve can be added by providing its length (if you don't need, use 0m.).
+<br> 用户可以选择曲线的行进方向：向左（逆时针）或向右（顺时针）。需要指定曲线半径；并可选择添加缓和曲线，此时需提供缓和曲线长度（如果不需要请输入0m）。
 
 The plugin offers an "Allow cutting or extending existing way ends" option.
 When enabled and if the selected S is the last node of the SW and the E is the first node of the EW, the plugin will attempt to move S and E to the actual start and end nodes (i.e. the tangent nodes) of the curve.
 However, if S or E is used by other ways, they will not be moved, and the curve's start and end nodes will remain being independently added.
 <br> 插件提供「允许裁切或延长现有路径端头」选项。当所选的S是SW的最后一个节点，且E是EW的第一个节点时，启用此选项后，插件会尝试将S和E移动到曲线的实际起点和终点。但若S或E同时被其他路径使用，则不会移动，而是保持独立添加曲线起点和终点。
+
+The usage example below demonstrates how to use this tool to sketch curve connection similar to the left-turn direct ramps (with angles less than 90°) and left-turn loop ramps (with angles greater than 180°) for a cloverleaf interchange,
+illustrating the relationship between input features, curve direction (although they actually turn left), and the final result.
+<br> 以下使用示例展示了如何利用此工具绘制类似于苜蓿叶立交的左转直接匝道（角度小于90°）和左转环形匝道（角度大于180°）的曲线连接，说明了输入要素选择、行进方向（尽管最终都是向左拐）与最终结果之间的关系。
+
+<p align="middle"><img src="/doc/CurveConnectExample.png" alt="Input example of Curve Connect" width="75%"></p>
 
 ### Note · 注意
 
@@ -137,8 +146,8 @@ Since the plugin also uses Utilsplugin2, you will need to add the Utilsplugin2.j
 The JAR file for JOSM's core can be downloaded from [its official website](https://josm.openstreetmap.de/). The JAR for Utilsplugin2 can be found in the aforementioned plugin directory.
 <br> JOSM本体的JAR文件可以在其[官网](https://josm.openstreetmap.de/)下载到，Utilsplugin2的JAR可在前述插件文件夹下找到。
 
-Some helpful documents could be found at [`doc.md`](doc.md), but now it is in Chinese.
-<br> 请查看[`doc.md`](doc.md)获取更多有用的信息。
+Some helpful documents could be found at [`doc.md`](doc/doc.md), but now it is in Chinese.
+<br> 请查看[`doc.md`](doc/doc.md)获取更多有用的信息。
 
 This project currently has no plans to be integrated into JOSM's SVN system, which means localization for various languages must be handled independently.
 The plugin's native language is Chinese, and an English translation is already provided (as JOSM requires English to be used within the I18n functions).

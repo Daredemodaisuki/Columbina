@@ -18,11 +18,11 @@
   * 角A模式
 * 〔自1.0.2起〕【T】Transition Curve（过渡曲线）
 * 〔自1.0.2起〕【A】Oriented Line（定向画线）（相对角度模式）
+* 〔自1.0.3起〕【W】Curve Connect（曲线连接）
 
 正在 · 计划开发：
 * 倒圆角的切距模式
 * 定向画线的绝对角度模式
-* 〔计划1.0.3〕【W】Curve Connect（曲线连接）
 * 【P】Regular Polygon（产生正多边形）
 * 【V】Voronoi Line（计算Voronoi中线）
 * 【B】Buffer（绘制缓冲区）
@@ -34,7 +34,7 @@
 根据JOSM插件要求提供的插件入口点（定义在`build.xml`中的必需的清单属性之`Plugin-Class`），通过新建动作类的实体来在JOSM菜单中注册功能项。
 
 <p align="center">
-  <del>→ <a href="src/yakxin/columbina/Columbina.java">月之门由此进</a> ←</del>
+  <del>→ <a href="../src/yakxin/columbina/Columbina.java">月之门由此进</a> ←</del>
 </p>
 
 ### 抽象五大基类

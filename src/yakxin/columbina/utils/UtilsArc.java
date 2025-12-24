@@ -62,7 +62,7 @@ public class UtilsArc {
      * @param directLoop 弯道模式（DIRECT直接弯〔1〕，LOOP回旋弯〔-1〕）
      * @param enCurveRadius 圆曲线半径（内圆R）
      * @param enTransArcLength 缓和曲线长度（ls）
-     * @return 打包好的双螺旋曲线的起始点、起始偏角
+     * @return 打包好的双螺旋曲线的起起点终点、起点终点方向角（AB、CB方向）
      */
     public static TransArcStartResult getStartsOfEulerArcs(
             ColumbinaCorner corner, int directLoop,

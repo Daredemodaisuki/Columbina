@@ -19,6 +19,7 @@ import java.util.stream.Collectors;
  * <p>意图声明一个希望达到的目标状态或高级操作，一个意图可能在不同情况下对应不同种的一个Command，甚至可能对应多个Command，此乃意图和Command的不同之处
  * <p>这个类的toCommands负责根据意图和数据集现状返回适当的Command列表
  * <p>组内不应有冲突，因为组间的意图之间可能有冲突（如输入组可能会要求移动同一个要素），所以转换时应该汇总全部ColumbinaSingleOutput的intents统一转换，这里会发现冲突并降级为添加节点，这里也会遵循先加节点、再加路径的顺序
+ * <p>所有可能存在冲突的意图都需要有降级到不可能冲突的AddCommand和保持不变的fallback
  */
 public abstract class ColumbinaOutputIntent <T extends OsmPrimitive> {
     public final T feature;
