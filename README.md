@@ -76,30 +76,33 @@ A positive deflection angle indicates a turn to the left, and a negative angle i
 This feature allows users to connect specified segments between two ways with smooth curves.
 <br> 该功能允许用户使用平滑曲线连接两条路径上的指定节点段。
 
-Users need to select the start way (BW), start reference node (S), end way (EW), and end reference node (E).
+Users need to select the start way (SW), start reference node (S), end way (EW), and end reference node (E).
+The first selected way is designated as SW, and the second as EW; the order in which S and E are selected does not matter, as the plugin will automatically match them to SW and EW as best as possible.
 The plugin will draw a curve starting from the tangent node between the previous node (before start, BS) of S on the SW to S, at the direction of BS → S.
 Similarly, it will end on the tangent node between E and its next node (after end, AE) on the EW, at the direction of E → AE.
-<br> 您需要选择起点路径（BW）、参考起点（S）、终点路径（EW）、参考终点（E），插件会尝试在您选择的S和其在BW上的前一个节点（BS）之间找到切点以BS→S的方向引出一条曲线，连接至您选择的E和其在EW上的后一个节点（AE）之间的切点，以E→AE的方向结束。
+<br> 您需要选择起点路径（SW）、参考起点（S）、终点路径（EW）、参考终点（E），其中先选择的路径是SW，后选择的路径是EW；S和E的选择顺序无要求，会尽可能自动匹配到SW和EW上。插件会尝试在您选择的S和其在SW上的前一个节点（BS）之间找到切点以BS→S的方向引出一条曲线，连接至您选择的E和其在EW上的后一个节点（AE）之间的切点，以E→AE的方向结束。
 
-The first selected way is designated as SW, and the second as EW; the order in which S and E are selected does not matter, as the plugin will automatically match them to SW and EW as best as possible.
-To define the curve's starting and ending directions, the start node S cannot be the first node of the start way, and the end node E cannot be the last node of the end way.
-The S and E can be the same node when shared by both SW and EW.
-<br> 先选择的路径是SW，后选择的路径是EW；S和E的选择顺序无要求，会尽可能自动匹配到SW和EW上。为了获得曲线开始和结束的方向，S不能是SW上第一个节点，E不能是EW上最后一个节点。S和E可以是一个节点，但此时其必须同时在BW和EW上。
+The selections need to meet the following requirements:
+<br> 选定要素需要满足：
+
+* SW and EW can't be parallel (please use two 90° corner); <br> SW和EW不能平行（请使用两个90°拐角）；
+* To define the curve's starting and ending directions, the start node S cannot be the first node of the start way, and the end node E cannot be the last node of the end way; and <br> 为了获得曲线开始和结束的方向，S不能是SW上第一个节点，E不能是EW上最后一个节点；
+* The S and E can be the same node when shared by both SW and EW. <br> S和E可以是一个节点，但此时其必须同时在SW和EW上。
 
 Users can choose the curve direction: left (counter-clockwise) or right (clockwise). The curve radius must be specified,
-and if desired, a transition curve can be added by providing its length.
-<br> 用户可以选择曲线的行进方向：向左（逆时针）或向右（顺时针）。需要指定曲线半径；并可选择添加缓和曲线，此时需提供缓和曲线长度。
+and if desired, a transition curve can be added by providing its length (if you don't need, use 0m.).
+<br> 用户可以选择曲线的行进方向：向左（逆时针）或向右（顺时针）。需要指定曲线半径；并可选择添加缓和曲线，此时需提供缓和曲线长度（如果不需要请输入0m）。
 
 The plugin offers an "Allow cutting or extending existing way ends" option.
 When enabled and if the selected S is the last node of the SW and the E is the first node of the EW, the plugin will attempt to move S and E to the actual start and end nodes (i.e. the tangent nodes) of the curve.
 However, if S or E is used by other ways, they will not be moved, and the curve's start and end nodes will remain being independently added.
 <br> 插件提供「允许裁切或延长现有路径端头」选项。当所选的S是SW的最后一个节点，且E是EW的第一个节点时，启用此选项后，插件会尝试将S和E移动到曲线的实际起点和终点。但若S或E同时被其他路径使用，则不会移动，而是保持独立添加曲线起点和终点。
 
-The usage example below demonstrates how to use this tool to sketch curve connection like the right-turn ramps (direct ramps with angles less than 90°) and left-turn ramps (loop ramps with angles greater than 180°) for a cloverleaf interchange,
-illustrating the relationship between input elements, direction, and the final result.
-<br> 以下使用示例展示了如何利用此工具绘制类似于苜蓿叶立交的右转匝道（角度小于90°的直接匝道）和左转匝道（角度大于180°的环形匝道）的曲线连接，说明了输入要素、行进方向与最终结果之间的关系。
+The usage example below demonstrates how to use this tool to sketch curve connection similar to the left-turn direct ramps (with angles less than 90°) and left-turn loop ramps (with angles greater than 180°) for a cloverleaf interchange,
+illustrating the relationship between input features, curve direction (although they actually turn left), and the final result.
+<br> 以下使用示例展示了如何利用此工具绘制类似于苜蓿叶立交的左转直接匝道（角度小于90°）和左转环形匝道（角度大于180°）的曲线连接，说明了输入要素选择、行进方向（尽管最终都是向左拐）与最终结果之间的关系。
 
-<p align="middle"><img src="/doc/CurveConnectExample.png" alt="Input example of Curve Connect" width="50%"></p>
+<p align="middle"><img src="/doc/CurveConnectExample.png" alt="Input example of Curve Connect" width="75%"></p>
 
 ### Note · 注意
 

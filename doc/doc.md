@@ -18,11 +18,11 @@
   * 角A模式
 * 〔自1.0.2起〕【T】Transition Curve（过渡曲线）
 * 〔自1.0.2起〕【A】Oriented Line（定向画线）（相对角度模式）
+* 〔自1.0.3起〕【W】Curve Connect（曲线连接）
 
 正在 · 计划开发：
 * 倒圆角的切距模式
 * 定向画线的绝对角度模式
-* 〔计划1.0.3〕【W】Curve Connect（曲线连接）
 * 【P】Regular Polygon（产生正多边形）
 * 【V】Voronoi Line（计算Voronoi中线）
 * 【B】Buffer（绘制缓冲区）

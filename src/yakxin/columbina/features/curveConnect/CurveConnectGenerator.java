@@ -17,6 +17,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public final class CurveConnectGenerator extends AbstractGenerator<CurveConnectParams> {
     // 模式常量，注意这个不是用来判断±1的！
@@ -66,9 +67,9 @@ public final class CurveConnectGenerator extends AbstractGenerator<CurveConnectP
      * @param endNode 终点
      * @param endWay 终点所在路径
      * @param endNodeIdx 终点索引
-     * @param enCurveRadius 圆曲线半径（R）
-     * @param enTransArcLength 缓和曲线长度（ls）
-     * @param enChainageLength 桩距（节点间距，米）
+     * @param surfaceCurveRadius 地表圆曲线半径（R）
+     * @param surfaceTransArcLength 地表缓和曲线长度（ls）
+     * @param surfaceChainageLength 地表桩距（节点间距，米）
      * @param dirMode 模式索引（COUNTER_CLOCKWISE_MODE逆时针左拐〔0〕，CLOCKWISE_MODE顺时针右拐〔1〕）
      * @param ableToAdjustInputNode 对于端头起点和终点，是否允许裁剪或沿伸
      * @return 这个拐角缓和曲线包含的点和其他信息
@@ -76,8 +77,8 @@ public final class CurveConnectGenerator extends AbstractGenerator<CurveConnectP
     private static ColumbinaSingleOutput buildCorner(
             Node startNode, Way startWay, int startNodeIdx,
             Node endNode, Way endWay, int endNodeIdx,
-            double enCurveRadius, double enTransArcLength,  // 圆曲线半径（内圆R）、缓和段长度（ls）
-            double enChainageLength,  // 每个桩（节点）之间的距离
+            double surfaceCurveRadius, double surfaceTransArcLength,  // 圆曲线半径（内圆R）、缓和段长度（ls）
+            double surfaceChainageLength,  // 每个桩（节点）之间的距离
             int dirMode, boolean ableToAdjustInputNode
     ) {
         /// 计算交点
@@ -97,26 +98,24 @@ public final class CurveConnectGenerator extends AbstractGenerator<CurveConnectP
         IntersectResult intersectResult = getIntersectResult(start, startDirVec, end, endDirVec); // 交点和是否平行
         
         /// 计算切距切点
-        ColumbinaCorner stdCorner;  // 起点在交点前、终点在交点后的标准拐角（不然拐角可能会倒过来）
-        UtilsArc.TransArcStartResult transArcStarts;
-        if (intersectResult.parallel) {  // 如果是平行的，则无法产生
-            return null;
-        } else {
-            // 计算标准拐角（交点沿着起始反方向倒着走10m、沿着结束正方向顺着走10m），保证起点在交点前、终点在交点后
-            ColumbinaEN stdStart = intersectResult.intersect.walk(UtilsMath.reverseAngleRad(startDirVec.bearingRad()), 10);
-            ColumbinaEN stdEnd = intersectResult.intersect.walk(endDirVec.bearingRad(), 10);
-            stdCorner = new ColumbinaCorner(stdStart, intersectResult.intersect, stdEnd);
-            // 判断mode和实际转弯方向是否一致以确定是直接弯还是回旋弯
-            int directLoop = getDirectLoop(dirMode, stdCorner.leftRight);
-            
-            transArcStarts = UtilsArc.getStartsOfEulerArcs(stdCorner, directLoop, enCurveRadius, enTransArcLength);
-        }
+        if (intersectResult.parallel) return null;  // 如果是平行的，则无法产生
+        
+        // 计算标准拐角（交点沿着起始反方向倒着走10m、沿着结束正方向顺着走10m），保证起点在交点前、终点在交点后
+        ColumbinaEN stdStart = intersectResult.intersect.walk(UtilsMath.reverseAngleRad(startDirVec.bearingRad()), 10);
+        ColumbinaEN stdEnd = intersectResult.intersect.walk(endDirVec.bearingRad(), 10);
+        ColumbinaCorner stdCorner = new ColumbinaCorner(stdStart, intersectResult.intersect, stdEnd);  // 起点在交点前、终点在交点后的标准拐角（不然拐角可能会倒过来）
+        // 判断mode和实际转弯方向是否一致以确定是直接弯还是回旋弯
+        int directLoop = getDirectLoop(dirMode, stdCorner.leftRight);
+        // 东北坐标下的距离
+        double enCurveRadius = UtilsMath.surfaceDistanceToEastNorth(surfaceCurveRadius, stdCorner.latB);
+        double enTransArcLength = UtilsMath.surfaceDistanceToEastNorth(surfaceTransArcLength, stdCorner.latB);
+        double enChainageLength = UtilsMath.surfaceDistanceToEastNorth(surfaceChainageLength, stdCorner.latB);
+        UtilsArc.TransArcStartResult transArcStarts = UtilsArc.getStartsOfEulerArcs(stdCorner, directLoop, enCurveRadius, enTransArcLength);
+        
 
         /// 计算圆心位置
         ColumbinaEN center;
         // 默认从交点向内/外角平分线方向走(圆曲线半径R + 内移距离p) / sin(张角θ / 2)这个长度为圆心
-        int leftRight = startDirVec.turnLeftRightTo(endDirVec);
-        int directLoop = getDirectLoop(dirMode, leftRight);  // 判断mode和实际转弯方向是否一致以确定是直接弯还是回旋弯
         double enCenterToB = (enCurveRadius + transArcStarts.enShiftDistance) / Math.sin(stdCorner.angleRad / 2);
         // 回旋弯圆心在外角对角线上，直接弯在内角对角线上
         if (directLoop == UtilsArc.LOOP)
@@ -140,31 +139,27 @@ public final class CurveConnectGenerator extends AbstractGenerator<CurveConnectP
         if (tanNodeStrategy.startMethod == FAILED || tanNodeStrategy.endMethod == FAILED) return null;
         
         /// 绘制螺旋线
-        int actualLeftRight = dirMode == COUNTER_CLOCKWISE_MODE ? UtilsArc.LEFT : UtilsArc.RIGHT;
-        // TODO：缓和曲线长度太长导致回旋线部分的转角就大于了总偏转角，导致曲线直接绕了一圈
-        // A侧螺旋线（从A侧直缓切点顺着画）
-        UtilsArc.SingleEulerArcResult unrotatedTransArcA = UtilsArc.getUnrotatedEulerArc(  // 绘制
-                enCurveRadius, enTransArcLength,
-                enChainageLength,
-                actualLeftRight  // 因为这里定义了顺逆时针，不用transArcStarts里的左右
-        );
-        
-        UtilsArc.SingleEulerArcResult rotatedTransArcA = UtilsArc.rotateAndMoveEulerArc(  // 旋转、移动
-                transArcStarts.startA,
-                transArcStarts.startAngleARad,
-                unrotatedTransArcA
-        );
-        // C侧螺旋线（从C侧直缓切点开始倒着画）
-        UtilsArc.SingleEulerArcResult unrotatedTransArcC = UtilsArc.getUnrotatedEulerArc(  // 绘制
-                enCurveRadius, enTransArcLength,
-                enChainageLength,
-                -actualLeftRight  // C侧是倒回来画的，与A到C方向的左右相反
-        );
-        UtilsArc.SingleEulerArcResult rotatedTransArcC = UtilsArc.rotateAndMoveEulerArc(  // 旋转、移动
-                transArcStarts.startC,
-                transArcStarts.startAngleCRad,
-                unrotatedTransArcC
-        );
+        int leftRightForDraw = dirMode == COUNTER_CLOCKWISE_MODE ? UtilsArc.LEFT : UtilsArc.RIGHT;
+        UtilsArc.SingleEulerArcResult rotatedTransArcA;
+        UtilsArc.SingleEulerArcResult rotatedTransArcC;
+        if (enTransArcLength > 0){  // 如果需要绘制缓和曲线
+            // TODO：会否缓和曲线长度太长导致回旋线部分的转角就大于了总偏转角，可能导致曲线直接绕了一圈？
+            // A侧螺旋线（从A侧直缓切点顺着画）
+            UtilsArc.SingleEulerArcResult unrotatedTransArcA = UtilsArc.getUnrotatedEulerArc(  // 绘制
+                    enCurveRadius, enTransArcLength, enChainageLength, leftRightForDraw  // 因为这里定义了顺逆时针，不用transArcStarts里的左右
+            );
+            rotatedTransArcA = UtilsArc.rotateAndMoveEulerArc(  // 旋转、移动
+                    transArcStarts.startA, transArcStarts.startAngleARad, unrotatedTransArcA);
+            // C侧螺旋线（从C侧直缓切点开始倒着画）
+            UtilsArc.SingleEulerArcResult unrotatedTransArcC = UtilsArc.getUnrotatedEulerArc(  // 绘制
+                    enCurveRadius, enTransArcLength, enChainageLength, -leftRightForDraw  // C侧是倒回来画的，与A到C方向的左右相反
+            );
+            rotatedTransArcC = UtilsArc.rotateAndMoveEulerArc(  // 旋转、移动
+                    transArcStarts.startC, transArcStarts.startAngleCRad, unrotatedTransArcC);
+        } else {  // 如果不需要绘制，则手动构建SingleEulerArcResult
+            rotatedTransArcA = new UtilsArc.SingleEulerArcResult(new ArrayList<>(), transArcStarts.startAngleARad, transArcStarts.startAngleARad);
+            rotatedTransArcC = new UtilsArc.SingleEulerArcResult(new ArrayList<>(), transArcStarts.startAngleCRad, transArcStarts.startAngleCRad);
+        }
         
         /// 圆曲线
         // 计算段数（圆心角）
@@ -176,26 +171,28 @@ public final class CurveConnectGenerator extends AbstractGenerator<CurveConnectP
         List<EastNorth> circularArc = UtilsArc.getCircleArc(
                 center, enCurveRadius,
                 tangentBearingARad, tangentBearingCRad,
-                numAngleSteps, actualLeftRight
+                numAngleSteps, leftRightForDraw
         );
         
         /// 拼接
-        // 整理用于拼接的点
-        List<EastNorth> transArcA = new ArrayList<>(rotatedTransArcA.arcNodes);
-        List<EastNorth> transArcC = new ArrayList<>(rotatedTransArcC.arcNodes);
-        if (transArcA.size() < 2 || circularArc.size() < 2 || transArcC.size() < 2) return null;  // 曲线不完整，绘制失败
-        transArcA.remove(transArcA.size() - 1);  // 不要ArcA的最后一个点（=圆曲线第一个点）
-        Collections.reverse(transArcC);  // 倒着画的原地逆序正回来
-        transArcC.remove(0);  // 正序之后不要第一个点（=圆曲线最后一个点）
-        
-        // 最终节点列表
         ArrayList<EastNorth> finalNodeEN = new ArrayList<>();
-        finalNodeEN.addAll(transArcA);
-        finalNodeEN.addAll(circularArc);
-        finalNodeEN.addAll(transArcC);
-        ArrayList<Node> finalNodes = new ArrayList<>();
-        for (EastNorth en : finalNodeEN)
-            finalNodes.add(new Node(en));
+        if (enTransArcLength > 0) {  // 如果包含缓和曲线
+            // 整理用于拼接的点
+            List<EastNorth> transArcA = new ArrayList<>(rotatedTransArcA.arcNodes);
+            List<EastNorth> transArcC = new ArrayList<>(rotatedTransArcC.arcNodes);
+            if (transArcA.size() < 2 || circularArc.size() < 2 || transArcC.size() < 2) return null;  // 曲线不完整，绘制失败
+            transArcA.remove(transArcA.size() - 1);  // 不要ArcA的最后一个点（=圆曲线第一个点）
+            Collections.reverse(transArcC);  // 倒着画的原地逆序正回来
+            transArcC.remove(0);  // 正序之后不要第一个点（=圆曲线最后一个点）
+            // 最终节点列表
+            finalNodeEN.addAll(transArcA);
+            finalNodeEN.addAll(circularArc);
+            finalNodeEN.addAll(transArcC);
+        } else {  // 不包含就直接上圆曲线节点
+            if (circularArc.size() < 2) return null;
+            finalNodeEN.addAll(circularArc);
+        }
+        ArrayList<Node> finalNodes = finalNodeEN.stream().map(Node::new).collect(Collectors.toCollection(ArrayList::new));
         
         // 画线
         Way finalWay = new Way();
