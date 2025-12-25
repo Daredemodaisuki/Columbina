@@ -51,7 +51,7 @@ public final class FilletPreference extends AbstractPreference<FilletParams> {
         
         // 参数验证
         if (newParams.surfaceRadius <= 0.0)
-            throw new IllegalArgumentException(I18n.tr("Invalid round corner surfaceRadius, should be greater than 0m."));
+            throw new IllegalArgumentException(I18n.tr("Invalid round corner radius, should be greater than 0m."));
         
         double chainageLengthChecked = newParams.surfaceChainageLength;
         if (chainageLengthChecked < 0.1) {

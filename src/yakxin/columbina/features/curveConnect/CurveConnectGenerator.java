@@ -98,6 +98,7 @@ public final class CurveConnectGenerator extends AbstractGenerator<CurveConnectP
         IntersectResult intersectResult = getIntersectResult(start, startDirVec, end, endDirVec); // 交点和是否平行
         
         /// 计算切距切点
+        // TODO：改成抛ex
         if (intersectResult.parallel) return null;  // 如果是平行的，则无法产生
         
         // 计算标准拐角（交点沿着起始反方向倒着走10m、沿着结束正方向顺着走10m），保证起点在交点前、终点在交点后

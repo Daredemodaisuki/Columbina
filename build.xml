@@ -63,7 +63,7 @@
             <manifest>
                 <!-- 必需的清单属性 -->
                 <attribute name="Plugin-Mainversion" value="18600"/>
-                <attribute name="Plugin-Version" value="1.0.2"/>
+                <attribute name="Plugin-Version" value="1.0.3"/>
                 <attribute name="Plugin-Class"
                            value="yakxin.columbina.Columbina"/>
                 <attribute name="Plugin-Description"

@@ -31,8 +31,7 @@ public abstract class AbstractDrawingAction <
         GeneratorType extends AbstractGenerator<ParamType>,  // 生成器泛型
         PreferenceType extends AbstractPreference<ParamType>,  // 首选项泛型
         ParamType extends AbstractParams>  // 输入参数泛型
-        extends JosmAction
-    {
+        extends JosmAction {
     public static final int NO_LIMITATION_ON_INPUT_NUM = -1;
     public static final int NO_THIS_KIND_OF_INPUT = 0;
     public static final int CHECK_OK = 0;
@@ -43,6 +42,7 @@ public abstract class AbstractDrawingAction <
     protected final GeneratorType generator;
     protected final PreferenceType preference;  // preference是final但是不影响它内部自己变
     protected ParamType params;  // params将在执行点击事件时具体获取，每次获取可能不一致
+    public final String iconName;
 
     /// 所有需要由中间层或具体action类定义的东西
     /**
@@ -157,10 +157,8 @@ public abstract class AbstractDrawingAction <
         );
         this.generator = generator;
         this.preference = preference;
+        this.iconName = iconName;
         // params将在执行点击事件时具体获取，每次获取可能不一致
-        // this.inputFeatureType = inputFeatureType;  // 弃用
-        // this.minSelection = minSelection;  // 下放到中间层
-        // this.maxSelection = maxSelection;
     }
 
     /**
@@ -213,8 +211,7 @@ public abstract class AbstractDrawingAction <
         }
 
         // 绘制部分的撤销重做栈处理并正式提交执行
-        // TODO：icon
-        Command cmdAdd = new ColumbinaSeqCommand(getUndoRedoInfo(totalInput, params), cmdsAdd, "RoundCorners");
+        Command cmdAdd = new ColumbinaSeqCommand(getUndoRedoInfo(totalInput, params), cmdsAdd, iconName);
         UndoRedoHandler.getInstance().add(cmdAdd);
 
         /// 移除旧路径（如果需要的话）
