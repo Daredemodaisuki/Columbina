@@ -29,6 +29,6 @@ def merge_translations(a_path, b_path, output_path):
 
 
 existing_po = "./po/zh_CN.po"
-add_existing_into = "template_v1.0.2.po"
+add_existing_into = "template_v1.0.3.po"
 output_po = "./zh_CN.po"
 merge_translations(existing_po, add_existing_into, output_po)

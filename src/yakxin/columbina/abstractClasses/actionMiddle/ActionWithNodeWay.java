@@ -77,15 +77,11 @@ public abstract class ActionWithNodeWay<
             newWay.setKeys(wayTags);
         }
         
-        // 转为指令
+        // 转为指令（ColumbinaOutputIntent.toCommands已去重）
         List<Command> commands = new ArrayList<>(ColumbinaOutputIntent.toCommands(singleOutput.outputIntents, ds));
-        // for (ColumbinaOutputIntent<?> intent : singleOutput.outputIntents) commands.addAll(intent.resolveToCommand(ds));
         
         if (commands.isEmpty())  // 未能成功生成一条线
             throw new ColumbinaException(I18n.tr("Failed to generate any new way."));
-        
-        // 去重防止提交重复添加（ColumbinaOutputIntent.toCommands已去重）
-        // commands = commands.stream().distinct().collect(Collectors.toList());
         
         return commands;
     }

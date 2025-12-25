@@ -37,7 +37,7 @@ public final class CurveConnectDialog extends ExtendedDialog {
 
         // 单选框组
         curveConnectDirection = new UtilsUI.RadioButtonGroup(
-                new ArrayList<>(List.of(new String[]{I18n.tr("Turn left"), I18n.tr("Turn right")})),
+                new ArrayList<>(List.of(new String[]{I18n.tr("Counter-clockwise"), I18n.tr("Clockwise")})),
                 savedParams.dirMode
         );
 
@@ -47,7 +47,7 @@ public final class CurveConnectDialog extends ExtendedDialog {
 
         UtilsUI.addSection(panel, I18n.tr("Curve Information"));
 
-        UtilsUI.addLabel(panel, "Curve direction: ");
+        UtilsUI.addLabel(panel, "Curve direction:");
         curveConnectDirection.addRadioButton(panel, CurveConnectGenerator.COUNTER_CLOCKWISE_MODE);
         curveConnectDirection.addRadioButton(panel, CurveConnectGenerator.CLOCKWISE_MODE);
 
@@ -55,7 +55,7 @@ public final class CurveConnectDialog extends ExtendedDialog {
         curveConnectR = UtilsUI.addInput(panel, I18n.tr("Circular curve surfaceRadius (m): "), savedParams.surfaceCircleRadius);
         curveConnectTransArcLength = UtilsUI.addInput(panel, I18n.tr("Transition curve length (m): "), savedParams.surfaceTransArcLength);
         curveConnectChainageLength = UtilsUI.addInput(panel, I18n.tr("Chainage length (node spacing, m): "), savedParams.surfaceChainageLength);
-        curveConnectAbleToAdjustTanNodes = UtilsUI.addCheckbox(panel, I18n.tr("Able to cut or extent existing way ends"), savedParams.ableToAdjustInputNode);
+        curveConnectAbleToAdjustTanNodes = UtilsUI.addCheckbox(panel, I18n.tr("Allow cutting or extending the input way ends"), savedParams.ableToAdjustInputNode);
 
         UtilsUI.addSection(panel, I18n.tr("Other Operations"));
         selectNewWays = UtilsUI.addCheckbox(panel, I18n.tr("Select new ways after drawing"), savedParams.selectNew);

@@ -51,7 +51,9 @@ public final class CurveConnectAction extends
 
     @Override
     public String getUndoRedoInfo(ColumbinaInput inputs, CurveConnectParams params) {
-        return "";
+        String dirInfo = params.dirMode == CurveConnectGenerator.COUNTER_CLOCKWISE_MODE ? I18n.tr("counter-clockwise") : I18n.tr("clockwise");
+        return I18n.tr("Create a {0} curve between Way {1} and {2}: R={3}m, ls={4}m",
+                dirInfo, inputs.getWays().get(0).getUniqueId(), inputs.getWays().get(1).getUniqueId(), params.surfaceCircleRadius, params.surfaceTransArcLength);
     }
 
     @Override

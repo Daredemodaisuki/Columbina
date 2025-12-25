@@ -93,7 +93,7 @@ Users can choose the curve direction: left (counter-clockwise) or right (clockwi
 and if desired, a transition curve can be added by providing its length (if you don't need, use 0m.).
 <br> 用户可以选择曲线的行进方向：向左（逆时针）或向右（顺时针）。需要指定曲线半径；并可选择添加缓和曲线，此时需提供缓和曲线长度（如果不需要请输入0m）。
 
-The plugin offers an "Allow cutting or extending existing way ends" option.
+The plugin offers an "Allow cutting or extending the input way ends" option.
 When enabled and if the selected S is the last node of the SW and the E is the first node of the EW, the plugin will attempt to move S and E to the actual start and end nodes (i.e. the tangent nodes) of the curve.
 However, if S or E is used by other ways, they will not be moved, and the curve's start and end nodes will remain being independently added.
 <br> 插件提供「允许裁切或延长现有路径端头」选项。当所选的S是SW的最后一个节点，且E是EW的第一个节点时，启用此选项后，插件会尝试将S和E移动到曲线的实际起点和终点。但若S或E同时被其他路径使用，则不会移动，而是保持独立添加曲线起点和终点。
@@ -117,7 +117,6 @@ When " <img src="/images/RemoveOldWays.png" alt="Remove Old Ways" width="10px"> 
 ## Known Issues · 已知问题
 
 * The plugin packages the replace/delete operations within a single command sequence, and no actual changes occur until the sequence is committed. Consequently, when nodes are shared exclusively between the ways being filleted, the command generation logic assumes these nodes are still referenced by another way since the command sequence has not been commited, and therefore excludes them from removal. <br> 因为希望将替换/删除指令打包在一个命令序列中，而在提交命令序列前不会有任何内容实际删除，故当需要圆角的路径间存在交点且交点只由需要圆角的路径引用，移除旧路径生成命令时始终会认为交点被另一条路径引用，交点不会被移除；
-* Since the plugin draws the fillet first and then connects the lines, when the segment between two vertices is not long enough, the middle section between two curves may be misaligned, resulting in a sharp corner. <br> 由于是先画圆角再连线，路径折点宽度不够长时，曲线之间可能会错开导致连出尖角。
 
 <p align="right">
 Other issues are welcomed at this page ↓ <br> 其他问题欢迎在这个页面提出 ↓<br><a href="https://github.com/Daredemodaisuki/Columbina/issues">Issues</a>

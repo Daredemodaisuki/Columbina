@@ -12,7 +12,7 @@ input_files = [f"../{file}" for file in find_java_files_relative("../")]
 
 # ！！！！！！！！！！！！！！！！重要！！！！！！！！！！！！！！！！
 # 需要更新这里
-VERSION = "v1.0.2"
+VERSION = "v1.0.3"
 # ！！！！！！！！！！！！！！！！重要！！！！！！！！！！！！！！！！
 
 OUTPUT_FILE = f"template_{VERSION}.po"
@@ -26,7 +26,7 @@ msgstr ""
 "Project-Id-Version: Columbina Plugin\\n"
 "Report-Msgid-Bugs-To: \\n"
 "POT-Creation-Date: 2025-12-02 11:45+0800\\n"
-"PO-Revision-Date: 2025-12-02 19:19+0800\\n"
+"PO-Revision-Date: 2025-12-25 19:19+0800\\n"
 "Last-Translator: \\n"
 "Language-Team: \\n"
 "MIME-Version: 1.0\\n"
