@@ -25,7 +25,7 @@
 * 定向画线的绝对角度模式
 * 【P】Regular Polygon（产生正多边形）
 * 【V】Voronoi Line（计算Voronoi中线）
-* 【B】Buffer（绘制缓冲区，Andrew's monotone chain凸包，前端合并）
+* 【B】Buffer（绘制缓冲区，Andrew's monotone chain凸包，前端合并：当前前端和下一个凸包必然从当前前端一侧开始共线，从当前前端另一侧开始找和下一凸包的第一个交点）
 
 ## 重要的类
 

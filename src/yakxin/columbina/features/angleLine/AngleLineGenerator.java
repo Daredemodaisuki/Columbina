@@ -10,6 +10,7 @@ import yakxin.columbina.utils.UtilsData;
 import yakxin.columbina.utils.UtilsMath;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 public final class AngleLineGenerator extends AbstractGenerator<AngleLineParams> {
@@ -59,7 +60,7 @@ public final class AngleLineGenerator extends AbstractGenerator<AngleLineParams>
         newNodes.add(node);
         newNodes.add(new Node(destination));
 
-        return new ColumbinaSingleOutput(newNodes, new ArrayList<>());  // 无failed部分
+        return new ColumbinaSingleOutput(newNodes, new HashMap<>());  // 无failed部分
     }
 }
 

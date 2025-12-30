@@ -4,6 +4,7 @@ import org.openstreetmap.josm.data.coor.EastNorth;
 import org.openstreetmap.josm.data.osm.Node;
 import org.openstreetmap.josm.data.osm.OsmPrimitive;
 import org.openstreetmap.josm.data.osm.Way;
+import org.openstreetmap.josm.tools.I18n;
 import yakxin.columbina.abstractClasses.AbstractGenerator;
 import yakxin.columbina.data.ColumbinaCorner;
 import yakxin.columbina.data.ColumbinaEN;
@@ -13,7 +14,9 @@ import yakxin.columbina.data.dto.inputs.ColumbinaSingleInput;
 import yakxin.columbina.utils.UtilsMath;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public final class ChamferGenerator extends AbstractGenerator<ChamferParams> {
     // 模式常量
@@ -81,7 +84,7 @@ public final class ChamferGenerator extends AbstractGenerator<ChamferParams> {
             double surfaceDistanceA, double surfaceDistanceC,
             double angleADeg
     ) {
-        List<OsmPrimitive> failedNodes = new ArrayList<>();
+        Map<OsmPrimitive, String> failedNodes = new HashMap<>();
 
         // 获取路径的所有节点
         List<Node> nodes = new ArrayList<>(way.getNodes());
@@ -101,17 +104,10 @@ public final class ChamferGenerator extends AbstractGenerator<ChamferParams> {
 
                 // JOSM用Mercator投影的NorthEast坐标等角不等距，需要重算距离
                 double enDistanceA1, enDistanceA2, enDistanceC;
-                try {
-                    enDistanceA1 = UtilsMath.surfaceDistanceToEastNorth(surfaceDistanceA, latB);
-                    enDistanceA2 = UtilsMath.surfaceDistanceToEastNorth(surfaceDistanceA, UtilsMath.toLatLon(corner.A).lat());
-                    enDistanceC = UtilsMath.surfaceDistanceToEastNorth(surfaceDistanceC, latB);
-                } catch (ColumbinaException exSurToEn) {
-                    // 如果纬度接近90度，直接失败跳过这个斜角
-                    chamfers.add(null);
-                    failedNodes.add(nodes.get(i + 1));
-                    continue;
-                }
-
+                enDistanceA1 = UtilsMath.surfaceDistanceToEastNorth(surfaceDistanceA, latB);
+                enDistanceA2 = UtilsMath.surfaceDistanceToEastNorth(surfaceDistanceA, UtilsMath.toLatLon(corner.A).lat());
+                enDistanceC = UtilsMath.surfaceDistanceToEastNorth(surfaceDistanceC, latB);
+                
                 // 有EN长度之后继续算切角
                 List<EastNorth> chamfer;
                 if (mode == DISTANCE_MODE) chamfer = getChamferCutNodesUsingDistance(corner, enDistanceA1, enDistanceC);
@@ -120,14 +116,14 @@ public final class ChamferGenerator extends AbstractGenerator<ChamferParams> {
 
                 if (chamfer == null) {  // 该拐角没有生成斜角（半径过大或角度问题）
                     chamfers.add(null);
-                    failedNodes.add(nodes.get(i + 1));
+                    failedNodes.put(nodes.get(i + 1), I18n.tr("Too short distance to adjacent nodes or not meeting the angle restrictions."));
                 } else {
                     chamfers.add(chamfer);
                 }
             } catch (ColumbinaException exCorner) {
-                // 创建拐角失败
+                // 创建拐角失败（比如纬度接近90度surfaceDistanceToEastNorth抛错误）
                 chamfers.add(null);
-                failedNodes.add(nodes.get(i + 1));
+                failedNodes.put(nodes.get(i + 1), exCorner.getMessage());
             }
         }
 

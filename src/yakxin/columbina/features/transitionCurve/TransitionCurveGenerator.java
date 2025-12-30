@@ -4,6 +4,7 @@ import org.openstreetmap.josm.data.coor.EastNorth;
 import org.openstreetmap.josm.data.osm.Node;
 import org.openstreetmap.josm.data.osm.OsmPrimitive;
 import org.openstreetmap.josm.data.osm.Way;
+import org.openstreetmap.josm.tools.I18n;
 import yakxin.columbina.abstractClasses.AbstractGenerator;
 import yakxin.columbina.data.ColumbinaCorner;
 import yakxin.columbina.data.ColumbinaEN;
@@ -13,9 +14,7 @@ import yakxin.columbina.data.dto.inputs.ColumbinaSingleInput;
 import yakxin.columbina.utils.UtilsArc;
 import yakxin.columbina.utils.UtilsMath;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 /**缓和曲线计算类
  * <p>本文件角度定义:
@@ -55,7 +54,6 @@ public final class TransitionCurveGenerator extends AbstractGenerator<Transition
         // 缓和曲线长度太长导致切距超过拐角两侧距离
         if (transArcStarts.enTangentLength > corner.lenBA || transArcStarts.enTangentLength > corner.lenBC)
             return null;
-        // TODO：缓和曲线长度太长导致回旋线部分的转角就大于了总偏转角，导致曲线直接绕了一圈
 
         /// A侧螺旋线（从A侧直缓切点顺着画）
         // 绘制
@@ -83,6 +81,14 @@ public final class TransitionCurveGenerator extends AbstractGenerator<Transition
                 transArcStarts.startAngleCRad,
                 unrotatedTransArcC
         );
+        
+        // 检查回旋线部分的总偏角
+        //  若两段回旋线部分太长导致其自身的转角总和就大于了总偏转角，整条曲线三部分将会错开或者直接绕了一圈，这种情况失败
+        double eulerDeflectionSum = UtilsMath.normAngleRad(Math.abs(unrotatedTransArcA.endTangentAngleRad - unrotatedTransArcA.startTangentAngleRad))
+                        + UtilsMath.normAngleRad(Math.abs(unrotatedTransArcC.endTangentAngleRad - unrotatedTransArcC.startTangentAngleRad));
+        if (eulerDeflectionSum > Math.abs(corner.deflectionRad))
+            return null;
+        
         /// 圆曲线
         // 计算圆心（从B向角平分线方向走(圆曲线半径R + 内移距离p) / sin(张角θ / 2)这个长度）
         double enCenterToB = (enCurveRadius + transArcStarts.enShiftDistance) / Math.sin(corner.angleRad / 2);
@@ -129,7 +135,7 @@ public final class TransitionCurveGenerator extends AbstractGenerator<Transition
             Way way,
             double surfaceRadius, double surfaceLength, double surfaceChainageLength
     ) {
-        List<OsmPrimitive> failedNodes = new ArrayList<>();
+        Map<OsmPrimitive, String> failedNodes = new HashMap<>();
         // 获取路径的所有节点
         List<Node> nodes = new ArrayList<>(way.getNodes());  // 获取节点（包含重复的首末点）
         int numNode = way.isClosed() ? way.getNodesCount() - 1 : way.getNodesCount();  // 实际节点数（去除闭合点）
@@ -156,14 +162,15 @@ public final class TransitionCurveGenerator extends AbstractGenerator<Transition
 
                 if (transCurve == null || transCurve.size() < 2) {  // 该拐角没有生成缓和曲线
                     transCurves.add(null);
-                    failedNodes.add(nodes.get(i + 1));  // 记录失败拐角
+                    failedNodes.put(nodes.get(i + 1), I18n.tr("TEMP INFO"));  // 记录失败拐角
+                    // TODO：getTransCurve改为抛出错误而不是返回null
                 } else {
                     transCurves.add(transCurve);
                 }
             } catch (ColumbinaException | IllegalArgumentException e) {
                 // 如果纬度接近90度，使用一个很小的正数，避免除0，但这样不准确，所以直接失败跳过这个圆弧吧
                 transCurves.add(null);
-                failedNodes.add(nodes.get(i + 1));
+                failedNodes.put(nodes.get(i + 1), e.getMessage());
             }
         }
         if (transCurves.isEmpty()) {  // 没有曲线，返回原始路径
@@ -190,12 +197,6 @@ public final class TransitionCurveGenerator extends AbstractGenerator<Transition
 
         return new ColumbinaSingleOutput(finalNodes, failedNodes);
     }
-
-    /*
-    TODO：边缘情况检查
-    注意极端几何：R太小、α太小
-    检查各种null的情况
-     */
 }
 
 

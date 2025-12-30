@@ -129,14 +129,16 @@ public abstract class ActionWithBatchWays<
     ) {
         List<ColumbinaOutputIntent<?>> intents = new ArrayList<>();
         inputOutputPairs = new HashMap<>();  // 输入节点/路径k与新绘制的路径v的打包对
-        Map<Way, List<OsmPrimitive>> failedNodeIds = new HashMap<>();  // 处理输入节点/路径k与处理时k上失败的节点v的打包对
+        Map<ColumbinaSingleInput, ColumbinaSingleOutput> ioPairs = new HashMap<>();  // 处理输入节点/路径k与处理时k上失败的节点v的打包对
         // 处理路径
         for (ColumbinaSingleInput singleInput : singleInputs) {  // 分别处理每个输入路径
             // 调用生成传入的函数计算路径
             ColumbinaSingleOutput singleOutput = generator.getOutputForSingleInput(singleInput, params);
             if (singleOutput == null) continue;
             if (!singleOutput.isValid()) continue;
-            failedNodeIds.put(singleInput.ways.get(0), singleOutput.partialFailureInputs);
+            
+            // 记录输入输出对
+            ioPairs.put(singleInput, singleOutput);
             
             // 收集新线（目前假定singleOutput只输出一条新线）
             Way newWay = (Way) singleOutput.representatives.get(0);
@@ -158,7 +160,7 @@ public abstract class ActionWithBatchWays<
 
         // 提示失败信息
         // TODO：汇总生成器和解释器的错误信息
-        showFailedProcessedCorner(failedNodeIds);
+        showFailureInfo(ioPairs);
 
         return commands;
     }
@@ -292,26 +294,37 @@ public abstract class ActionWithBatchWays<
     }
 
     /**
-     * 弹出消息提示处理失败的节点
-     * @param failedNodes 存在失败情况的路径和具体失败的节点列表组成的打包对
+     * 如果有失败，则弹出消息提示处理失败的信息
+     * @param ioPairs 单组输入和单组输出的打包对
      */
-    public void showFailedProcessedCorner(Map<Way, List<OsmPrimitive>> failedNodes) {
-        // 如果有拐角处理失败，则提示
-        if (failedNodes != null && !failedNodes.isEmpty()) {
-            boolean hasFailedNodes = false;
-            StringBuilder failedInfo = new StringBuilder(I18n.tr("The following corner nodes could not be processed due to too short distance to adjacent nodes or not meeting the angle restrictions: "));
-            for (Map.Entry<Way, List<OsmPrimitive>> failedEntry : failedNodes.entrySet()) {
-                if (failedEntry.getValue().isEmpty()) continue;
-                failedInfo.append(
-                        I18n.tr("\nWay")).append(failedEntry.getKey().getUniqueId())
-                        .append(I18n.tr(": ")).append(
-                                failedEntry.getValue().stream().map(OsmPrimitive::getUniqueId).map(String::valueOf)
-                                        .collect(Collectors.joining(",", "[", "]"))
-                        );
-                hasFailedNodes = true;
+    public void showFailureInfo(Map<ColumbinaSingleInput, ColumbinaSingleOutput> ioPairs) {
+        // TODO：需要继续整理格式
+        StringBuilder partiallyFailed = new StringBuilder(I18n.tr("Partial failures occurring when processing following inputs:\n"));
+        StringBuilder failed = new StringBuilder(I18n.tr("Failures occurring when processing following inputs:\n"));
+        boolean hasPartiallyFailedInput = false;
+        boolean hasFailedInput = false;
+        for (Map.Entry<ColumbinaSingleInput, ColumbinaSingleOutput> ioEntry : ioPairs.entrySet()) {
+            if (ioEntry != null && ioEntry.getKey() != null && ioEntry.getValue() != null) {
+                ColumbinaSingleInput input = ioEntry.getKey();
+                ColumbinaSingleOutput output = ioEntry.getValue();
+                switch (output.status) {
+                    case FAILED:
+                        failed.append("-").append(UtilsData.featureListToString(input.getMixedInputList())).append(":")
+                                .append(output.generalInfo).append("\n");
+                        hasFailedInput = true;
+                        break;
+                    case PARTIALLY_FAILED:
+                        partiallyFailed.append("-").append(UtilsData.featureListToString(input.getMixedInputList())).append(":\n")
+                                .append(" - >").append(output.concludeFailedInfo()).append("\n");
+                        hasPartiallyFailedInput = true;
+                        break;
+                }
             }
-            if (hasFailedNodes) UtilsUI.warnInfo(failedInfo.toString());
         }
+        String warnInfo = "";
+        if (hasFailedInput) warnInfo += failed + "\n";
+        if (hasPartiallyFailedInput) warnInfo += partiallyFailed + "\n";
+        if (hasFailedInput || hasPartiallyFailedInput) UtilsUI.warnInfo(warnInfo);
     }
 }
 
