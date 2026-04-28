@@ -91,31 +91,22 @@
 * `PreferenceType extends AbstractPreference<ParamType>`：首选项泛型
 * `ParamType extends AbstractParams`：输入参数泛型
 
-##### 中间抽象层
+##### ~~中间抽象层~~〔自1.0.4起已整合取消〕
 
-考虑到面向不同类型的输入要素，获取失败结果的类型、移除旧输入命令的具体操作可能会不同，所以稍微具体点，派生出了两个中间类。
+原先考虑到面向不同类型的输入要素，获取失败结果的类型、移除旧输入命令的具体操作可能会不同，所以派生出了两个中间类（`ActionWithBatchWays`和`ActionWithNodeWay`）。
 
-与这些差异有关的内容（如获取失败结果并弹窗、产生移除旧输入命令）需要在子类中实现；同时，按照输入区分子类可以明确输入要素类型泛型，减少理解负担。
+〔自1.0.4起〕由于非批量输入等同于批量输入一组，两个中间层的逻辑已统一合并至`AbstractDrawingAction`中，中间层被取消。`AbstractDrawingAction`现在直接提供：
 
-* 面向批量路径输入的抽象绘图操作类（`yakxin.columbina.abstractClasses.actionMiddle.ActionWithBatchWays`）
-
-    路径倒圆角、倒斜角和根据路径绘制缓和曲线功能由此派生，这些操作有下面的共同性：
-    1. 对于这些功能而言，生成器会对每个拐角进行分别计算、再汇总，故一条路径上有成功的也有失败的拐角，其失败结果可以用`List<Map<Way, List<Node>>>`表示，即：
-       * `List<Map>`：失败结果列表
-            * `Way`：存在失败情况的输入路径
-            * `List<Node>`：处理这条路径时没有成功的节点列表
-    2. 因为是细化原有路径，所以输入路径的操作往往需要移除或替换输入的旧路径。
-
-* 面向一条路径 + 一个节点输入的抽象绘图操作类（`yakxin.columbina.abstractClasses.ActionWithNodeWay`）
-
-    导向直线（相对角度模式）、路径切圆功能由此派生，这些操作有下面的共同性：
-    1. 对于这些功能而言，因为不是「分别计算的」，其失败就是整个失败，失败结果使用`List<Node>`即可；
-    2. 因为输入的节点就是新绘制路径的起点，所以不可以删除输入节点；在相对角度下也无需删除原有路径，产生空命令列表交给抽象类执行西北风即可。
-    注意：导向直线功能可以只输入一个节点（绝对角度模式），相当于传入的Way是空的。
-
-> [!NOTE]
-> 
-> 正在考虑整合取消中间层，详见文末之「未来重构计划」第1点。
+* `concludeAddCommands`的默认实现：统一使用批量循环逻辑，遍历每个单组输入，调用生成器，汇总意图和命令，并追踪输入输出对和失败信息；
+* `concludeRemoveCommands`的默认实现：对记录的旧路径→新路径对进行替换或删除；
+* `getWhatToSelectAfterDraw`的默认实现：返回记录的输出代表性要素；
+* `getNewWayTags`的默认实现：返回空映射（可在具体类中重写以复制标签）；
+* 以下辅助方法供具体动作类使用：
+  * `defaultBatchWaysCheckInputNum`：批量路径输入的数量检查（含>5条确认）；
+  * `defaultBatchWaysCheckInputDetails`：批量路径输入的具体检查（2点路径检测）；
+  * `defaultBatchWaysSplitInputs`：批量路径输入的拆分（每条Way为一组）；
+  * `defaultBatchWaysGetNewWayTags`：批量路径输入的标签复制；
+  * `defaultNonBatchSplitInputs`：非批量输入的拆分（所有输入包装为一组）。
 
 #### 抽象生成器类（`yakxin.columbina.abstractClasses.AbstractGenerator`）
 
@@ -266,11 +257,9 @@
 
 可能目前写得有点复杂了，慢慢改吧~
 
-1. 目前抽象层数貌似有点多了，考虑逐步整合：
-   * 第一阶段：两个中间层可以考虑重新定义为「对于批量输入的（现在的`ActionWithBatchWays`）」和「非批量输入的（现在的`ActionWithNodeWay`）」；
-   * 第二阶段：随后非批量输入等同于批量输入一组，最终合并到一起并移动至最底层、取消中间层；
-   * 现在两个中间层除了前面的输入不同，主要就是二者失败记录的类型不同、处理不一样，但其实可以考虑改作`Map<ColumbinaSingleInput, Object>`，其中：
-     * `ColumbinaSingleInput`是失败或者部分失败的输入，需要给到一个`toString`的方法显示输入具体是什么；
-     * `Object`是部分失败记录，具体的动作类定义一个根据`Object`自行输出`String`的方法（`Object`也可以是`null`表示这组输入都失败了）；
-     * 两个拼在一起就是现状`ActionWithBatchWays`输出部分失败消息的逻辑；
+1. ~~目前抽象层数貌似有点多了，考虑逐步整合~~〔自1.0.4起已完成〕：
+   * ~~第一阶段：两个中间层可以考虑重新定义为「对于批量输入的（现在的`ActionWithBatchWays`）」和「非批量输入的（现在的`ActionWithNodeWay`）」~~；
+   * ~~第二阶段：随后非批量输入等同于批量输入一组，最终合并到一起并移动至最底层、取消中间层~~；
+   * 已将`ActionWithBatchWays`和`ActionWithNodeWay`的逻辑统一合并至`AbstractDrawingAction`，非批量输入等同于批量输入一组，取消了中间抽象层；
+   * 失败信息提示已统一使用`Map<ColumbinaSingleInput, ColumbinaSingleOutput>`，`ColumbinaSingleOutput`中的`status`和`concludeFailedInfo`方法已能区分完全失败和部分失败；
 2. Preference弹窗时会向Dialog传入input以便窗口显示推荐参数（如果需要），现状推荐参数由Dialog自行计算，窗口负责了数据计算，职责不太明晰，现在`ColumbinaSingleInput`有了「快捷传递中间量（`quickPrecomputedData`）」后，也许可以在action类具体检查时计算推荐参数并送入这里，窗口直接读取？

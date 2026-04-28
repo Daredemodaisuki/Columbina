@@ -4,7 +4,7 @@ import org.openstreetmap.josm.data.osm.Node;
 import org.openstreetmap.josm.data.osm.Way;
 import org.openstreetmap.josm.tools.I18n;
 import org.openstreetmap.josm.tools.Shortcut;
-import yakxin.columbina.abstractClasses.actionMiddle.ActionWithNodeWay;
+import yakxin.columbina.abstractClasses.AbstractDrawingAction;
 import yakxin.columbina.data.ColumbinaException;
 import yakxin.columbina.data.dto.inputs.ColumbinaInput;
 import yakxin.columbina.data.dto.inputs.ColumbinaSingleInput;
@@ -14,7 +14,7 @@ import java.awt.event.KeyEvent;
 import java.util.List;
 
 public final class CurveConnectAction extends
-        ActionWithNodeWay<CurveConnectGenerator, CurveConnectPreference, CurveConnectParams>
+        AbstractDrawingAction<CurveConnectGenerator, CurveConnectPreference, CurveConnectParams>
 {
     /**
      * 构造函数
@@ -132,6 +132,9 @@ public final class CurveConnectAction extends
 
         return CHECK_OK;
     }
+
+    @Override
+    public List<ColumbinaSingleInput> splitBatchInputs(ColumbinaInput totalInput) {
+        return defaultNonBatchSplitInputs(totalInput);
+    }
 }
-
-

@@ -4,14 +4,15 @@ import org.openstreetmap.josm.data.osm.Way;
 import org.openstreetmap.josm.tools.I18n;
 import org.openstreetmap.josm.tools.Shortcut;
 import yakxin.columbina.abstractClasses.AbstractDrawingAction;
-import yakxin.columbina.abstractClasses.actionMiddle.ActionWithBatchWays;
 import yakxin.columbina.data.dto.inputs.ColumbinaInput;
+import yakxin.columbina.data.dto.inputs.ColumbinaSingleInput;
 
 import java.awt.event.KeyEvent;
+import java.util.List;
 import java.util.stream.Collectors;
 
 public final class FilletAction extends
-        ActionWithBatchWays<FilletGenerator, FilletPreference, FilletParams>
+        AbstractDrawingAction<FilletGenerator, FilletPreference, FilletParams>
 {
     /**
      * 构造函数
@@ -24,11 +25,7 @@ public final class FilletAction extends
      * @param preference  首选项实例
      */
     private FilletAction(String name, String iconName, String description, Shortcut shortcut, FilletGenerator generator, FilletPreference preference) {
-        super(
-                name, iconName, description, shortcut,
-                generator, preference,
-                1, AbstractDrawingAction.NO_LIMITATION_ON_INPUT_NUM
-        );
+        super(name, iconName, description, shortcut, generator, preference);
     }
 
     /**
@@ -58,6 +55,24 @@ public final class FilletAction extends
         else undoRedoInfo = I18n.tr("Round corners of {0} ways: {1}m", inputs.getInputNum(Way.class), params.surfaceRadius);
         return undoRedoInfo;
     }
+
+    @Override
+    public int checkInputNum(ColumbinaInput totalInput) {
+        return defaultBatchWaysCheckInputNum(totalInput, 1, AbstractDrawingAction.NO_LIMITATION_ON_INPUT_NUM);
+    }
+
+    @Override
+    public int checkInputDetails(List<ColumbinaSingleInput> singleInputs) {
+        return defaultBatchWaysCheckInputDetails(singleInputs);
+    }
+
+    @Override
+    public List<ColumbinaSingleInput> splitBatchInputs(ColumbinaInput totalInput) {
+        return defaultBatchWaysSplitInputs(totalInput);
+    }
+
+    @Override
+    public java.util.Map<String, String> getNewWayTags(ColumbinaSingleInput singleInput) {
+        return defaultBatchWaysGetNewWayTags(singleInput);
+    }
 }
-
-
