@@ -53,7 +53,7 @@ public final class TransitionCurveGenerator extends AbstractGenerator<Transition
         UtilsArc.TransArcStartResult transArcStarts = UtilsArc.getStartsOfEulerArcs(corner, UtilsArc.DIRECT, enCurveRadius, enTransArcLength);
         // 缓和曲线长度太长导致切距超过拐角两侧距离
         if (transArcStarts.enTangentLength > corner.lenBA || transArcStarts.enTangentLength > corner.lenBC)
-            return null;
+            throw new ColumbinaException(I18n.tr("Transition curve tangent length exceeds the distance to adjacent nodes. Try reducing the curve radius or transition curve length"));
 
         /// A侧螺旋线（从A侧直缓切点顺着画）
         // 绘制
@@ -87,7 +87,7 @@ public final class TransitionCurveGenerator extends AbstractGenerator<Transition
         double eulerDeflectionSum = UtilsMath.normAngleRad(Math.abs(unrotatedTransArcA.endTangentAngleRad - unrotatedTransArcA.startTangentAngleRad))
                         + UtilsMath.normAngleRad(Math.abs(unrotatedTransArcC.endTangentAngleRad - unrotatedTransArcC.startTangentAngleRad));
         if (eulerDeflectionSum > Math.abs(corner.deflectionRad))
-            return null;
+            throw new ColumbinaException(I18n.tr("Total deflection angle of the two Euler spirals exceeds the corner deflection angle. Try reducing the transition curve length"));
         
         /// 圆曲线
         // 计算圆心（从B向角平分线方向走(圆曲线半径R + 内移距离p) / sin(张角θ / 2)这个长度）
@@ -108,7 +108,8 @@ public final class TransitionCurveGenerator extends AbstractGenerator<Transition
         // 整理用于拼接的点
         List<EastNorth> transArcA = new ArrayList<>(rotatedTransArcA.arcNodes);
         List<EastNorth> transArcC = new ArrayList<>(rotatedTransArcC.arcNodes);
-        if (transArcA.size() < 2 || circularArc.size() < 2 || transArcC.size() < 2) return null;  // 曲线不完整，绘制失败
+        if (transArcA.size() < 2 || circularArc.size() < 2 || transArcC.size() < 2)
+            throw new ColumbinaException(I18n.tr("Incomplete curve generation: one or more segments (Euler spiral A, circular arc, Euler spiral C) have fewer than 2 points. Try increasing the chainage length"));
         transArcA.remove(transArcA.size() - 1);  // 不要ArcA的最后一个点（=圆曲线第一个点）
         Collections.reverse(transArcC);  // 倒着画的原地逆序正回来
         transArcC.remove(0);  // 正序之后不要第一个点（=圆曲线最后一个点）
@@ -162,8 +163,7 @@ public final class TransitionCurveGenerator extends AbstractGenerator<Transition
 
                 if (transCurve == null || transCurve.size() < 2) {  // 该拐角没有生成缓和曲线
                     transCurves.add(null);
-                    failedNodes.put(nodes.get(i + 1), I18n.tr("TEMP INFO"));  // 记录失败拐角
-                    // TODO：getTransCurve改为抛出错误而不是返回null
+                    failedNodes.put(nodes.get(i + 1), I18n.tr("Transition curve generation failed for unknown reason"));  // 记录失败拐角
                 } else {
                     transCurves.add(transCurve);
                 }
