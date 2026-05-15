@@ -2,6 +2,7 @@ package yakxin.columbina.features.fillet;
 
 import java.awt.GridBagLayout;
 import java.awt.Insets;
+import java.awt.event.ActionEvent;
 import java.text.NumberFormat;
 import java.text.ParseException;
 import java.util.ArrayList;
@@ -14,11 +15,13 @@ import org.openstreetmap.josm.data.osm.Node;
 import org.openstreetmap.josm.data.osm.Way;
 import org.openstreetmap.josm.gui.ExtendedDialog;
 import org.openstreetmap.josm.gui.MainApplication;
+import org.openstreetmap.josm.tools.GBC;
 import org.openstreetmap.josm.tools.I18n;
 import yakxin.columbina.data.ColumbinaCorner;
 import yakxin.columbina.data.ColumbinaEN;
 import yakxin.columbina.data.ColumbinaException;
 import yakxin.columbina.data.dto.inputs.ColumbinaInput;
+import yakxin.columbina.features.fillet.advanced.AdvFilletDialog;
 import yakxin.columbina.utils.UtilsMath;
 import yakxin.columbina.utils.UtilsUI;
 
@@ -37,8 +40,7 @@ public final class FilletDialog extends ExtendedDialog {
     private final JCheckBox deleteOldWays;
     private final JCheckBox selectNewWays;
     private final JCheckBox copyTag;
-    
-    // 构建窗口 - 从params读取初始值，同时接收input用于计算最大半径
+
     FilletDialog(ColumbinaInput input, FilletParams savedParams) {
         // 标题、按钮
         super(MainApplication.getMainFrame(),
@@ -89,7 +91,15 @@ public final class FilletDialog extends ExtendedDialog {
                         + "</div></html>",
                 15
         );
-        
+
+        UtilsUI.addSpace(panel, 5);
+        JButton advButton = new JButton(I18n.tr("Advanced"));
+        advButton.addActionListener((ActionEvent e) -> {
+            new AdvFilletDialog(savedParams, input);
+        });
+        panel.add(advButton, GBC.eol().insets(0, 5, 0, 0).anchor(13));
+        // TODO：添加按钮包装成函数
+
         UtilsUI.addSection(panel, I18n.tr("Other Operations"));
         copyTag = UtilsUI.addCheckbox(panel, I18n.tr("Copy original ways'' tags"), savedParams.copyTag);
         deleteOldWays = UtilsUI.addCheckbox(panel, I18n.tr("Remove original ways after drawing"), savedParams.deleteOld);

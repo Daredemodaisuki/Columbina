@@ -13,6 +13,8 @@ import java.util.*;
 import java.util.List;
 
 public class UtilsUI {
+    public static final String ADVANCED_ITALIC = I18n.tr("\uD835\uDE08\uD835\uDE25\uD835\uDE37\uD835\uDE22\uD835\uDE2F\uD835\uDE24\uD835\uDE26\uD835\uDE25\n");
+    
     // 测试用调试输出
     public static void testMsgWindow(String info) {
         JOptionPane.showMessageDialog(
