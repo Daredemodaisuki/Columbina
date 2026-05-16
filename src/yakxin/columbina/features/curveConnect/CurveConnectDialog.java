@@ -25,7 +25,7 @@ public final class CurveConnectDialog extends ExtendedDialog {
 
     private final JCheckBox curveConnectAbleToAdjustTanNodes;
     private final JCheckBox selectNewWays;
-    
+
     CurveConnectDialog(CurveConnectParams savedParams) {
         super(MainApplication.getMainFrame(),
                 I18n.tr("Columbina"),

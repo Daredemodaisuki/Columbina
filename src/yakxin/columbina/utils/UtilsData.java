@@ -8,6 +8,7 @@ import yakxin.columbina.data.dto.inputs.ColumbinaInput;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class UtilsData {
     public static final int NODE_NOT_FOUND = -1;
@@ -109,6 +110,15 @@ public class UtilsData {
                 throw new IllegalArgumentException(I18n.tr("No way should be selected."));
             throw new IllegalArgumentException(I18n.tr("Too many ways are selected, required at most {0}.", maxWay));
         }
+    }
+    
+    public static String featureListToString(List<OsmPrimitive> features) {
+        return features.stream().map(feature -> {
+                    if (feature instanceof Node) return I18n.tr("Node {0}", feature.getUniqueId());
+                    else if (feature instanceof Way) return I18n.tr("Way {0}", feature.getUniqueId());
+                    else if (feature instanceof Relation) return I18n.tr("Relation {0}", feature.getUniqueId());
+                    else return feature.getClass().toString() + feature.getUniqueId();
+                }).collect(Collectors.joining(",", "[", "]"));
     }
 }
 

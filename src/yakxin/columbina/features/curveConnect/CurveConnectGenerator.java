@@ -144,7 +144,6 @@ public final class CurveConnectGenerator extends AbstractGenerator<CurveConnectP
         UtilsArc.SingleEulerArcResult rotatedTransArcA;
         UtilsArc.SingleEulerArcResult rotatedTransArcC;
         if (enTransArcLength > 0){  // 如果需要绘制缓和曲线
-            // TODO：会否缓和曲线长度太长导致回旋线部分的转角就大于了总偏转角，可能导致曲线直接绕了一圈？
             // A侧螺旋线（从A侧直缓切点顺着画）
             UtilsArc.SingleEulerArcResult unrotatedTransArcA = UtilsArc.getUnrotatedEulerArc(  // 绘制
                     enCurveRadius, enTransArcLength, enChainageLength, leftRightForDraw  // 因为这里定义了顺逆时针，不用transArcStarts里的左右
@@ -157,6 +156,19 @@ public final class CurveConnectGenerator extends AbstractGenerator<CurveConnectP
             );
             rotatedTransArcC = UtilsArc.rotateAndMoveEulerArc(  // 旋转、移动
                     transArcStarts.startC, transArcStarts.startAngleCRad, unrotatedTransArcC);
+            
+            // 检查回旋线部分的总偏角
+            //  若两段回旋线部分太长导致其自身的转角总和就大于了总偏转角，整条曲线三部分将会错开或者直接绕了一圈，
+            //  这种情况转为一般圆角
+            double eulerDeflectionSum = UtilsMath.normAngleRad(Math.abs(unrotatedTransArcA.endTangentAngleRad - unrotatedTransArcA.startTangentAngleRad))
+                    + UtilsMath.normAngleRad(Math.abs(unrotatedTransArcC.endTangentAngleRad - unrotatedTransArcC.startTangentAngleRad));
+            if (eulerDeflectionSum > Math.abs(stdCorner.deflectionRad)) {
+                // TODO：告知用户无法生成回旋线，自动转为一般圆角
+                enTransArcLength = 0;
+                rotatedTransArcA = new UtilsArc.SingleEulerArcResult(new ArrayList<>(), transArcStarts.startAngleARad, transArcStarts.startAngleARad);
+                rotatedTransArcC = new UtilsArc.SingleEulerArcResult(new ArrayList<>(), transArcStarts.startAngleCRad, transArcStarts.startAngleCRad);
+            }
+            
         } else {  // 如果不需要绘制，则手动构建SingleEulerArcResult
             rotatedTransArcA = new UtilsArc.SingleEulerArcResult(new ArrayList<>(), transArcStarts.startAngleARad, transArcStarts.startAngleARad);
             rotatedTransArcC = new UtilsArc.SingleEulerArcResult(new ArrayList<>(), transArcStarts.startAngleCRad, transArcStarts.startAngleCRad);
@@ -223,7 +235,7 @@ public final class CurveConnectGenerator extends AbstractGenerator<CurveConnectP
         }
         intents.add(new ColumbinaOutputIntent.AddThisWayIfOK(finalWay));
         
-        ColumbinaSingleOutput result = new ColumbinaSingleOutput(intents, List.of(finalWay), new ArrayList<>(), new HashMap<>());
+        ColumbinaSingleOutput result = new ColumbinaSingleOutput(intents, List.of(finalWay), new HashMap<>(), new HashMap<>());
         result.extraData.put("startMethod", tanNodeStrategy.startMethod);
         result.extraData.put("endMethod", tanNodeStrategy.endMethod);
         

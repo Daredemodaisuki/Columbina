@@ -4,7 +4,7 @@ import org.openstreetmap.josm.data.osm.Node;
 import org.openstreetmap.josm.data.osm.Way;
 import org.openstreetmap.josm.tools.I18n;
 import org.openstreetmap.josm.tools.Shortcut;
-import yakxin.columbina.abstractClasses.actionMiddle.ActionWithNodeWay;
+import yakxin.columbina.abstractClasses.AbstractDrawingAction;
 import yakxin.columbina.data.ColumbinaException;
 import yakxin.columbina.data.dto.inputs.ColumbinaInput;
 import yakxin.columbina.data.dto.inputs.ColumbinaSingleInput;
@@ -14,7 +14,7 @@ import java.awt.event.KeyEvent;
 import java.util.List;
 
 public final class AngleLineAction extends
-        ActionWithNodeWay<AngleLineGenerator, AngleLinePreference, AngleLineParams>
+        AbstractDrawingAction<AngleLineGenerator, AngleLinePreference, AngleLineParams>
 {
 
     /**
@@ -28,10 +28,7 @@ public final class AngleLineAction extends
      * @param preference  首选项实例
      */
     public AngleLineAction(String name, String iconName, String description, Shortcut shortcut, AngleLineGenerator generator, AngleLinePreference preference) {
-        super(
-                name, iconName, description, shortcut,
-                generator, preference
-        );
+        super(name, iconName, description, shortcut, generator, preference);
     }
 
     /**
@@ -99,6 +96,9 @@ public final class AngleLineAction extends
 
         return CHECK_OK;
     }
+
+    @Override
+    public List<ColumbinaSingleInput> splitBatchInputs(ColumbinaInput totalInput) {
+        return defaultNonBatchSplitInputs(totalInput);
+    }
 }
-
-

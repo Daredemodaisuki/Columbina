@@ -8,11 +8,14 @@ import yakxin.columbina.data.dto.PanelSectionResult;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.ActionListener;
 import java.text.NumberFormat;
 import java.util.*;
 import java.util.List;
 
 public class UtilsUI {
+    public static final String ADVANCED_ITALIC = I18n.tr("\uD835\uDE08\uD835\uDE25\uD835\uDE37\uD835\uDE22\uD835\uDE2F\uD835\uDE24\uD835\uDE26\uD835\uDE25\n");
+    
     // 测试用调试输出
     public static void testMsgWindow(String info) {
         JOptionPane.showMessageDialog(
@@ -39,7 +42,7 @@ public class UtilsUI {
             ImageIcon icon = new ImageProvider(iconName).setSize(24,24).get();
             header.add(new JLabel(icon));
         }
-        header.add(new JLabel("<html><h1 style=\"font-size:10px;\">" + headTitle + "</h1></html>"));
+        header.add(new JLabel("<html><div style=\"width:200px;\"><h1 style=\"font-size:10px;\">" + headTitle + "</h1></html>"));
         panel.add(header, GBC.eol().insets(0, 0, 0, 0).fill(GridBagConstraints.HORIZONTAL));
 
         return header;
@@ -56,11 +59,14 @@ public class UtilsUI {
         return addInput(panel, labelText, String.valueOf(doubleInput));
     }
     public static JFormattedTextField addInput(JPanel panel, String labelText, String initInput) {
+        return addInput(panel, labelText, initInput, GBC.eol().fill(GridBagConstraints.HORIZONTAL));
+    }
+    public static JFormattedTextField addInput(JPanel panel, String labelText, String initInput, GBC locGBC) {
         JFormattedTextField input = new JFormattedTextField(NumberFormat.getInstance(Locale.US));  // 强制美式数码格式，「.」为小数点
         JLabel label = new JLabel(labelText);
         panel.add(label, GBC.std());
         label.setLabelFor(input);
-        panel.add(input, GBC.eol().fill(GridBagConstraints.HORIZONTAL));
+        panel.add(input, locGBC);
         input.setText(initInput);  // 初始值
         return input;
     }
@@ -71,6 +77,14 @@ public class UtilsUI {
         panel.add(checkbox, GBC.eol().fill(GridBagConstraints.HORIZONTAL));
         checkbox.setSelected(initialCheck);
         return checkbox;
+    }
+    
+    // 下拉选择框
+    public static <ComboType>JComboBox<ComboType> addCombo(JPanel panel, JComboBox<ComboType> combo, String labelText) {
+        JLabel label = new JLabel(labelText);
+        panel.add(label, GBC.std());
+        panel.add(combo, GBC.eol().insets(5, 0, 0, 0));
+        return combo;
     }
 
     // 标签
@@ -86,6 +100,18 @@ public class UtilsUI {
         UtilsUI.addSpace(panel,2);
 
         return label;
+    }
+    
+    // 按钮
+    public static JButton addButton(JPanel panel, String text, ActionListener actionListener) {
+        return addButton(panel, text, actionListener, GBC.eol());
+    }
+    public static JButton addButton(JPanel panel, String text, ActionListener actionListener, GBC locGBC) {
+        JButton button = new JButton(text);
+        button.addActionListener(actionListener);
+        
+        panel.add(button, locGBC);
+        return button;
     }
 
     // 分隔线

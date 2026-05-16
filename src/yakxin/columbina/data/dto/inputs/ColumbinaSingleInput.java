@@ -1,8 +1,10 @@
 package yakxin.columbina.data.dto.inputs;
 
 import org.openstreetmap.josm.data.osm.Node;
+import org.openstreetmap.josm.data.osm.OsmPrimitive;
 import org.openstreetmap.josm.data.osm.Way;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -56,6 +58,13 @@ public final class ColumbinaSingleInput {
         this.nodes = totalInput.getNodes();
         this.ways = totalInput.getWays();
         this.quickPrecomputedData = quickPrecomputedData;
+    }
+    
+    public List<OsmPrimitive> getMixedInputList() {
+        List<OsmPrimitive> result = new ArrayList<>();
+        result.addAll(nodes);
+        result.addAll(ways);
+        return result;
     }
 }
 

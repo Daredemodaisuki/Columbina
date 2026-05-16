@@ -5,14 +5,15 @@ import org.openstreetmap.josm.tools.I18n;
 import org.openstreetmap.josm.tools.Shortcut;
 
 import yakxin.columbina.abstractClasses.AbstractDrawingAction;
-import yakxin.columbina.abstractClasses.actionMiddle.ActionWithBatchWays;
 import yakxin.columbina.data.dto.inputs.ColumbinaInput;
+import yakxin.columbina.data.dto.inputs.ColumbinaSingleInput;
 
 import java.awt.event.KeyEvent;
+import java.util.List;
 import java.util.stream.Collectors;
 
 public final class ChamferAction extends
-        ActionWithBatchWays<ChamferGenerator, ChamferPreference, ChamferParams>
+        AbstractDrawingAction<ChamferGenerator, ChamferPreference, ChamferParams>
 {
     // TODO:距离模式的角度检查
 
@@ -27,11 +28,7 @@ public final class ChamferAction extends
      * @param preference  首选项实例
      */
     private ChamferAction(String name, String iconName, String description, Shortcut shortcut, ChamferGenerator generator, ChamferPreference preference) {
-        super(
-                name, iconName, description, shortcut,
-                generator, preference,
-                1, AbstractDrawingAction.NO_LIMITATION_ON_INPUT_NUM
-        );
+        super(name, iconName, description, shortcut, generator, preference);
     }
 
     /**
@@ -67,6 +64,24 @@ public final class ChamferAction extends
         }
         return undoRedoInfo;
     }
+
+    @Override
+    public int checkInputNum(ColumbinaInput totalInput) {
+        return defaultBatchWaysCheckInputNum(totalInput, 1, AbstractDrawingAction.NO_LIMITATION_ON_INPUT_NUM);
+    }
+
+    @Override
+    public int checkInputDetails(List<ColumbinaSingleInput> singleInputs) {
+        return defaultBatchWaysCheckInputDetails(singleInputs);
+    }
+
+    @Override
+    public List<ColumbinaSingleInput> splitBatchInputs(ColumbinaInput totalInput) {
+        return defaultBatchWaysSplitInputs(totalInput);
+    }
+
+    @Override
+    public java.util.Map<String, String> getNewWayTags(ColumbinaSingleInput singleInput) {
+        return defaultBatchWaysGetNewWayTags(singleInput);
+    }
 }
-
-

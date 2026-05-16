@@ -13,7 +13,9 @@ import yakxin.columbina.data.ColumbinaEN;
 import yakxin.columbina.utils.UtilsMath;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import static yakxin.columbina.utils.UtilsArc.getCircleArc;
 
@@ -24,8 +26,20 @@ public final class FilletGenerator extends AbstractGenerator<FilletParams> {
     @Override
     public ColumbinaSingleOutput getOutputForSingleInput(ColumbinaSingleInput input, FilletParams params) {
         if (input.ways != null && input.ways.size() == 1) {
+            Way way = input.ways.get(0);
+            // 如果设置了高级参数，则按各拐角半径分别绘制
+            if (params.advFilletParams != null && !params.advFilletParams.isEmpty()) {
+                List<Double> advRadiusList = params.advFilletParams.getSurfaceRadiusList(way.getUniqueId());
+                if (advRadiusList != null) {
+                    return buildSmoothPolyline(
+                            way,
+                            advRadiusList, params.surfaceChainageLength, params.maxPointNum,
+                            params.minAngleDeg, params.maxAngleDeg
+                    );
+                }
+            }
             return buildSmoothPolyline(
-                    input.ways.get(0),
+                    way,
                     params.surfaceRadius, params.surfaceChainageLength, params.maxPointNum,
                     params.minAngleDeg, params.maxAngleDeg
             );
@@ -84,7 +98,7 @@ public final class FilletGenerator extends AbstractGenerator<FilletParams> {
     }
 
     /**
-     * 为整条路径倒圆角
+     * 为整条路径倒圆角（各拐角使用相同半径）
      * @param way 输入的路径
      * @param surfaceRadius 圆曲线地表半径（米）
      * @param surfaceChainageLength 桩距（节点间距，米）
@@ -98,7 +112,33 @@ public final class FilletGenerator extends AbstractGenerator<FilletParams> {
             double surfaceRadius, double surfaceChainageLength, int maxPointNum,
             double minAngleDeg, double maxAngleDeg
     ) {
-        List<OsmPrimitive> failedNodes = new ArrayList<>();
+        int numNode = way.isClosed() ? way.getNodesCount() - 1 : way.getNodesCount();
+        if (numNode < 3) return null;
+        int numCorner = way.isClosed() ? numNode : numNode - 2;
+        // 将统一半径转为各拐角相同的半径列表，委托给独立半径版本
+        List<Double> surfaceRadiusList = new ArrayList<>(numCorner);
+        for (int i = 0; i < numCorner; i++) {
+            surfaceRadiusList.add(surfaceRadius);
+        }
+        return buildSmoothPolyline(way, surfaceRadiusList, surfaceChainageLength, maxPointNum, minAngleDeg, maxAngleDeg);
+    }
+
+    /**
+     * 为整条路径倒圆角（各拐角使用各自的半径）
+     * @param way 输入的路径
+     * @param surfaceRadiusList 各拐角的圆曲线地表半径列表（米），顺序与路径中拐角出现顺序一致
+     * @param surfaceChainageLength 桩距（节点间距，米）
+     * @param maxPointNum 最大节点数
+     * @param minAngleDeg 最小允许倒角角度
+     * @param maxAngleDeg 最大允许倒角角度
+     * @return 包含新节点列表和失败节点ID的ColumbinaSingleOutput
+     */
+    public static ColumbinaSingleOutput buildSmoothPolyline(
+            Way way,
+            List<Double> surfaceRadiusList, double surfaceChainageLength, int maxPointNum,
+            double minAngleDeg, double maxAngleDeg
+    ) {
+        Map<OsmPrimitive, String> failedNodes = new HashMap<>();
         // 获取路径的所有节点
         List<Node> nodes = new ArrayList<>(way.getNodes());
         int numNode = way.isClosed() ? way.getNodesCount() - 1 : way.getNodesCount();  // 实际节点数（去除闭合点）
@@ -108,10 +148,22 @@ public final class FilletGenerator extends AbstractGenerator<FilletParams> {
         // 存储每个拐角的过渡曲线结果
         List<List<EastNorth>> filletCurves = new ArrayList<>();
 
+        // 半径列表索引（仅对通过角度筛选的拐角递增，与高级窗口的拐角列表对齐）
+        int radiusIdx = 0;
+
         // 为路径计算所有拐角
         for (int i = 0; i < numCorner; i ++) {
             try {
                 ColumbinaCorner corner = ColumbinaCorner.create(way, i);
+                // 跳过角度不在允许范围内的拐角（与高级窗口的筛选逻辑一致，不消耗半径列表条目）
+                if (corner.angleRad < Math.toRadians(minAngleDeg) || corner.angleRad > Math.toRadians(maxAngleDeg)) {
+                    filletCurves.add(null);
+                    failedNodes.put(nodes.get(i + 1), "Angle not within the allowed range");
+                    continue;
+                }
+                // 获取该拐角的半径：若半径列表不够长则使用默认半径0（跳过该拐角）
+                double surfaceRadius = radiusIdx < surfaceRadiusList.size() ? surfaceRadiusList.get(radiusIdx) : 0;
+                radiusIdx++;
                 double latB = corner.latB;
                 double enRadius = UtilsMath.surfaceDistanceToEastNorth(surfaceRadius, latB);
                 double enChainageLength = UtilsMath.surfaceDistanceToEastNorth(surfaceChainageLength, latB);
@@ -123,7 +175,7 @@ public final class FilletGenerator extends AbstractGenerator<FilletParams> {
                 );
                 if (arc == null || arc.size() < 2) {  // 该拐角没有生成圆角（半径过大或角度问题）
                     filletCurves.add(null);
-                    failedNodes.add(nodes.get(i + 1));
+                    failedNodes.put(nodes.get(i + 1), "Too short distance to adjacent nodes or not meeting the angle restrictions");
                 }
                 else {
                     filletCurves.add(arc);
@@ -131,9 +183,28 @@ public final class FilletGenerator extends AbstractGenerator<FilletParams> {
             } catch (ColumbinaException exSurToEN) {
                 // 如果纬度接近90度，使用一个很小的正数，避免除0，但这样不准确，所以直接失败跳过这个圆弧吧
                 filletCurves.add(null);
-                failedNodes.add(nodes.get(i + 1));
+                failedNodes.put(nodes.get(i + 1), exSurToEN.getMessage());
             }
         }
+
+        return concludeFilletNodes(way, nodes, filletCurves, failedNodes);
+    }
+
+    /**
+     * 根据各拐角的过渡曲线结果汇总最终的节点列表
+     * @param way 输入的路径
+     * @param nodes 路径的原始节点列表
+     * @param filletCurves 各拐角的过渡曲线结果（null表示该拐角未生成曲线）
+     * @param failedNodes 失败的拐角节点映射
+     * @return 包含新节点列表和失败节点ID的ColumbinaSingleOutput
+     */
+    private static ColumbinaSingleOutput concludeFilletNodes(
+            Way way, List<Node> nodes,
+            List<List<EastNorth>> filletCurves,
+            Map<OsmPrimitive, String> failedNodes
+    ) {
+        int numNode = way.isClosed() ? way.getNodesCount() - 1 : way.getNodesCount();
+        int numCorner = way.isClosed() ? numNode : numNode - 2;
 
         // 最终的节点经纬度坐标序列
         List<Node> finalNodes = new ArrayList<>();

@@ -4,17 +4,18 @@ import org.openstreetmap.josm.data.osm.Way;
 import org.openstreetmap.josm.tools.I18n;
 import org.openstreetmap.josm.tools.Shortcut;
 import yakxin.columbina.abstractClasses.AbstractDrawingAction;
-import yakxin.columbina.abstractClasses.actionMiddle.ActionWithBatchWays;
 import yakxin.columbina.data.dto.inputs.ColumbinaInput;
+import yakxin.columbina.data.dto.inputs.ColumbinaSingleInput;
 
 import java.awt.event.KeyEvent;
+import java.util.List;
 import java.util.stream.Collectors;
 
 /**
  * 过渡曲线（缓和曲线）交互类
  */
 public final class TransitionCurveAction extends
-        ActionWithBatchWays<TransitionCurveGenerator, TransitionCurvePreference, TransitionCurveParams>
+        AbstractDrawingAction<TransitionCurveGenerator, TransitionCurvePreference, TransitionCurveParams>
 {
     /**
      * 构造函数
@@ -27,11 +28,7 @@ public final class TransitionCurveAction extends
      * @param preference  首选项实例
      */
     private TransitionCurveAction(String name, String iconName, String description, Shortcut shortcut, TransitionCurveGenerator generator, TransitionCurvePreference preference) {
-        super(
-                name, iconName, description, shortcut,
-                generator, preference,
-                1, AbstractDrawingAction.NO_LIMITATION_ON_INPUT_NUM
-        );
+        super(name, iconName, description, shortcut, generator, preference);
     }
 
     /**
@@ -68,6 +65,24 @@ public final class TransitionCurveAction extends
         }
         return undoRedoInfo;
     }
+
+    @Override
+    public int checkInputNum(ColumbinaInput totalInput) {
+        return defaultBatchWaysCheckInputNum(totalInput, 1, AbstractDrawingAction.NO_LIMITATION_ON_INPUT_NUM);
+    }
+
+    @Override
+    public int checkInputDetails(List<ColumbinaSingleInput> singleInputs) {
+        return defaultBatchWaysCheckInputDetails(singleInputs);
+    }
+
+    @Override
+    public List<ColumbinaSingleInput> splitBatchInputs(ColumbinaInput totalInput) {
+        return defaultBatchWaysSplitInputs(totalInput);
+    }
+
+    @Override
+    public java.util.Map<String, String> getNewWayTags(ColumbinaSingleInput singleInput) {
+        return defaultBatchWaysGetNewWayTags(singleInput);
+    }
 }
-
-
