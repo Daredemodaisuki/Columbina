@@ -101,7 +101,12 @@ public final class FilletDialog extends ExtendedDialog {
                 (ActionEvent e) -> {
                     AdvFilletDialog advFilletDialog = new AdvFilletDialog(getParams(), input);  // 传入当前输入框的参数
                     // 如果高级窗口点击确定，则记录高级参数
-                    if (advFilletDialog.getValue() == 1) advFilletParams = advFilletDialog.getAdvParams();
+                    if (advFilletDialog.getValue() == 1) {
+                        advFilletParams = advFilletDialog.getAdvParams();
+                        filletR.setEnabled(false);
+                        minAngleDeg.setEnabled(false);
+                        maxAngleDeg.setEnabled(false);
+                    }
                 },
                 GBC.eol().insets(0, 5, 0, 0).anchor(13)
         );

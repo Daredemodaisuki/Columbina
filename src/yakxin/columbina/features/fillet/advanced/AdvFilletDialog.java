@@ -410,6 +410,8 @@ public final class AdvFilletDialog extends ExtendedDialog {
 
     /**
      * 计算单条路径上所有拐角
+     * <p>最大半径计算考虑相邻拐角间的相互制约：共享线段两端的拐角各自消耗切距，
+     * 每个拐角的最大半径受其两侧线段约束，取较小值。
      * @param way 路径
      * @param params 输入参数（包含默认半径、最大最小角度等）
      * @return 拐角信息列表（No.从1开始递增）
@@ -419,30 +421,78 @@ public final class AdvFilletDialog extends ExtendedDialog {
         if (way == null) return corners;
 
         int numNode = way.isClosed() ? way.getNodesCount() - 1 : way.getNodesCount();
-        if (numNode < 3) return corners;  // 至少3个节点才能形成拐角
-        int endIdx = way.isClosed() ? numNode : numNode - 2;
+        if (numNode < 3) return corners;
+        int numCorner = way.isClosed() ? numNode : numNode - 2;
 
-        for (int i = 1; i <= endIdx; i++) {
+        // 第一遍：计算所有拐角的角度、线段长度和是否通过角度筛选
+        double[] cornerAngleRad = new double[numCorner];
+        double[] cornerEnLenBA = new double[numCorner];
+        double[] cornerEnLenBC = new double[numCorner];
+        double[] cornerLatB = new double[numCorner];
+        boolean[] cornerPassesFilter = new boolean[numCorner];
+        for (int i = 0; i < numCorner; i++) {
             try {
-                ColumbinaCorner corner = ColumbinaCorner.create(way, (i - 1 + numNode) % numNode);
-                // 跳过近似直线的拐角和过于尖锐的拐角（由传入的params决定，也就是FilletDialog中用户点击高级时编辑框中的值）
-                if (corner.angleRad > Math.toRadians(params.maxAngleDeg) || corner.angleRad < Math.toRadians(params.minAngleDeg))
-                    continue;
+                ColumbinaCorner corner = ColumbinaCorner.create(way, i);
+                cornerAngleRad[i] = corner.angleRad;
+                cornerEnLenBA[i] = corner.lenBA;
+                cornerEnLenBC[i] = corner.lenBC;
+                cornerLatB[i] = corner.latB;
+                cornerPassesFilter[i] = corner.angleRad >= Math.toRadians(params.minAngleDeg)
+                        && corner.angleRad <= Math.toRadians(params.maxAngleDeg);
+            } catch (Exception ignored) {
+                cornerPassesFilter[i] = false;
+            }
+        }
 
-                double surfaceLenBA = UtilsMath.eastNorthDistanceToSurface(corner.lenBA, corner.latB);
-                double surfaceLenBC = UtilsMath.eastNorthDistanceToSurface(corner.lenBC, corner.latB);
-                double maxRadius = UtilsMath.getMaxRadiusForCorner(surfaceLenBA, surfaceLenBC, corner.angleRad);
+        // 第二遍：对通过角度筛选的拐角，计算考虑相邻拐角制约的最大半径
+        for (int i = 0; i < numCorner; i++) {
+            if (!cornerPassesFilter[i]) continue;
+            try {
+                double theta = cornerAngleRad[i];
+                double cotHalfTheta = 1.0 / Math.tan(theta / 2.0);
 
-                Node cornerNode = way.getNode(i % numNode);
+                // BA侧线段约束：该线段与前一个拐角共享
+                double constraintEnBA;
+                if (way.isClosed() || i > 0) {
+                    int prevCornerIdx = (i - 1 + numCorner) % numCorner;
+                    if (cornerPassesFilter[prevCornerIdx]) {
+                        double cotHalfPrev = 1.0 / Math.tan(cornerAngleRad[prevCornerIdx] / 2.0);
+                        constraintEnBA = cornerEnLenBA[i] / (cotHalfTheta + cotHalfPrev);
+                    } else {
+                        constraintEnBA = cornerEnLenBA[i] / cotHalfTheta;
+                    }
+                } else {
+                    constraintEnBA = cornerEnLenBA[i] / cotHalfTheta;
+                }
+
+                // BC侧线段约束：该线段与后一个拐角共享
+                double constraintEnBC;
+                if (way.isClosed() || i < numCorner - 1) {
+                    int nextCornerIdx = (i + 1) % numCorner;
+                    if (cornerPassesFilter[nextCornerIdx]) {
+                        double cotHalfNext = 1.0 / Math.tan(cornerAngleRad[nextCornerIdx] / 2.0);
+                        constraintEnBC = cornerEnLenBC[i] / (cotHalfTheta + cotHalfNext);
+                    } else {
+                        constraintEnBC = cornerEnLenBC[i] / cotHalfTheta;
+                    }
+                } else {
+                    constraintEnBC = cornerEnLenBC[i] / cotHalfTheta;
+                }
+
+                // 取两侧约束的较小值，转换为地表半径
+                double maxEnRadius = Math.min(constraintEnBA, constraintEnBC);
+                double maxRadius = UtilsMath.eastNorthDistanceToSurface(maxEnRadius, cornerLatB[i]);
+
+                Node cornerNode = way.getNode((i + 1) % numNode);
                 corners.add(new CornerInfo(
                         way.getUniqueId(),
-                        i,
+                        i + 1,
                         cornerNode.getUniqueId(),
-                        Math.toDegrees(corner.angleRad),
+                        Math.toDegrees(theta),
                         maxRadius
                 ));
             } catch (Exception ignored) {
-                // 跳过无法计算的拐角
+                // 跳过无法计算最大半径的拐角
             }
         }
         return corners;

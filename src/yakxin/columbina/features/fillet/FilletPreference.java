@@ -87,11 +87,13 @@ public final class FilletPreference extends AbstractPreference<FilletParams> {
         NEED_COPY_TAGS.setValue(newParams.copyTag);
         
         savePreference();
-        return new FilletParams(
+        FilletParams finalParams = new FilletParams(
                 newParams.surfaceRadius, chainageLengthChecked,
                 newParams.maxPointNum, minAngleDegChecked, maxAngleDegChecked,
                 newParams.deleteOld, newParams.selectNew, newParams.copyTag
         );
+        if (newParams.advFilletParams != null) finalParams.advFilletParams = newParams.advFilletParams;
+        return finalParams;
     }
 }
 

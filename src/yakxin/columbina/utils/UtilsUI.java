@@ -42,7 +42,7 @@ public class UtilsUI {
             ImageIcon icon = new ImageProvider(iconName).setSize(24,24).get();
             header.add(new JLabel(icon));
         }
-        header.add(new JLabel("<html><h1 style=\"font-size:10px;\">" + headTitle + "</h1></html>"));
+        header.add(new JLabel("<html><div style=\"width:200px;\"><h1 style=\"font-size:10px;\">" + headTitle + "</h1></html>"));
         panel.add(header, GBC.eol().insets(0, 0, 0, 0).fill(GridBagConstraints.HORIZONTAL));
 
         return header;
