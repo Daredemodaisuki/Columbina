@@ -1,9 +1,12 @@
 package yakxin.columbina.features.fillet.advanced;
 
+import org.openstreetmap.josm.data.osm.DataSet;
 import org.openstreetmap.josm.data.osm.Node;
+import org.openstreetmap.josm.data.osm.OsmPrimitive;
 import org.openstreetmap.josm.data.osm.Way;
 import org.openstreetmap.josm.gui.ExtendedDialog;
 import org.openstreetmap.josm.gui.MainApplication;
+import org.openstreetmap.josm.gui.util.HighlightHelper;
 import org.openstreetmap.josm.tools.GBC;
 import org.openstreetmap.josm.tools.I18n;
 import yakxin.columbina.data.ColumbinaCorner;
@@ -37,6 +40,9 @@ public final class AdvFilletDialog extends ExtendedDialog {
     private final JFormattedTextField batchRadiusInput;
 
     // 拐角数据
+    private final ColumbinaInput input;
+    private final List<OsmPrimitive> savedSelection;  // 窗口打开时的选中要素，用于关闭时还原
+    private final HighlightHelper highlightHelper = new HighlightHelper();
     private final List<CornerInfo> allCorners;
     private final double[] editedRadii;  // 用于临时记录半径修改值
     private List<Integer> cornerIdxDisplaying = new ArrayList<>();  // 当前正在列表中展示的每个拐角在allCorners/editedRadii的索引
@@ -50,6 +56,10 @@ public final class AdvFilletDialog extends ExtendedDialog {
         setButtonIcons(BUTTON_ICONS);
         setDefaultButton(1);
 
+        this.input = input;
+        // 记录窗口打开时的选中要素，用于关闭时还原
+        DataSet ds = MainApplication.getLayerManager().getEditDataSet();
+        savedSelection = ds != null ? new ArrayList<>(ds.getSelected()) : new ArrayList<>();
         // 计算所有拐角信息
         allCorners = computeCorners(input, savedParams);
         // 初始化用户编辑半径数组（默认值 = 推荐最大半径）
@@ -100,6 +110,14 @@ public final class AdvFilletDialog extends ExtendedDialog {
         contentInsets = new Insets(5, 15, 5, 15);
         setContent(panel);
 
+        // 窗口关闭时清除高亮
+        addWindowListener(new java.awt.event.WindowAdapter() {
+            @Override
+            public void windowClosed(java.awt.event.WindowEvent e) {
+                clearHighlight();
+            }
+        });
+
         setupDialog();
         showDialog();
     }
@@ -121,10 +139,11 @@ public final class AdvFilletDialog extends ExtendedDialog {
             comboBox.addItem(new WayComboItem(false, wayId, label));
             // wayIndex++;
         }
-        // 选择变更时刷新表格
+        // 选择变更时刷新表格并更新高亮
         comboBox.addItemListener((ItemEvent e) -> {
             if (e.getStateChange() == ItemEvent.SELECTED) {
                 refreshTable();
+                updateHighlight();
             }
         });
         return comboBox;
@@ -172,6 +191,101 @@ public final class AdvFilletDialog extends ExtendedDialog {
         }
         // 同步到editedRadii
         saveCurrentTableEdits();
+    }
+
+    /**
+     * 根据当前下拉选择框和列表选中行更新地图上的高亮
+     * <p>高亮逻辑：
+     * <ul>
+     *     <li>下拉选择框选中某条路径时，高亮该路径及其所有节点</li>
+     *     <li>列表中有选中行时，额外高亮选中行对应的拐角节点</li>
+     * </ul>
+     * <p>路径仅选中，节点需要进一步高亮；
+     * <p>节点需要被选中才能进一步高亮，因此临时选中相关节点，
+     * 并在清除高亮/关闭窗口时还原回窗口打开时的选中要素。
+     */
+    private void updateHighlight() {
+        DataSet ds = MainApplication.getLayerManager().getEditDataSet();
+        if (ds == null) return;
+
+        List<Node> nodeToHighlight = new ArrayList<>();
+        List<Way> wayToHighlight = new ArrayList<>();
+        List<OsmPrimitive> featureToSelect = new ArrayList<>();
+
+        // 根据下拉选择框确定要高亮的路径节点
+        WayComboItem selected = (WayComboItem) wayComboBox.getSelectedItem();
+        if (selected != null) {
+            if (!selected.isAll) {
+                Way way = findWayById(selected.wayId);
+                if (way != null) wayToHighlight.add(way);
+            } else if (table.getSelectedRows().length == 0) {
+                clearHighlight();  // 下拉框选中全部，且列表无选中则还原至清除高亮状态
+                return;
+            }
+        }
+        
+        // 根据列表选中行确定要高亮的拐角节点
+        int[] selectedRows = table.getSelectedRows();
+        for (int row : selectedRows) {
+            if (row < cornerIdxDisplaying.size()) {
+                int cornerIdx = cornerIdxDisplaying.get(row);
+                Node node = findNodeById(allCorners.get(cornerIdx).nodeId);
+                if (node != null && !nodeToHighlight.contains(node)) nodeToHighlight.add(node);
+            }
+        }
+
+        // 临时选中要高亮的要素（节点需被选中才能在地图上显示高亮）
+        featureToSelect.addAll(wayToHighlight);
+        featureToSelect.addAll(nodeToHighlight);
+        ds.setSelected(featureToSelect);
+        // 同时设置高亮标记（为路径提供额外的高亮视觉效果）
+        if (highlightHelper.highlightOnly(nodeToHighlight)) {
+            MainApplication.getMap().repaint();
+        }
+    }
+
+    /**
+     * 根据唯一ID在当前数据集中查找路径
+     * @param wayId 路径唯一ID
+     * @return 路径对象，未找到则返回null
+     */
+    private Way findWayById(long wayId) {
+        DataSet ds = MainApplication.getLayerManager().getEditDataSet();
+        if (ds == null) return null;
+        for (Way way : ds.getWays()) {
+            if (way.getUniqueId() == wayId) return way;
+        }
+        return null;
+    }
+
+    /**
+     * 根据唯一ID在当前数据集中查找节点
+     * @param nodeId 节点唯一ID
+     * @return 节点对象，未找到则返回null
+     */
+    private Node findNodeById(long nodeId) {
+        DataSet ds = MainApplication.getLayerManager().getEditDataSet();
+        if (ds == null) return null;
+        for (Node node : ds.getNodes()) {
+            if (node.getUniqueId() == nodeId) return node;
+        }
+        return null;
+    }
+
+    /**
+     * 清除所有高亮并还原窗口打开时的选中要素
+     */
+    private void clearHighlight() {
+        highlightHelper.clear();
+        HighlightHelper.clearAllHighlighted();
+        // 还原窗口打开时的选中要素
+        DataSet ds = MainApplication.getLayerManager().getEditDataSet();
+        if (ds != null) {
+            ds.setSelected(savedSelection);
+        }
+        if (MainApplication.getMap() != null) {
+            MainApplication.getMap().repaint();
+        }
     }
 
     /**
@@ -267,7 +381,14 @@ public final class AdvFilletDialog extends ExtendedDialog {
             TableColumn col = table.getColumnModel().getColumn(i);
             col.setPreferredWidth((int)(totalWidth * percentages[i]));
         }
-        
+
+        // 列表选中行变更时更新高亮
+        table.getSelectionModel().addListSelectionListener(e -> {
+            if (!e.getValueIsAdjusting()) {
+                updateHighlight();
+            }
+        });
+
         return tableScrollPane;
     }
 
