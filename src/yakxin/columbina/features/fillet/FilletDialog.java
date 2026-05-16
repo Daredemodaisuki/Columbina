@@ -22,6 +22,7 @@ import yakxin.columbina.data.ColumbinaEN;
 import yakxin.columbina.data.ColumbinaException;
 import yakxin.columbina.data.dto.inputs.ColumbinaInput;
 import yakxin.columbina.features.fillet.advanced.AdvFilletDialog;
+import yakxin.columbina.features.fillet.advanced.AdvFilletParams;
 import yakxin.columbina.utils.UtilsMath;
 import yakxin.columbina.utils.UtilsUI;
 
@@ -36,6 +37,7 @@ public final class FilletDialog extends ExtendedDialog {
     private final JFormattedTextField filletMaxPointNum;
     private final JFormattedTextField minAngleDeg;
     private final JFormattedTextField maxAngleDeg;
+    private AdvFilletParams advFilletParams = null;
     
     private final JCheckBox deleteOldWays;
     private final JCheckBox selectNewWays;
@@ -93,12 +95,16 @@ public final class FilletDialog extends ExtendedDialog {
         );
 
         UtilsUI.addSpace(panel, 5);
-        JButton advButton = new JButton(I18n.tr("Advanced"));
-        advButton.addActionListener((ActionEvent e) -> {
-            new AdvFilletDialog(savedParams, input);
-        });
-        panel.add(advButton, GBC.eol().insets(0, 5, 0, 0).anchor(13));
-        // TODO：添加按钮包装成函数
+        UtilsUI.addButton(
+                panel,
+                I18n.tr("Advanced"),
+                (ActionEvent e) -> {
+                    AdvFilletDialog advFilletDialog = new AdvFilletDialog(getParams(), input);  // 传入当前输入框的参数
+                    // 如果高级窗口点击确定，则记录高级参数
+                    if (advFilletDialog.getValue() == 1) advFilletParams = advFilletDialog.getAdvParams();
+                },
+                GBC.eol().insets(0, 5, 0, 0).anchor(13)
+        );
 
         UtilsUI.addSection(panel, I18n.tr("Other Operations"));
         copyTag = UtilsUI.addCheckbox(panel, I18n.tr("Copy original ways'' tags"), savedParams.copyTag);
@@ -176,11 +182,13 @@ public final class FilletDialog extends ExtendedDialog {
     
     // 获取数据
     public FilletParams getParams() {
-        return new FilletParams(
+        FilletParams filletParams = new FilletParams(
                 getFilletRadius(), getFilletChainageLength(),
                 getFilletMaxPointNum(), getMinAngleDeg(), getMaxAngleDeg(),
                 getIfDeleteOld(), getIfSelectNew(), getIfCopyTag()
         );
+        if (this.advFilletParams != null) filletParams.advFilletParams = this.advFilletParams;
+        return filletParams;
     }
     
     public double getFilletRadius() {

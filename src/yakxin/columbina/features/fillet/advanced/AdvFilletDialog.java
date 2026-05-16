@@ -14,17 +14,33 @@ import yakxin.columbina.utils.UtilsUI;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
+import javax.swing.table.TableColumn;
 import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ItemEvent;
+import java.text.NumberFormat;
+import java.text.ParseException;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 
 public final class AdvFilletDialog extends ExtendedDialog {
     private static final String[] BUTTON_TEXTS = new String[] {I18n.tr("Confirm"), I18n.tr("Cancel")};
     private static final String[] BUTTON_ICONS = new String[] {"ok", "cancel"};
 
-    private static final double STRAIGHT_THRESHOLD_RAD = Math.toRadians(170);
-
+    // 窗体组件
     private JTable table;
+    private DefaultTableModel tableModel;
+    private final JComboBox<WayComboItem> wayComboBox;
+    private final JFormattedTextField batchRadiusInput;
+
+    // 拐角数据
+    private final List<CornerInfo> allCorners;
+    private final double[] editedRadii;  // 用于临时记录半径修改值
+    private List<Integer> cornerIdxDisplaying = new ArrayList<>();  // 当前正在列表中展示的每个拐角在allCorners/editedRadii的索引
+    private final Map<Long, List<Integer>> cornerIdxMap;  // 每条路径每个拐角在allCorners/editedRadii的索引，用于快速筛选{Way1: [1,2,3], Way2: [4,5,6,7], ...}
 
     public AdvFilletDialog(FilletParams savedParams, ColumbinaInput input) {
         super(MainApplication.getMainFrame(),
@@ -34,21 +50,47 @@ public final class AdvFilletDialog extends ExtendedDialog {
         setButtonIcons(BUTTON_ICONS);
         setDefaultButton(1);
 
-        List<CornerInfo> corners = computeCorners(input, savedParams.surfaceRadius);
+        // 计算所有拐角信息
+        allCorners = computeCorners(input, savedParams);
+        // 初始化用户编辑半径数组（默认值 = 推荐最大半径）
+        editedRadii = new double[allCorners.size()];
+        for (int i = 0; i < allCorners.size(); i++) {
+            editedRadii[i] = allCorners.get(i).preferredMaxRadius;
+        }
+        // 按路径ID分组（记录allCorners/editedRadii索引）
+        cornerIdxMap = groupCornerIdxByWayId(allCorners);
+        
+        wayComboBox = buildWayComboBox();  // 构建下拉选择框
+        JScrollPane tableScrollPane = makeAndGetTable();  // 构建表格（初始显示全部）
 
-        JScrollPane tableScrollPane = makeAndGetTable(corners);
-
+        // 窗体
         JPanel panel = new JPanel(new GridBagLayout());
         UtilsUI.addHeader(panel,
-                UtilsUI.ADVANCED_ITALIC + "\n\n"
+                UtilsUI.ADVANCED_ITALIC + "<br>"
                         + I18n.tr("Round Corners"),
                 "RoundCorners"
         );
 
         UtilsUI.addSection(panel, I18n.tr("Corner Information"));
+
+        // 下拉选择框
+        UtilsUI.addCombo(panel, wayComboBox, I18n.tr("Filter by way:"));
+
+        // 列表
         panel.add(tableScrollPane, GBC.eol().fill(GridBagConstraints.HORIZONTAL));
 
-        if (corners.isEmpty()) {
+        // 批量设置半径
+        UtilsUI.addSpace(panel, 3);
+        batchRadiusInput = UtilsUI.addInput(
+                panel, I18n.tr("Batch set radius (m): "),
+                String.valueOf(savedParams.surfaceRadius), GBC.std()
+        );
+        UtilsUI.addButton(
+                panel, I18n.tr("Apply to selected"),
+                (ActionEvent e) -> applyBatchRadius()
+        );
+
+        if (allCorners.isEmpty()) {
             UtilsUI.addSpace(panel, 5);
             JLabel hint = new JLabel(I18n.tr("No corners found in the selected ways."));
             hint.setForeground(Color.GRAY);
@@ -62,92 +104,305 @@ public final class AdvFilletDialog extends ExtendedDialog {
         showDialog();
     }
 
-    private JScrollPane makeAndGetTable(List<CornerInfo> corners) {
+    /**
+     * 构建路径筛选下拉选择框
+     * @return 下拉选择框
+     */
+    private JComboBox<WayComboItem> buildWayComboBox() {
+        JComboBox<WayComboItem> comboBox = new JComboBox<>();
+        // 添加「全部」选项
+        comboBox.addItem(new WayComboItem(true, 0, I18n.tr("All")));
+        // 添加各路径选项
+        // int wayIndex = 1;
+        for (Map.Entry<Long, List<Integer>> entry : cornerIdxMap.entrySet()) {
+            long wayId = entry.getKey();
+            int cornerCount = entry.getValue().size();
+            String label = I18n.tr("Way{0} ({1} corners)", wayId, cornerCount);
+            comboBox.addItem(new WayComboItem(false, wayId, label));
+            // wayIndex++;
+        }
+        // 选择变更时刷新表格
+        comboBox.addItemListener((ItemEvent e) -> {
+            if (e.getStateChange() == ItemEvent.SELECTED) {
+                refreshTable();
+            }
+        });
+        return comboBox;
+    }
+
+    /**
+     * 在刷新表格前，将当前表格中用户编辑的半径保存到editedRadii
+     */
+    private void saveCurrentTableEdits() {
+        for (int tableRow = 0; tableRow < cornerIdxDisplaying.size(); tableRow++) {
+            // 获取刷新前每一行拐角在allCorners/editedRadii的索引
+            int cornerIdx = cornerIdxDisplaying.get(tableRow);
+            // 更新储存值
+            Object value = tableModel.getValueAt(tableRow, 5);  // 第5列为「半径」列
+            if (value instanceof Number) {
+                editedRadii[cornerIdx] = ((Number) value).doubleValue();
+            }
+        }
+    }
+
+    /**
+     * 将批量输入框中的半径值应用到表格中所有选中行
+     */
+    private void applyBatchRadius() {
+        // 读取输入值
+        double radius;
+        try {
+            radius = NumberFormat.getInstance(Locale.US).parse(batchRadiusInput.getText()).doubleValue();
+        } catch (ParseException e) {
+            return;  // 输入无效时不做操作
+        }
+
+        // 退出单元格编辑模式
+        if (table.isEditing()) {
+            table.getCellEditor().stopCellEditing();
+        }
+
+        // 获取选中行
+        int[] selectedRows = table.getSelectedRows();
+        if (selectedRows.length == 0) return;  // 没有选中行时不做操作
+
+        // 设置选中行的半径
+        for (int row : selectedRows) {
+            tableModel.setValueAt(radius, row, 5);
+        }
+        // 同步到editedRadii
+        saveCurrentTableEdits();
+    }
+
+    /**
+     * 根据当前下拉选择框的选中项刷新表格数据
+     */
+    private void refreshTable() {
+        // 退出单元格编辑模式，将编辑器中的值提交到表格模型
+        if (table.isEditing()) {
+            table.getCellEditor().stopCellEditing();
+        }
+        // 保存当前表格中的编辑
+        saveCurrentTableEdits();
+
+        WayComboItem selected = (WayComboItem) wayComboBox.getSelectedItem();
+        if (selected == null) return;
+
+        // 确定要显示的拐角索引列表
+        if (selected.isAll) {
+            cornerIdxDisplaying = new ArrayList<>();
+            for (int i = 0; i < allCorners.size(); i++) {
+                cornerIdxDisplaying.add(i);
+            }
+        } else {
+            cornerIdxDisplaying = new ArrayList<>(
+                    cornerIdxMap.getOrDefault(selected.wayId, new ArrayList<>())
+            );
+        }
+
+        // 清空表格并重新填充
+        tableModel.setRowCount(0);
+        for (int idx : cornerIdxDisplaying) {
+            CornerInfo c = allCorners.get(idx);
+            tableModel.addRow(new Object[]{
+                    String.valueOf(c.wayId),
+                    c.cornerNoInWay,
+                    String.valueOf(c.nodeId),
+                    Math.round(c.angleDeg * 100.0) / 100.0,
+                    Math.round(c.preferredMaxRadius * 100.0) / 100.0,
+                    Math.round(editedRadii[idx] * 100.0) / 100.0
+            });
+        }
+    }
+
+    /**
+     * 将拐角列表按路径ID分组，记录各拐角在allCorners中的索引
+     * @param corners 所有拐角信息列表
+     * @return 路径ID到拐角索引列表的映射
+     */
+    private static Map<Long, List<Integer>> groupCornerIdxByWayId(List<CornerInfo> corners) {
+        Map<Long, List<Integer>> map = new LinkedHashMap<>();
+        for (int i = 0; i < corners.size(); i++) {
+            CornerInfo c = corners.get(i);
+            map.computeIfAbsent(c.wayId, k -> new ArrayList<>()).add(i);
+        }
+        return map;
+    }
+
+    private JScrollPane makeAndGetTable() {
         String[] columnNames = {
-                I18n.tr("No."), I18n.tr("Node ID"),
+                I18n.tr("Way ID"), I18n.tr("No."),
+                I18n.tr("Node ID"),
                 I18n.tr("Angle (°)"), I18n.tr("Preferred Max Radius (m)"),
-                I18n.tr("Radius (m)")
+                I18n.tr("Setted Radius (m)")
         };
-        Object[][] data = buildTableData(corners);
-        DefaultTableModel tableModel = new DefaultTableModel(data, columnNames) {
+
+        // 初始显示全部拐角
+        cornerIdxDisplaying = new ArrayList<>();
+        for (int i = 0; i < allCorners.size(); i++) {
+            cornerIdxDisplaying.add(i);
+        }
+
+        Object[][] data = buildTableDataForIndices(cornerIdxDisplaying);
+        tableModel = new DefaultTableModel(data, columnNames) {
             @Override
             public boolean isCellEditable(int row, int column) {
-                return column == 4;
+                return column == 5;  // 只有「半径」列可编辑
             }
             @Override
             public Class<?> getColumnClass(int columnIndex) {
-                return columnIndex == 1 ? String.class : Double.class;
+                if (columnIndex == 0 || columnIndex == 2) return String.class;  // Way ID、Node ID为字符串
+                return Double.class;
             }
         };
         table = new JTable(tableModel);
         table.setRowHeight(22);
+        table.setAutoResizeMode(JTable.AUTO_RESIZE_SUBSEQUENT_COLUMNS);
         JScrollPane tableScrollPane = new JScrollPane(table);
-        tableScrollPane.setPreferredSize(new Dimension(520, 250));
+        tableScrollPane.setPreferredSize(new Dimension(600, 250));
+        // 设置列宽
+        int totalWidth = tableScrollPane.getPreferredSize().width;
+        double[] percentages = {0.10, 0.05, 0.10, 0.15, 0.30, 0.30};
+        for (int i = 0; i < table.getColumnCount(); i++) {
+            TableColumn col = table.getColumnModel().getColumn(i);
+            col.setPreferredWidth((int)(totalWidth * percentages[i]));
+        }
+        
         return tableScrollPane;
     }
 
-    private static List<CornerInfo> computeCorners(ColumbinaInput input, double defaultRadius) {
+    /**
+     * 计算所有输入路径中的拐角信息
+     * @param input 输入要素
+     * @param params 输入参数（包含默认半径、最大最小角度等）
+     * @return 拐角信息列表
+     */
+    private static List<CornerInfo> computeCorners(ColumbinaInput input, FilletParams params) {
         List<CornerInfo> corners = new ArrayList<>();
         if (input == null) return corners;
 
         for (Way way : input.getWays()) {
-            corners.addAll(computeCornersForWay(way, defaultRadius));
+            corners.addAll(computeCornersForWay(way, params));
         }
         return corners;
     }
 
-    private static List<CornerInfo> computeCornersForWay(Way way, double defaultRadius) {
+    /**
+     * 计算单条路径上所有拐角
+     * @param way 路径
+     * @param params 输入参数（包含默认半径、最大最小角度等）
+     * @return 拐角信息列表（No.从1开始递增）
+     */
+    private static List<CornerInfo> computeCornersForWay(Way way, FilletParams params) {
         List<CornerInfo> corners = new ArrayList<>();
         if (way == null) return corners;
 
         int numNode = way.isClosed() ? way.getNodesCount() - 1 : way.getNodesCount();
-        if (numNode < 3) return corners;
-
-        int startIdx = way.isClosed() ? 0 : 1;
+        if (numNode < 3) return corners;  // 至少3个节点才能形成拐角
         int endIdx = way.isClosed() ? numNode : numNode - 2;
 
-        for (int i = startIdx; i <= endIdx; i++) {
+        for (int i = 1; i <= endIdx; i++) {
             try {
                 ColumbinaCorner corner = ColumbinaCorner.create(way, (i - 1 + numNode) % numNode);
-                if (corner.angleRad > STRAIGHT_THRESHOLD_RAD) continue;
+                // 跳过近似直线的拐角和过于尖锐的拐角（由传入的params决定，也就是FilletDialog中用户点击高级时编辑框中的值）
+                if (corner.angleRad > Math.toRadians(params.maxAngleDeg) || corner.angleRad < Math.toRadians(params.minAngleDeg))
+                    continue;
 
                 double surfaceLenBA = UtilsMath.eastNorthDistanceToSurface(corner.lenBA, corner.latB);
                 double surfaceLenBC = UtilsMath.eastNorthDistanceToSurface(corner.lenBC, corner.latB);
                 double maxRadius = UtilsMath.getMaxRadiusForCorner(surfaceLenBA, surfaceLenBC, corner.angleRad);
-                // double preferredRadius = Math.min(maxRadius, defaultRadius);
-                // double preferredRadius = Math.min(maxRadius, defaultRadius);
 
                 Node cornerNode = way.getNode(i % numNode);
                 corners.add(new CornerInfo(
+                        way.getUniqueId(),
+                        i,
                         cornerNode.getUniqueId(),
                         Math.toDegrees(corner.angleRad),
                         maxRadius
                 ));
             } catch (Exception ignored) {
+                // 跳过无法计算的拐角
             }
         }
         return corners;
     }
 
-    private static Object[][] buildTableData(List<CornerInfo> corners) {
-        Object[][] data = new Object[corners.size()][5];
-        for (int i = 0; i < corners.size(); i++) {
-            CornerInfo c = corners.get(i);
-            data[i][0] = i + 1;
-            data[i][1] = String.valueOf(c.nodeId);
-            data[i][2] = Math.round(c.angleDeg * 100.0) / 100.0;
-            data[i][3] = Math.round(c.preferredMaxRadius * 100.0) / 100.0;
-            data[i][4] = Math.round(c.preferredMaxRadius * 100.0) / 100.0;
+    /**
+     * 根据拐角索引列表构建表格数据
+     * @param indices 要显示的拐角在allCorners中的索引列表
+     * @return 表格数据（6列：Way ID, No., Node ID, Angle, Preferred Max Radius, Radius）
+     */
+    private Object[][] buildTableDataForIndices(List<Integer> indices) {
+        Object[][] data = new Object[indices.size()][6];
+        for (int row = 0; row < indices.size(); row++) {
+            int idx = indices.get(row);
+            CornerInfo c = allCorners.get(idx);
+            data[row][0] = String.valueOf(c.wayId);
+            data[row][1] = c.cornerNoInWay;
+            data[row][2] = String.valueOf(c.nodeId);
+            data[row][3] = Math.round(c.angleDeg * 100.0) / 100.0;
+            data[row][4] = Math.round(c.preferredMaxRadius * 100.0) / 100.0;
+            data[row][5] = Math.round(editedRadii[idx] * 100.0) / 100.0;
         }
         return data;
     }
 
-    private static class CornerInfo {
-        final long nodeId;
-        final double angleDeg;
-        final double preferredMaxRadius;
+    /**
+     * 获取高级参数，将表格中各路径各拐角的半径汇总
+     * @return 高级圆角参数
+     */
+    public AdvFilletParams getAdvParams() {
+        // 退出单元格编辑模式，将编辑器中的值提交到表格模型
+        if (table.isEditing()) {
+            table.getCellEditor().stopCellEditing();
+        }
+        // 保存当前表格中可能尚未同步的编辑
+        saveCurrentTableEdits();
 
-        CornerInfo(long nodeId, double angleDeg, double preferredMaxRadius) {
+        Map<Long, List<Double>> radiusMap = new LinkedHashMap<>();
+
+        // 按路径ID分组汇总各拐角的半径
+        for (int i = 0; i < allCorners.size(); i++) {
+            CornerInfo corner = allCorners.get(i);
+            radiusMap.computeIfAbsent(corner.wayId, k -> new ArrayList<>()).add(editedRadii[i]);
+        }
+
+        return new AdvFilletParams(radiusMap);
+    }
+
+    /**
+     * 下拉选择框的选项项
+     */
+    private static class WayComboItem {
+        final boolean isAll;    // 是否为「全部」选项
+        final long wayId;       // 路径ID（isAll为true时无意义）
+        final String label;
+
+        WayComboItem(boolean isAll, long wayId, String label) {
+            this.isAll = isAll;
+            this.wayId = wayId;
+            this.label = label;
+        }
+
+        @Override
+        public String toString() {
+            return label;
+        }
+    }
+
+    /**
+     * 拐角信息
+     */
+    private static class CornerInfo {
+        final long wayId;            // 所属路径ID
+        final int cornerNoInWay;     // 路径内拐角编号（从1开始）
+        final long nodeId;           // 拐角节点ID
+        final double angleDeg;       // 拐角角度（度）
+        final double preferredMaxRadius;  // 推荐最大半径（m）
+
+        CornerInfo(long wayId, int cornerNoInWay, long nodeId, double angleDeg, double preferredMaxRadius) {
+            this.wayId = wayId;
+            this.cornerNoInWay = cornerNoInWay;
             this.nodeId = nodeId;
             this.angleDeg = angleDeg;
             this.preferredMaxRadius = preferredMaxRadius;
