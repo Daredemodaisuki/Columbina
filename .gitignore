@@ -25,6 +25,7 @@ replay_pid*
 
 # Others
 .idea/
+.vscode/
 Ant/
 design/
 i18n/.idea/

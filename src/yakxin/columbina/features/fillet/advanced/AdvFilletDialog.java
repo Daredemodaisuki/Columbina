@@ -1,5 +1,7 @@
 package yakxin.columbina.features.fillet.advanced;
 
+import org.openstreetmap.josm.actions.AutoScaleAction;
+import org.openstreetmap.josm.data.coor.EastNorth;
 import org.openstreetmap.josm.data.osm.DataSet;
 import org.openstreetmap.josm.data.osm.Node;
 import org.openstreetmap.josm.data.osm.OsmPrimitive;
@@ -12,6 +14,7 @@ import org.openstreetmap.josm.tools.I18n;
 import yakxin.columbina.data.ColumbinaCorner;
 import yakxin.columbina.data.dto.inputs.ColumbinaInput;
 import yakxin.columbina.features.fillet.FilletParams;
+import yakxin.columbina.utils.UtilsData;
 import yakxin.columbina.utils.UtilsMath;
 import yakxin.columbina.utils.UtilsUI;
 
@@ -38,10 +41,13 @@ public final class AdvFilletDialog extends ExtendedDialog {
     private DefaultTableModel tableModel;
     private final JComboBox<WayComboItem> wayComboBox;
     private final JFormattedTextField batchRadiusInput;
-
-    // 拐角数据
-    private final ColumbinaInput input;
+    
     private final List<OsmPrimitive> savedSelection;  // 窗口打开时的选中要素，用于关闭时还原
+    private final EastNorth savedMapCenter;
+    private final double savedMapScale;
+    
+    // 拐角数据
+    // private final ColumbinaInput input;
     private final HighlightHelper highlightHelper = new HighlightHelper();
     private final List<CornerInfo> allCorners;
     private final double[] editedRadii;  // 用于临时记录半径修改值
@@ -56,10 +62,13 @@ public final class AdvFilletDialog extends ExtendedDialog {
         setButtonIcons(BUTTON_ICONS);
         setDefaultButton(1);
 
-        this.input = input;
-        // 记录窗口打开时的选中要素，用于关闭时还原
-        DataSet ds = MainApplication.getLayerManager().getEditDataSet();
+        // this.input = input;
+        // 记录窗口打开时的选中要素、视图位置，用于关闭时还原
+        DataSet ds = UtilsData.getEditDataSet();
         savedSelection = ds != null ? new ArrayList<>(ds.getSelected()) : new ArrayList<>();
+        savedMapCenter = MainApplication.getMap().mapView.getCenter();
+        savedMapScale = MainApplication.getMap().mapView.getScale();
+        
         // 计算所有拐角信息
         allCorners = computeCorners(input, savedParams);
         // 初始化用户编辑半径数组（默认值 = 推荐最大半径）
@@ -82,15 +91,24 @@ public final class AdvFilletDialog extends ExtendedDialog {
         );
 
         UtilsUI.addSection(panel, I18n.tr("Corner Information"));
-
+        UtilsUI.addLabel(panel,
+                "<html><div style=\"width:600\">"
+                        + I18n.tr("※ You may specify the fillet radius for each corner in the table below. ")
+                        + I18n.tr("Use the combo box above the table to filter ways. ")
+                        + I18n.tr("Click on a table item to highlight the relevant node and zoom to here. ")
+                        + I18n.tr("Double-click the \"Set Radius\" column to edit single value. ")
+                        + I18n.tr("The table supports selecting all or multiple entries via keyboard shortcuts, and you can batch-set values using the input field below the table.")
+                        + "</div></html>",
+                15
+        );
+        UtilsUI.addSpace(panel, 5);
+        
         // 下拉选择框
         UtilsUI.addCombo(panel, wayComboBox, I18n.tr("Filter by way:"));
-
         // 列表
         panel.add(tableScrollPane, GBC.eol().fill(GridBagConstraints.HORIZONTAL));
-
+        UtilsUI.addSpace(panel, 4);
         // 批量设置半径
-        UtilsUI.addSpace(panel, 3);
         batchRadiusInput = UtilsUI.addInput(
                 panel, I18n.tr("Batch set radius (m): "),
                 String.valueOf(savedParams.surfaceRadius), GBC.std()
@@ -205,7 +223,7 @@ public final class AdvFilletDialog extends ExtendedDialog {
      * 并在清除高亮/关闭窗口时还原回窗口打开时的选中要素。
      */
     private void updateHighlight() {
-        DataSet ds = MainApplication.getLayerManager().getEditDataSet();
+        DataSet ds = UtilsData.getEditDataSet();
         if (ds == null) return;
 
         List<Node> nodeToHighlight = new ArrayList<>();
@@ -216,7 +234,7 @@ public final class AdvFilletDialog extends ExtendedDialog {
         WayComboItem selected = (WayComboItem) wayComboBox.getSelectedItem();
         if (selected != null) {
             if (!selected.isAll) {
-                Way way = findWayById(selected.wayId);
+                Way way = UtilsData.findWayById(selected.wayId);
                 if (way != null) wayToHighlight.add(way);
             } else if (table.getSelectedRows().length == 0) {
                 clearHighlight();  // 下拉框选中全部，且列表无选中则还原至清除高亮状态
@@ -229,7 +247,7 @@ public final class AdvFilletDialog extends ExtendedDialog {
         for (int row : selectedRows) {
             if (row < cornerIdxDisplaying.size()) {
                 int cornerIdx = cornerIdxDisplaying.get(row);
-                Node node = findNodeById(allCorners.get(cornerIdx).nodeId);
+                Node node = UtilsData.findNodeById(allCorners.get(cornerIdx).nodeId);
                 if (node != null && !nodeToHighlight.contains(node)) nodeToHighlight.add(node);
             }
         }
@@ -242,47 +260,27 @@ public final class AdvFilletDialog extends ExtendedDialog {
         if (highlightHelper.highlightOnly(nodeToHighlight)) {
             MainApplication.getMap().repaint();
         }
+        
+        // 检查视图
+        AutoScaleAction.autoScale(AutoScaleAction.AutoScaleMode.SELECTION);
     }
 
     /**
-     * 根据唯一ID在当前数据集中查找路径
-     * @param wayId 路径唯一ID
-     * @return 路径对象，未找到则返回null
-     */
-    private Way findWayById(long wayId) {
-        DataSet ds = MainApplication.getLayerManager().getEditDataSet();
-        if (ds == null) return null;
-        for (Way way : ds.getWays()) {
-            if (way.getUniqueId() == wayId) return way;
-        }
-        return null;
-    }
-
-    /**
-     * 根据唯一ID在当前数据集中查找节点
-     * @param nodeId 节点唯一ID
-     * @return 节点对象，未找到则返回null
-     */
-    private Node findNodeById(long nodeId) {
-        DataSet ds = MainApplication.getLayerManager().getEditDataSet();
-        if (ds == null) return null;
-        for (Node node : ds.getNodes()) {
-            if (node.getUniqueId() == nodeId) return node;
-        }
-        return null;
-    }
-
-    /**
-     * 清除所有高亮并还原窗口打开时的选中要素
+     * 清除所有高亮，还原窗口打开时的选中要素和视图位置
      */
     private void clearHighlight() {
         highlightHelper.clear();
         HighlightHelper.clearAllHighlighted();
         // 还原窗口打开时的选中要素
-        DataSet ds = MainApplication.getLayerManager().getEditDataSet();
+        DataSet ds = UtilsData.getEditDataSet();
         if (ds != null) {
             ds.setSelected(savedSelection);
         }
+        // 还原视图位置
+//        MainApplication.getMap().mapView.getState().usingCenter(savedMapCenter);
+//        MainApplication.getMap().mapView.getState().usingScale(savedMapScale);
+        MainApplication.getMap().mapView.zoomTo(savedMapCenter, savedMapScale);
+        
         if (MainApplication.getMap() != null) {
             MainApplication.getMap().repaint();
         }
@@ -348,7 +346,7 @@ public final class AdvFilletDialog extends ExtendedDialog {
                 I18n.tr("Way ID"), I18n.tr("No."),
                 I18n.tr("Node ID"),
                 I18n.tr("Angle (°)"), I18n.tr("Preferred Max Radius (m)"),
-                I18n.tr("Setted Radius (m)")
+                I18n.tr("Set Radius (m)")
         };
 
         // 初始显示全部拐角

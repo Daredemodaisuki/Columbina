@@ -8,6 +8,7 @@ import org.openstreetmap.josm.gui.MainApplication;
 import org.openstreetmap.josm.gui.layer.OsmDataLayer;
 import org.openstreetmap.josm.tools.I18n;
 import yakxin.columbina.data.ColumbinaException;
+import yakxin.columbina.utils.UtilsData;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -56,7 +57,7 @@ public class ColumbinaInput {
     private LayerDataSet getLayerDataSet() {
         OsmDataLayer newLayer = MainApplication.getLayerManager().getEditLayer();  // 当前的编辑图层
         if (newLayer == null) throw new ColumbinaException(I18n.tr("Current layer is not available."));
-        DataSet newDataset = MainApplication.getLayerManager().getEditDataSet();  // 当前的编辑数据库
+        DataSet newDataset = UtilsData.getEditDataSet();  // 当前的编辑数据库
         if (newDataset == null) throw new ColumbinaException(I18n.tr("Current dataset is not available."));
         return new LayerDataSet(newLayer, newDataset);
     }

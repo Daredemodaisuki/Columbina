@@ -1,7 +1,6 @@
 package yakxin.columbina.features.fillet;
 
-import java.awt.GridBagLayout;
-import java.awt.Insets;
+import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.text.NumberFormat;
 import java.text.ParseException;
@@ -99,14 +98,25 @@ public final class FilletDialog extends ExtendedDialog {
                 panel,
                 I18n.tr("Advanced"),
                 (ActionEvent e) -> {
+                    // 通过移出屏幕隐藏自身（
+                    Point originalLocation = FilletDialog.this.getLocation();
+                    FilletDialog.this.setLocation(-10000, -10000);
+                    // 弹窗并等待关闭
                     AdvFilletDialog advFilletDialog = new AdvFilletDialog(getParams(), input);  // 传入当前输入框的参数
-                    // 如果高级窗口点击确定，则记录高级参数
-                    if (advFilletDialog.getValue() == 1) {
-                        advFilletParams = advFilletDialog.getAdvParams();
-                        filletR.setEnabled(false);
-                        minAngleDeg.setEnabled(false);
-                        maxAngleDeg.setEnabled(false);
-                    }
+                    advFilletDialog.addWindowListener(new java.awt.event.WindowAdapter() {
+                        @Override
+                        public void windowClosed(java.awt.event.WindowEvent we) {
+                            // 如果高级窗口点击确定，则记录高级参数
+                            if (advFilletDialog.getValue() == 1) {
+                                advFilletParams = advFilletDialog.getAdvParams();
+                                filletR.setEnabled(false);
+                                minAngleDeg.setEnabled(false);
+                                maxAngleDeg.setEnabled(false);
+                            }
+                            FilletDialog.this.setLocation(originalLocation);  // 重新显示当前对话框（移回来）
+                            advFilletDialog.removeWindowListener(this);  // 移除监听器，避免内存泄漏
+                        }
+                    });
                 },
                 GBC.eol().insets(0, 5, 0, 0).anchor(13)
         );
