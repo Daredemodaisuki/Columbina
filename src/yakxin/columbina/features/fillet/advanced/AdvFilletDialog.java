@@ -374,7 +374,7 @@ public final class AdvFilletDialog extends ExtendedDialog {
         tableScrollPane.setPreferredSize(new Dimension(600, 250));
         // 设置列宽
         int totalWidth = tableScrollPane.getPreferredSize().width;
-        double[] percentages = {0.10, 0.05, 0.10, 0.15, 0.30, 0.30};
+        double[] percentages = {0.15, 0.08, 0.13, 0.14, 0.25, 0.25};
         for (int i = 0; i < table.getColumnCount(); i++) {
             TableColumn col = table.getColumnModel().getColumn(i);
             col.setPreferredWidth((int)(totalWidth * percentages[i]));
