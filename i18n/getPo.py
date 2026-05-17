@@ -12,7 +12,7 @@ input_files = [f"../{file}" for file in find_java_files_relative("../")]
 
 # ！！！！！！！！！！！！！！！！重要！！！！！！！！！！！！！！！！
 # 需要更新这里
-VERSION = "v1.0.3"
+VERSION = "v1.0.4"
 # ！！！！！！！！！！！！！！！！重要！！！！！！！！！！！！！！！！
 
 OUTPUT_FILE = f"template_{VERSION}.po"
@@ -78,6 +78,76 @@ def extract_msgid(call_text):
     return strings[0]
 
 
+def decode_java_string(s):
+    """将 Java 字符串字面量转义序列解码为实际字符"""
+    result = []
+    i = 0
+    while i < len(s):
+        if s[i] == '\\' and i + 1 < len(s):
+            c = s[i + 1]
+            if c == 'n':
+                result.append('\n'); i += 2
+            elif c == 't':
+                result.append('\t'); i += 2
+            elif c == 'r':
+                result.append('\r'); i += 2
+            elif c == 'f':
+                result.append('\f'); i += 2
+            elif c == 'b':
+                result.append('\b'); i += 2
+            elif c == '\\':
+                result.append('\\'); i += 2
+            elif c == '"':
+                result.append('"');  i += 2
+            elif c == '\'':
+                result.append("'");  i += 2
+            elif c == 'u':
+                if i + 5 < len(s):
+                    hex_str = s[i+2:i+6]
+                    try:
+                        cp = int(hex_str, 16)
+                        if 0xD800 <= cp <= 0xDBFF:
+                            result.append(chr(cp))
+                        elif 0xDC00 <= cp <= 0xDFFF:
+                            if result and 0xD800 <= ord(result[-1]) <= 0xDBFF:
+                                high = ord(result.pop())
+                                supp = 0x10000 + (high - 0xD800) * 0x400 + (cp - 0xDC00)
+                                result.append(chr(supp))
+                            else:
+                                result.append(chr(cp))
+                        else:
+                            result.append(chr(cp))
+                        i += 6
+                    except ValueError:
+                        result.append(s[i]); i += 1
+                else:
+                    result.append(s[i]); i += 1
+            else:
+                result.append(s[i]); i += 1
+        else:
+            result.append(s[i]); i += 1
+    return ''.join(result)
+
+
+def escape_po(s):
+    """将 Python 字符串编码为 .po 格式的字符串值（转义换行符、引号等）"""
+    result = []
+    for ch in s:
+        if ch == '\n':
+            result.append('\\n')
+        elif ch == '\r':
+            result.append('\\r')
+        elif ch == '\t':
+            result.append('\\t')
+        elif ch == '\\':
+            result.append('\\\\')
+        elif ch == '"':
+            result.append('\\"')
+        else:
+            result.append(ch)
+    return ''.join(result)
+
+
 def process_file(path: Path):
     """处理一个 Java 文件，返回 (行号, msgid) 列表"""
     text = path.read_text(encoding="utf-8", errors="ignore")
@@ -87,6 +157,7 @@ def process_file(path: Path):
     for pos, call in calls:
         msgid = extract_msgid(call)
         if msgid:
+            msgid = decode_java_string(msgid)
             line_number = text.count("\n", 0, pos) + 1
             results.append((line_number, msgid))
     return results
@@ -114,8 +185,8 @@ for msgid, refs in msg_map.items():
     for ref in refs:
         output_lines.append(f"#: {ref}")
 
-    output_lines.append(f'msgid "{msgid}"')
-    output_lines.append(f'msgstr "{msgid}"')
+    output_lines.append(f'msgid "{escape_po(msgid)}"')
+    output_lines.append(f'msgstr "{escape_po(msgid)}"')
     output_lines.append("")  # 空行
 
 
