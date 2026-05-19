@@ -649,8 +649,8 @@ msgid "Too near the pole, failed to calculate EN distance."
 msgstr "Too near the pole, failed to calculate EN distance."
 
 #: ../src\yakxin\columbina\utils\UtilsUI.java:17
-msgid "\uD835\uDE08\uD835\uDE25\uD835\uDE37\uD835\uDE22\uD835\uDE2F\uD835\uDE24\uD835\uDE26\uD835\uDE25\n"
-msgstr "\uD835\uDE08\uD835\uDE25\uD835\uDE37\uD835\uDE22\uD835\uDE2F\uD835\uDE24\uD835\uDE26\uD835\uDE25\n"
+msgid "𝘈𝘥𝘷𝘢𝘯𝘤𝘦𝘥\n"
+msgstr "𝘈𝘥𝘷𝘢𝘯𝘤𝘦𝘥\n"
 
 #: ../src\yakxin\columbina\utils\UtilsUI.java:24
 msgid "Debug Output"

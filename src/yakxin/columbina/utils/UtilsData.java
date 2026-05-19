@@ -2,6 +2,7 @@ package yakxin.columbina.utils;
 
 import org.openstreetmap.josm.command.*;
 import org.openstreetmap.josm.data.osm.*;
+import org.openstreetmap.josm.gui.MainApplication;
 import org.openstreetmap.josm.tools.I18n;
 import yakxin.columbina.abstractClasses.AbstractDrawingAction;
 import yakxin.columbina.data.dto.inputs.ColumbinaInput;
@@ -15,6 +16,42 @@ public class UtilsData {
     public static final int SELF_INTERSECTION = -2;
 
     /// 数据相关
+    /**
+     * 获取当前编辑数据集
+     * @return 当前编辑数据集，不存在则返回null
+     */
+    public static DataSet getEditDataSet() {
+        return MainApplication.getLayerManager().getEditDataSet();
+    }
+
+    /**
+     * 根据唯一ID在当前编辑数据集中查找路径
+     * @param wayId 路径唯一ID
+     * @return 路径对象，未找到则返回null
+     */
+    public static Way findWayById(long wayId) {
+        DataSet ds = getEditDataSet();
+        if (ds == null) return null;
+        for (Way way : ds.getWays()) {
+            if (way.getUniqueId() == wayId) return way;
+        }
+        return null;
+    }
+
+    /**
+     * 根据唯一ID在当前编辑数据集中查找节点
+     * @param nodeId 节点唯一ID
+     * @return 节点对象，未找到则返回null
+     */
+    public static Node findNodeById(long nodeId) {
+        DataSet ds = getEditDataSet();
+        if (ds == null) return null;
+        for (Node node : ds.getNodes()) {
+            if (node.getUniqueId() == nodeId) return node;
+        }
+        return null;
+    }
+
     /**
      * 替换路径上的节点（仅供未提交对象使用）
      * @param way 路径

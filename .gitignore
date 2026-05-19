@@ -25,8 +25,10 @@ replay_pid*
 
 # Others
 .idea/
+.vscode/
 Ant/
 design/
 i18n/.idea/
 i18n/__pycache__/
 i18n/example/
+experiment/
