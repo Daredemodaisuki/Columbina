@@ -45,6 +45,11 @@ The plugin automatically and uniformly interpolates nodes along the curve, addin
 For longer curves (when the radius remains constant, curves with smaller deflection angles become longer), a greater number of nodes will be generated.
 <br> 插件会自动在曲线上均匀地插值并添加节点，越长的曲线（当半径不变时，张角越小的拐点曲线越长）点数越多。
 
+#### Advanced Round Corner · 高级圆角
+
+Round Corner provides an Advanced mode for more flexible control over fillet operations, allowing users to specify different radii for different corners.
+<br> 圆角工具提供高级模式以提供更灵活的控制，允许用户为不同的拐角指定不同的半径。
+
 ### <img src="/images/ChamferCorners.png" alt="Chamfer Corner Menu" width="25px"> Chamfer Corner · 斜角 〔Alt+Ctrl+Shift+X〕
 
 Allows the user to chamfer each corner node of the selected way by a specified chamfer distance or chamfer angle.
