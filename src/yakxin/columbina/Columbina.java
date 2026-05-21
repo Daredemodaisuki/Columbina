@@ -9,6 +9,7 @@ import yakxin.columbina.features.chamfer.ChamferAction;
 import yakxin.columbina.features.curveConnect.CurveConnectAction;
 import yakxin.columbina.features.fillet.FilletAction;
 import yakxin.columbina.features.transitionCurve.TransitionCurveAction;
+import yakxin.columbina.modes.maalaus.MaalausMapMode;
 
 // %APPDATA%\JOSM\plugins\
 public class Columbina extends Plugin {
@@ -27,6 +28,9 @@ public class Columbina extends Plugin {
 
         MainMenu.add(MainApplication.getMenu().moreToolsMenu, AngleLineAction.create());
         MainMenu.add(MainApplication.getMenu().moreToolsMenu, CurveConnectAction.create());
+
+        MainApplication.getMenu().moreToolsMenu.addSeparator();  // 分隔线
+        MainMenu.add(MainApplication.getMenu().moreToolsMenu, new MaalausMapMode());  // Maalaus 绘制模式
     }
 }
 

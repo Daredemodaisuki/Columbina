@@ -101,6 +101,16 @@ public class UtilsUI {
 
         return label;
     }
+    public static JLabel addLabel(JPanel panel, String text, GBC locGBC) {
+        UtilsUI.addSpace(panel,2);
+
+        JLabel label = new JLabel(text);
+        panel.add(label, locGBC);
+
+        UtilsUI.addSpace(panel,2);
+
+        return label;
+    }
     
     // 按钮
     public static JButton addButton(JPanel panel, String text, ActionListener actionListener) {
