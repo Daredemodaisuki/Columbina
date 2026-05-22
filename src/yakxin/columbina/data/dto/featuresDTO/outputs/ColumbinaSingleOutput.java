@@ -1,4 +1,4 @@
-package yakxin.columbina.data.dto.outputs;
+package yakxin.columbina.data.dto.featuresDTO.outputs;
 
 import org.openstreetmap.josm.data.osm.Node;
 import org.openstreetmap.josm.data.osm.OsmPrimitive;

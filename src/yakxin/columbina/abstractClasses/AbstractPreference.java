@@ -1,7 +1,7 @@
 package yakxin.columbina.abstractClasses;
 
 import yakxin.columbina.data.ColumbinaPrefItem;
-import yakxin.columbina.data.dto.inputs.ColumbinaInput;
+import yakxin.columbina.data.dto.featuresDTO.inputs.ColumbinaInput;
 
 public abstract class AbstractPreference <ParamType extends AbstractParams> {
     protected AbstractPreference(ColumbinaPrefItem<?>[] allPrefItems) {

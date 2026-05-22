@@ -1,7 +1,7 @@
 package yakxin.columbina.abstractClasses;
 
-import yakxin.columbina.data.dto.outputs.ColumbinaSingleOutput;
-import yakxin.columbina.data.dto.inputs.ColumbinaSingleInput;
+import yakxin.columbina.data.dto.featuresDTO.outputs.ColumbinaSingleOutput;
+import yakxin.columbina.data.dto.featuresDTO.inputs.ColumbinaSingleInput;
 
 public abstract class AbstractGenerator <ParamType extends AbstractParams> {
     /// 具体类必须实现的

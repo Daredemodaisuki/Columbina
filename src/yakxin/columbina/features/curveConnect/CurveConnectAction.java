@@ -6,8 +6,8 @@ import org.openstreetmap.josm.tools.I18n;
 import org.openstreetmap.josm.tools.Shortcut;
 import yakxin.columbina.abstractClasses.AbstractDrawingAction;
 import yakxin.columbina.data.ColumbinaException;
-import yakxin.columbina.data.dto.inputs.ColumbinaInput;
-import yakxin.columbina.data.dto.inputs.ColumbinaSingleInput;
+import yakxin.columbina.data.dto.featuresDTO.inputs.ColumbinaInput;
+import yakxin.columbina.data.dto.featuresDTO.inputs.ColumbinaSingleInput;
 import yakxin.columbina.utils.UtilsData;
 
 import java.awt.event.KeyEvent;

@@ -1,4 +1,4 @@
-package yakxin.columbina.data.dto.outputs;
+package yakxin.columbina.data.dto.featuresDTO.outputs;
 
 import org.openstreetmap.josm.command.AddCommand;
 import org.openstreetmap.josm.command.ChangeNodesCommand;

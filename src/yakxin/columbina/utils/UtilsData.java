@@ -5,7 +5,7 @@ import org.openstreetmap.josm.data.osm.*;
 import org.openstreetmap.josm.gui.MainApplication;
 import org.openstreetmap.josm.tools.I18n;
 import yakxin.columbina.abstractClasses.AbstractDrawingAction;
-import yakxin.columbina.data.dto.inputs.ColumbinaInput;
+import yakxin.columbina.data.dto.featuresDTO.inputs.ColumbinaInput;
 
 import java.util.ArrayList;
 import java.util.List;

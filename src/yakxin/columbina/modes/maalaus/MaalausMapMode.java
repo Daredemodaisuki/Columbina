@@ -7,6 +7,7 @@ import java.awt.PointerInfo;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.awt.event.MouseEvent;
+import java.beans.PropertyChangeEvent;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -18,21 +19,24 @@ import org.openstreetmap.josm.tools.I18n;
 import org.openstreetmap.josm.tools.Shortcut;
 
 import yakxin.columbina.data.ColumbinaEN;
-import yakxin.columbina.data.curveSection.CurveSecUtils;
+import yakxin.columbina.abstractClasses.AbstractCurveSec;
 import yakxin.columbina.utils.UtilsUI;
+import yakxin.columbina.utils.utilsView.Previewer;
 
 /**
  * Maalaus 绘制模式的 MapMode
- * <p>处理鼠标和键盘事件，协调 {@link MaalausController}、{@link PreviewPainter}
- * 和 {@link MaalausInfoWindow} 之间的交互。
- * <p>当前仅实现直线延伸（LINE_EXTEND）模式。
+ * <p> Maalaus Controller
+ * <p> 处理鼠标和键盘事件，协调 {@link MaalausSessionData}、{@link MaalausDrawingService}、
+ * {@link Previewer} 和 {@link MaalausInfoWindow} 之间的交互。
+ * <p> 当前仅实现直线延伸（LINE_EXTEND）模式。
  */
 public class MaalausMapMode extends MapMode implements MaalausInfoWindow.ButtonListener {
 
-    private final MaalausController controller;
-    private final PreviewPainter previewPainter;
+    private final MaalausSessionData session;
+    private final MaalausDrawingService service;
+    private final Previewer previewer;
     private final KeyListener keyHandler;
-    private final java.beans.PropertyChangeListener controllerListener;
+    private final java.beans.PropertyChangeListener sessionListener;
     private MaalausInfoWindow infoWindow;
 
     /**
@@ -46,15 +50,16 @@ public class MaalausMapMode extends MapMode implements MaalausInfoWindow.ButtonL
             Shortcut.registerShortcut("maalaus:maalaus", "Maalaus", KeyEvent.VK_M, Shortcut.DIRECT),
             Cursor.getPredefinedCursor(Cursor.CROSSHAIR_CURSOR)
         );
-        this.controller = new MaalausController();
-        this.previewPainter = new PreviewPainter();
+        this.session = new MaalausSessionData();
+        this.service = new MaalausDrawingService(session);
+        this.previewer = new Previewer();
         this.keyHandler = new MaalausKeyHandler();
-        
-        // 定义统一的监听器
-        this.controllerListener = evt -> {
+
+        // 定义统一的监听器（注册到MaalausSessionData的PropertyChangeSupport后，会话状态变更时触发，于进入模式时注册，退出模式时注销）
+        this.sessionListener = (PropertyChangeEvent event) -> {
             // 如果完成或取消则退出模式
-            if ("state".equals(evt.getPropertyName())) {
-                MaalausState newState = (MaalausState) evt.getNewValue();
+            if ("state".equals(event.getPropertyName())) {
+                MaalausState newState = (MaalausState) event.getNewValue();
                 if (newState == MaalausState.DONE || newState == MaalausState.ABORT) {
                     leaveMode();
                     return;
@@ -62,10 +67,10 @@ public class MaalausMapMode extends MapMode implements MaalausInfoWindow.ButtonL
             }
             // 更新信息面板内容
             if (infoWindow != null) {
-                infoWindow.updateMode(controller.getSubMode().name());
-                infoWindow.updateStatus(controller.getState().name(), controller.getState().getStatusInfo());
-                infoWindow.updateSecCount(controller.getSecs().size());
-                infoWindow.updateInfo(controller.getSubMode().getInfo());
+                infoWindow.updateMode(session.getSubMode().name());
+                infoWindow.updateStatus(session.getState().name(), session.getState().getStatusInfo());
+                infoWindow.updateSecCount(session.getSecs().size());
+                infoWindow.updateInfo(session.getSubMode().getInfo());
             }
             refreshPreview();
             if (MainApplication.getMap() != null && MainApplication.getMap().mapView != null) {
@@ -83,11 +88,11 @@ public class MaalausMapMode extends MapMode implements MaalausInfoWindow.ButtonL
         super.enterMode();
         MapView mv = MainApplication.getMap().mapView;
 
-        // 显式重置控制器状态，防止上次退出时可能存在的状态污染
-        controller.reset();
+        // 显式重置会话状态，防止上次退出时可能存在的状态污染
+        session.reset();
 
         // 注册预览绘制器
-        mv.addTemporaryLayer(previewPainter);
+        mv.addTemporaryLayer(previewer);
 
         // MapMode不会自动接收MapView的鼠标事件，需要手动注册
         mv.addMouseListener(this);
@@ -100,13 +105,15 @@ public class MaalausMapMode extends MapMode implements MaalausInfoWindow.ButtonL
 
         // 创建并显示信息窗口
         infoWindow = new MaalausInfoWindow(this);
+        updateInfoWindowPosition(MouseInfo.getPointerInfo().getLocation().x, MouseInfo.getPointerInfo().getLocation().y);
         infoWindow.setVisible(true);
-        initInfoWindowPosition();
+        infoWindow.rebuildSecInfo(session.getSubMode());
+        infoWindow.updateSecInfoValues(session.getSubMode().extractDisplayData(session));
 
-        // 监听控制器属性变更以刷新预览和窗口
-        controller.addPropertyChangeListener(controllerListener);
+        // 监听会话属性变更以刷新预览和窗口
+        session.addPropertyChangeListener(sessionListener);
     }
-    
+
     /**
      * 退出模式所必要的操作，但插件中不能直接调用（否则重复退出），应调用leaveMode，JOSM切换模式后执行本函数。
      */
@@ -117,23 +124,22 @@ public class MaalausMapMode extends MapMode implements MaalausInfoWindow.ButtonL
             infoWindow.setVisible(false);
             infoWindow.dispose();
             infoWindow = null;
-            // UtilsUI.testMsgWindow("Closed");
         }
 
         MapView mv = MainApplication.getMap().mapView;
-        mv.removeTemporaryLayer(previewPainter);
+        mv.removeTemporaryLayer(previewer);
         mv.removeKeyListener(keyHandler);
         mv.removeMouseListener(this);
         mv.removeMouseMotionListener(this);
-        previewPainter.clear();
+        previewer.clear();
 
         // 移除监听器，防止累加
-        controller.removePropertyChangeListener(controllerListener);
+        session.removePropertyChangeListener(sessionListener);
 
-        controller.reset();
+        session.reset();
         super.exitMode();
     }
-    
+
     /**
      * 通过 JOSM 的模式切换流程离开当前模式，避免直接重复调用exitMode。
      */
@@ -147,19 +153,19 @@ public class MaalausMapMode extends MapMode implements MaalausInfoWindow.ButtonL
 
     @Override
     public void onUndo() {
-        controller.undoLastSec();
-        controller.pauseDrawing();  // 点击按钮时保持INFO状态
+        service.undoLastSec();
+        service.pauseDrawing();  // 点击按钮时保持INFO状态
     }
 
     @Override
     public void onCommit() {
-        if (!controller.commitAll(20))
+        if (!service.commitAll(20))
             UtilsUI.warnInfo(I18n.tr("Cannot draw the line."));
     }
 
     @Override
     public void onCancel() {
-        controller.abort();
+        service.abort();
     }
 
 
@@ -168,47 +174,48 @@ public class MaalausMapMode extends MapMode implements MaalausInfoWindow.ButtonL
     // ----------------------------------------------------------------
 
     @Override
-    public void mouseMoved(MouseEvent e) {
+    public void mouseMoved(MouseEvent event) {
         MapView mv = MainApplication.getMap().mapView;
         if (!mv.isActiveLayerVisible() || !isEditableDataLayer(mv.getLayerManager().getActiveLayer()))
             return;
 
-        ColumbinaEN mouseEN = getColumbinaEN(e, mv);
+        ColumbinaEN mouseEN = getColumbinaEN(event, mv);
 
-        // 更新信息窗口位置
-        if (controller.getState() != MaalausState.INFO && infoWindow != null && infoWindow.isVisible()) {
-            updateInfoWindowPosition(e.getXOnScreen(), e.getYOnScreen());
+        // 更新信息窗口位置、子模式信息面板
+        if (session.getState() != MaalausState.INFO && infoWindow != null && infoWindow.isVisible()) {
+            updateInfoWindowPosition(event.getXOnScreen(), event.getYOnScreen());
+            infoWindow.updateSecInfoValues(session.getSubMode().extractDisplayData(session));
         }
-        // 根据状态更新预览
-        if (controller.getState() == MaalausState.DRAW) {
-            controller.setPreviewPoint(mouseEN);
+        // 根据状态更新画布预览
+        if (session.getState() == MaalausState.DRAW) {
+            service.setPreviewPoint(mouseEN);
             refreshPreview();
             mv.repaint();
         }
     }
 
     @Override
-    public void mouseClicked(MouseEvent e) {
-        if (e.getButton() != MouseEvent.BUTTON1) return;
-        
+    public void mouseClicked(MouseEvent event) {
+        if (event.getButton() != MouseEvent.BUTTON1) return;
+
         MapView mv = MainApplication.getMap().mapView;
         if (!mv.isActiveLayerVisible() || !isEditableDataLayer(mv.getLayerManager().getActiveLayer()))
             return;
-        ColumbinaEN clickEN = getColumbinaEN(e, mv);
-        MaalausState state = controller.getState();
-        
+        ColumbinaEN clickEN = getColumbinaEN(event, mv);
+        MaalausState state = session.getState();
+
         switch (state) {
             case INIT:
                 // 首次点击：设置起点和切线方向，进入收集状态
                 ColumbinaEN initialTangent = new ColumbinaEN(1, 0);
-                controller.startDrawing(clickEN, initialTangent);
+                service.startDrawing(clickEN, initialTangent);
                 // TODO：如果凭空开始，可能没有切线方向，需要手动指定
                 break;
             case DRAW:
                 // 添加控制点并确认当前段
-                controller.addControlPoint(clickEN);
-                controller.confirmSec();
-                controller.setPreviewPoint(null);
+                service.addControlPoint(clickEN);
+                service.confirmSec();
+                service.setPreviewPoint(null);
                 break;
             default:
                 break;
@@ -221,21 +228,21 @@ public class MaalausMapMode extends MapMode implements MaalausInfoWindow.ButtonL
 
     private class MaalausKeyHandler implements KeyListener {
         @Override
-        public void keyPressed(KeyEvent e) {
-            switch (e.getKeyCode()) {
+        public void keyPressed(KeyEvent event) {
+            switch (event.getKeyCode()) {
                 case KeyEvent.VK_ENTER:  // 完成绘制
-                    if (!controller.commitAll(20))
+                    if (!service.commitAll(20))
                         UtilsUI.warnInfo(I18n.tr("Cannot draw the line."));
                     break;
                 case KeyEvent.VK_ESCAPE:  // 取消绘制
-                    controller.abort();
+                    service.abort();
                     break;
                 case KeyEvent.VK_BACK_SPACE:  // 撤销上一段
-                    controller.undoLastSec();
+                    service.undoLastSec();
                     break;
                 case KeyEvent.VK_SPACE:
-                    if (controller.getState() != MaalausState.INFO) controller.pauseDrawing();
-                    else controller.continueDrawing();
+                    if (session.getState() != MaalausState.INFO) service.pauseDrawing();
+                    else service.continueDrawing();
                     break;
                 default:
                     break;
@@ -243,12 +250,12 @@ public class MaalausMapMode extends MapMode implements MaalausInfoWindow.ButtonL
         }
 
         @Override
-        public void keyReleased(KeyEvent e) {
+        public void keyReleased(KeyEvent event) {
             // 未使用
         }
 
         @Override
-        public void keyTyped(KeyEvent e) {
+        public void keyTyped(KeyEvent event) {
             // 未使用
         }
     }
@@ -258,35 +265,35 @@ public class MaalausMapMode extends MapMode implements MaalausInfoWindow.ButtonL
     // ----------------------------------------------------------------
 
     /**
-     * 根据当前控制器状态刷新预览
+     * 根据当前会话状态刷新预览
      */
     private void refreshPreview() {
-        ColumbinaEN start = controller.getStartAnchor();
+        ColumbinaEN start = session.getStartAnchor();
         if (start == null) {
-            previewPainter.setStartPoint(null);
-            previewPainter.setPreview(null, null);
+            previewer.setStartPoint(null);
+            previewer.setPreview(null, null);
             return;
         }
 
         // 起点标记
-        previewPainter.setStartPoint(start);
+        previewer.setStartPoint(start);
 
         // 已完成段的预览点列
-        List<ColumbinaEN> committed = CurveSecUtils.sampleAll(controller.getSecs(), 2.0);
-        previewPainter.setCommittedPoints(committed);
+        List<ColumbinaEN> committed = AbstractCurveSec.sampleAll(session.getSecs(), 2.0);
+        previewer.setCommittedPoints(committed);
 
         // 当前段预览：从起点到鼠标位置的直线
-        List<ColumbinaEN> pending = controller.getPendingControlPoints();
+        List<ColumbinaEN> pending = session.getPendingControlPoints();
         ColumbinaEN previewTarget = !pending.isEmpty()
             ? pending.get(pending.size() - 1)
-            : controller.getPreviewPoint();
+            : session.getPreviewPoint();
         if (previewTarget != null) {
             List<ColumbinaEN> previewPoints = generateLinePreview(start, previewTarget);
             List<ColumbinaEN> previewControls = new ArrayList<>();
             previewControls.add(previewTarget);
-            previewPainter.setPreview(previewPoints, previewControls);
+            previewer.setPreview(previewPoints, previewControls);
         } else {
-            previewPainter.setPreview(null, null);
+            previewer.setPreview(null, null);
         }
     }
 
@@ -351,7 +358,7 @@ public class MaalausMapMode extends MapMode implements MaalausInfoWindow.ButtonL
     // Getter（供外部访问）
     // ----------------------------------------------------------------
 
-    public MaalausController getController() { return controller; }
+    public MaalausSessionData getSession() { return session; }
 
-    public PreviewPainter getPreviewPainter() { return previewPainter; }
+    public Previewer getPreviewPainter() { return previewer; }
 }

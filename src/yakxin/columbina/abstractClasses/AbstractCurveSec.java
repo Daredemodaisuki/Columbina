@@ -1,9 +1,11 @@
 package yakxin.columbina.abstractClasses;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import yakxin.columbina.data.ColumbinaEN;
+import yakxin.columbina.utils.UtilsMath;
 
 /**
  * 抽象组合曲段
@@ -82,4 +84,36 @@ public abstract class AbstractCurveSec extends AbstractBasicCurveSec {
     // ----------------------------------------------------------------
 
     public List<AbstractBasicCurveSec> getBasicCurveSecList() { return basicCurveSecList; }
+
+    // ----------------------------------------------------------------
+    // 静态工具：批量离散化
+    // ----------------------------------------------------------------
+
+    /**
+     * 离散化全部曲段并拼接点列。
+     * @param secs 曲段列表
+     * @param interval 采样间隔
+     * @return 拼接后的离散点列
+     */
+    public static List<ColumbinaEN> sampleAll(List<? extends AbstractCurveSec> secs, double interval) {
+        if (secs == null || secs.isEmpty()) return Collections.emptyList();
+
+        List<ColumbinaEN> allPoints = new ArrayList<>();
+        AbstractCurveSec previous = null;
+        for (AbstractCurveSec sec : secs) {
+            if (sec == null) continue;
+
+            if (previous != null && previous.getEndEN().distance(sec.getStartEN()) > UtilsMath.EPSILON_EASING) {
+                throw new IllegalArgumentException("Curve sections are not connected.");
+            }
+
+            List<ColumbinaEN> secPoints = sec.sample(interval);
+            for (int i = 0; i < secPoints.size(); i++) {
+                if (!allPoints.isEmpty() && i == 0) continue;
+                allPoints.add(secPoints.get(i));
+            }
+            previous = sec;
+        }
+        return allPoints;
+    }
 }

@@ -19,7 +19,7 @@ import org.openstreetmap.josm.tools.I18n;
 import yakxin.columbina.data.ColumbinaCorner;
 import yakxin.columbina.data.ColumbinaEN;
 import yakxin.columbina.data.ColumbinaException;
-import yakxin.columbina.data.dto.inputs.ColumbinaInput;
+import yakxin.columbina.data.dto.featuresDTO.inputs.ColumbinaInput;
 import yakxin.columbina.features.fillet.advanced.AdvFilletDialog;
 import yakxin.columbina.features.fillet.advanced.AdvFilletParams;
 import yakxin.columbina.utils.UtilsMath;

@@ -1,4 +1,4 @@
-package yakxin.columbina.data.dto.inputs;
+package yakxin.columbina.data.dto.featuresDTO.inputs;
 
 import org.openstreetmap.josm.data.osm.DataSet;
 import org.openstreetmap.josm.data.osm.Node;

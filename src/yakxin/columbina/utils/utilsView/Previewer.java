@@ -1,4 +1,4 @@
-package yakxin.columbina.modes.maalaus;
+package yakxin.columbina.utils.utilsView;
 
 import java.awt.BasicStroke;
 import java.awt.Color;
@@ -20,7 +20,7 @@ import yakxin.columbina.data.ColumbinaEN;
  * <p>实现 {@link MapViewPaintable} 接口，在 MapView 上绘制控制点标记、
  * 当前段预览线（起点到鼠标/控制点）、以及已完成曲段。
  */
-public class PreviewPainter implements MapViewPaintable {
+public class Previewer implements MapViewPaintable {
     private List<ColumbinaEN> previewPoints = Collections.emptyList();  // 当前段预览点列（起点到鼠标/ 控制点之间的采样点）
     private List<ColumbinaEN> controlPoints = Collections.emptyList();  // 控制点标记（当前段的端控制点）
     private List<ColumbinaEN> committedPoints = Collections.emptyList();  // 已完成曲段的预览点列

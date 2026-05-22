@@ -1,4 +1,4 @@
-package yakxin.columbina.data.curveSection.basic;
+package yakxin.columbina.data.columbinaCurveSection.basic;
 
 import java.util.ArrayList;
 import java.util.Collections;

@@ -3,7 +3,7 @@ package yakxin.columbina.features.curveConnect;
 import org.openstreetmap.josm.tools.I18n;
 import yakxin.columbina.abstractClasses.AbstractPreference;
 import yakxin.columbina.data.ColumbinaPrefItem;
-import yakxin.columbina.data.dto.inputs.ColumbinaInput;
+import yakxin.columbina.data.dto.featuresDTO.inputs.ColumbinaInput;
 
 public final class CurveConnectPreference extends AbstractPreference<CurveConnectParams> {
     public CurveConnectPreference() {

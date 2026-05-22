@@ -2,11 +2,12 @@ package yakxin.columbina.modes.maalaus;
 
 import org.openstreetmap.josm.tools.GBC;
 import org.openstreetmap.josm.tools.I18n;
+import yakxin.columbina.data.dto.modelsDTO.maalaus.SecDisplayData;
+import yakxin.columbina.modes.maalaus.secInfoPanel.SecInfoPanel;
 import yakxin.columbina.utils.UtilsUI;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
-import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Font;
 import java.awt.GridBagLayout;
@@ -42,6 +43,8 @@ public class MaalausInfoWindow extends JWindow {
     private final JButton undoButton;
     private final JButton commitButton;
     private final JButton cancelButton;
+    private final JPanel secInfoPlaceholder;
+    private SecInfoPanel currentSecInfoPanel;
 
     /**
      * 构造函数
@@ -86,7 +89,12 @@ public class MaalausInfoWindow extends JWindow {
         statusInfoLabel.setForeground(new Color(180, 220, 255));
         statusInfoLabel.setFont(new Font("SansSerif", Font.PLAIN, 10));
         mainPanel.add(infoLabelPanel, GBC.eol());
-        
+
+        // 曲段信息子面板占位容器（由子模式通过 SecInfoPanel 自行构建）
+        secInfoPlaceholder = new JPanel(new BorderLayout());
+        secInfoPlaceholder.setOpaque(false);
+        mainPanel.add(secInfoPlaceholder, GBC.eol());
+
         // 按钮面板
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 4, 2));
         buttonPanel.setOpaque(false);
@@ -138,6 +146,43 @@ public class MaalausInfoWindow extends JWindow {
      */
     public void updateInfo(String infoText) {
         infoLabel.setText(infoText != null ? infoText : " ");
+    }
+
+    /**
+     * 根据子模式重建曲段信息子面板
+     * <p>委托给 {@link SecInfoPanel}，由子模式自行构建面板内容。
+     * @param subMode 当前子模式
+     */
+    public void rebuildSecInfo(MaalausSubMode subMode) {
+        secInfoPlaceholder.removeAll();
+        currentSecInfoPanel = subMode.createSecInfoPanel();
+        if (currentSecInfoPanel != null) {
+            currentSecInfoPanel.getPanel().setVisible(true);
+            secInfoPlaceholder.add(currentSecInfoPanel.getPanel(), BorderLayout.CENTER);
+        }
+        secInfoPlaceholder.revalidate();
+        secInfoPlaceholder.repaint();
+    }
+
+    /**
+     * 更新曲段信息子面板
+     * <p>直接接收显示数据 DTO 并委托给当前 {@link SecInfoPanel#updateValues(SecDisplayData)}。
+     * @param data 显示数据 DTO
+     */
+    public void updateSecInfoValues(SecDisplayData data) {
+        if (currentSecInfoPanel != null && data != null) {
+            currentSecInfoPanel.updateValues(data);
+        }
+    }
+
+    /**
+     * 切换曲段信息面板的编辑模式
+     * @param editable DRAW 时为 false（只读标签），INFO 时为 true（可输入）
+     */
+    public void setSecInfoEditable(boolean editable) {
+        if (currentSecInfoPanel != null) {
+            currentSecInfoPanel.setEditable(editable);
+        }
     }
 
     /**

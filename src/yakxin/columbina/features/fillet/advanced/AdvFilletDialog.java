@@ -1,22 +1,17 @@
 package yakxin.columbina.features.fillet.advanced;
 
-import org.openstreetmap.josm.actions.AutoScaleAction;
-import org.openstreetmap.josm.data.coor.EastNorth;
-import org.openstreetmap.josm.data.osm.DataSet;
 import org.openstreetmap.josm.data.osm.Node;
-import org.openstreetmap.josm.data.osm.OsmPrimitive;
 import org.openstreetmap.josm.data.osm.Way;
 import org.openstreetmap.josm.gui.ExtendedDialog;
 import org.openstreetmap.josm.gui.MainApplication;
-import org.openstreetmap.josm.gui.util.HighlightHelper;
 import org.openstreetmap.josm.tools.GBC;
 import org.openstreetmap.josm.tools.I18n;
 import yakxin.columbina.data.ColumbinaCorner;
-import yakxin.columbina.data.dto.inputs.ColumbinaInput;
+import yakxin.columbina.data.dto.featuresDTO.inputs.ColumbinaInput;
 import yakxin.columbina.features.fillet.FilletParams;
-import yakxin.columbina.utils.UtilsData;
 import yakxin.columbina.utils.UtilsMath;
 import yakxin.columbina.utils.UtilsUI;
+import yakxin.columbina.utils.utilsView.Highlighter;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
@@ -41,14 +36,9 @@ public final class AdvFilletDialog extends ExtendedDialog {
     private DefaultTableModel tableModel;
     private final JComboBox<WayComboItem> wayComboBox;
     private final JFormattedTextField batchRadiusInput;
-    
-    private final List<OsmPrimitive> savedSelection;  // 窗口打开时的选中要素，用于关闭时还原
-    private final EastNorth savedMapCenter;
-    private final double savedMapScale;
-    
+
     // 拐角数据
-    // private final ColumbinaInput input;
-    private final HighlightHelper highlightHelper = new HighlightHelper();
+    private final Highlighter highlighter = new Highlighter();
     private final List<CornerInfo> allCorners;
     private final double[] editedRadii;  // 用于临时记录半径修改值
     private List<Integer> cornerIdxDisplaying = new ArrayList<>();  // 当前正在列表中展示的每个拐角在allCorners/editedRadii的索引
@@ -62,13 +52,6 @@ public final class AdvFilletDialog extends ExtendedDialog {
         setButtonIcons(BUTTON_ICONS);
         setDefaultButton(1);
 
-        // this.input = input;
-        // 记录窗口打开时的选中要素、视图位置，用于关闭时还原
-        DataSet ds = UtilsData.getEditDataSet();
-        savedSelection = ds != null ? new ArrayList<>(ds.getSelected()) : new ArrayList<>();
-        savedMapCenter = MainApplication.getMap().mapView.getCenter();
-        savedMapScale = MainApplication.getMap().mapView.getScale();
-        
         // 计算所有拐角信息
         allCorners = computeCorners(input, savedParams);
         // 初始化用户编辑半径数组（默认值 = 推荐最大半径）
@@ -132,7 +115,7 @@ public final class AdvFilletDialog extends ExtendedDialog {
         addWindowListener(new java.awt.event.WindowAdapter() {
             @Override
             public void windowClosed(java.awt.event.WindowEvent e) {
-                clearHighlight();
+                highlighter.clear();
             }
         });
 
@@ -213,77 +196,36 @@ public final class AdvFilletDialog extends ExtendedDialog {
 
     /**
      * 根据当前下拉选择框和列表选中行更新地图上的高亮
-     * <p>高亮逻辑：
-     * <ul>
-     *     <li>下拉选择框选中某条路径时，高亮该路径及其所有节点</li>
-     *     <li>列表中有选中行时，额外高亮选中行对应的拐角节点</li>
-     * </ul>
-     * <p>路径仅选中，节点需要进一步高亮；
-     * <p>节点需要被选中才能进一步高亮，因此临时选中相关节点，
-     * 并在清除高亮/关闭窗口时还原回窗口打开时的选中要素。
      */
     private void updateHighlight() {
-        DataSet ds = UtilsData.getEditDataSet();
-        if (ds == null) return;
-
-        List<Node> nodeToHighlight = new ArrayList<>();
-        List<Way> wayToHighlight = new ArrayList<>();
-        List<OsmPrimitive> featureToSelect = new ArrayList<>();
-
-        // 根据下拉选择框确定要高亮的路径节点
         WayComboItem selected = (WayComboItem) wayComboBox.getSelectedItem();
-        if (selected != null) {
-            if (!selected.isAll) {
-                Way way = UtilsData.findWayById(selected.wayId);
-                if (way != null) wayToHighlight.add(way);
-            } else if (table.getSelectedRows().length == 0) {
-                clearHighlight();  // 下拉框选中全部，且列表无选中则还原至清除高亮状态
-                return;
-            }
+        if (selected != null && selected.isAll && table.getSelectedRows().length == 0) {
+            highlighter.clear();
+            return;
         }
-        
-        // 根据列表选中行确定要高亮的拐角节点
+
+        List<Long> wayIds = new ArrayList<>();
+        if (selected != null && !selected.isAll) {
+            wayIds.add(selected.wayId);
+        }
+
+        List<Long> nodeIds = new ArrayList<>();
         int[] selectedRows = table.getSelectedRows();
         for (int row : selectedRows) {
             if (row < cornerIdxDisplaying.size()) {
                 int cornerIdx = cornerIdxDisplaying.get(row);
-                Node node = UtilsData.findNodeById(allCorners.get(cornerIdx).nodeId);
-                if (node != null && !nodeToHighlight.contains(node)) nodeToHighlight.add(node);
+                nodeIds.add(allCorners.get(cornerIdx).nodeId);
             }
         }
 
-        // 临时选中要高亮的要素（节点需被选中才能在地图上显示高亮）
-        featureToSelect.addAll(wayToHighlight);
-        featureToSelect.addAll(nodeToHighlight);
-        ds.setSelected(featureToSelect);
-        // 同时设置高亮标记（为路径提供额外的高亮视觉效果）
-        if (highlightHelper.highlightOnly(nodeToHighlight)) {
-            MainApplication.getMap().repaint();
-        }
-        
-        // 检查视图
-        AutoScaleAction.autoScale(AutoScaleAction.AutoScaleMode.SELECTION);
+        highlighter.highlight(wayIds, nodeIds);
     }
 
     /**
      * 清除所有高亮，还原窗口打开时的选中要素和视图位置
      */
     private void clearHighlight() {
-        highlightHelper.clear();
-        HighlightHelper.clearAllHighlighted();
-        // 还原窗口打开时的选中要素
-        DataSet ds = UtilsData.getEditDataSet();
-        if (ds != null) {
-            ds.setSelected(savedSelection);
-        }
-        // 还原视图位置
-//        MainApplication.getMap().mapView.getState().usingCenter(savedMapCenter);
-//        MainApplication.getMap().mapView.getState().usingScale(savedMapScale);
-        MainApplication.getMap().mapView.zoomTo(savedMapCenter, savedMapScale);
-        
-        if (MainApplication.getMap() != null) {
-            MainApplication.getMap().repaint();
-        }
+        highlighter.clear();
     }
 
     /**
