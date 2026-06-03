@@ -11,6 +11,7 @@ import java.awt.Color;
 import java.awt.FlowLayout;
 import java.awt.Font;
 import java.awt.GridBagLayout;
+import java.awt.GridBagConstraints;
 import java.awt.event.ActionEvent;
 
 import javax.swing.BorderFactory;
@@ -93,7 +94,7 @@ public class MaalausInfoWindow extends JWindow {
         // 曲段信息子面板占位容器（由子模式通过 SecInfoPanel 自行构建）
         secInfoPlaceholder = new JPanel(new BorderLayout());
         secInfoPlaceholder.setOpaque(false);
-        mainPanel.add(secInfoPlaceholder, GBC.eol());
+        mainPanel.add(secInfoPlaceholder, GBC.eol().fill(GridBagConstraints.HORIZONTAL).weight(1.0, 0.0));
 
         // 按钮面板
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 4, 2));
