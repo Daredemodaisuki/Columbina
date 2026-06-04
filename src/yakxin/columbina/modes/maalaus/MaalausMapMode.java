@@ -70,6 +70,10 @@ public class MaalausMapMode extends MapMode implements MaalausInfoWindow.UserEve
                     leaveMode();
                     return;
                 }
+                // 进入INFO时缓存当前显示数据，确保不修改输入框直接点击「添加曲段」时lastDisplayData不为null
+                if (newState == MaalausState.INFO) {
+                    lastDisplayData = session.getSubMode().extractDisplayData(session);
+                }
             }
             // 更新信息面板内容
             if (infoWindow != null) {

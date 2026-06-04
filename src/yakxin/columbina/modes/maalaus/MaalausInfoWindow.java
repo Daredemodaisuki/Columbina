@@ -117,7 +117,7 @@ public class MaalausInfoWindow extends JWindow {
         
         add(mainPanel);
         pack();
-        setSize(300, 140);   // 高度适当增大以容纳所有组件
+        setSize(500, 180);   // 高度适当增大以容纳所有组件
     }
     // ----------------------------------------------------------------
     // 更新方法
