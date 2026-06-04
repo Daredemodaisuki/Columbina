@@ -2,12 +2,14 @@
 
 - [MaalausMapMode](MaalausMapMode.java)〔Controller〕：
   - Maalaus模式入口点，管理模式的进入与退出
-  - 持有[MaalausSessionData](MaalausSessionData.java)、[MaalausDrawingService](MaalausDrawingService.java)、[MaalausInfoWindow](MaalausInfoWindow.java)、[PreviewPainter](PreviewPainter.java)
+  - 持有[MaalausSessionData](MaalausSessionData.java)、[MaalausDrawingService](MaalausDrawingService.java)、[MaalausInfoWindow](MaalausInfoWindow.java)、[Previewer](Previewer.java)
   - 在Maalaus模式时，监听键鼠，发生键鼠事件时检查状态，根据状态：
     - 调用[MaalausDrawingService](MaalausDrawingService.java)的业务方法（如`startDrawing`、添加控制点、提交曲段）
     - 状态机控制，调用[MaalausDrawingService](MaalausDrawingService.java)的状态变更方法（如`pauseDrawing`、`continueDrawing`）
-    - 设置[PreviewPainter](PreviewPainter.java)中需要画布绘制预览的数据
-  - 实现[MaalausInfoWindow](MaalausInfoWindow.java)的`ButtonListener`接口，作为信息窗口按钮事件的统一入口
+    - 设置[Previewer](Previewer.java)中需要画布绘制预览的数据
+  - 实现[MaalausInfoWindow](MaalausInfoWindow.java)的`UserEventListener`接口，作为信息窗口按钮事件和输入框变更事件的统一入口
+  - 暂存`lastDisplayData`（最近一次输入的完整参数），供 INFO 模式下点击「添加曲段」时通过`generateAllControlPoints`清空并重算所有控制点
+  - 键盘事件通过`KeyEventDispatcher`全局拦截，确保 InfoWindow 组件获得焦点时快捷键（Space/ESC/Enter/Tab）仍然生效
   - 监听[MaalausSessionData](MaalausSessionData.java)的`PropertyChangeSupport`，属性变更事件发生时：
     - 进行操作（如状态变为`DONE``ABORT`时退出模式）
     - 调用[MaalausInfoWindow](MaalausInfoWindow.java)的信息更新方法以刷新外显和子面板
@@ -17,7 +19,7 @@
   - 数据读方法公开，供[MaalausMapMode](MaalausMapMode.java)和[MaalausInfoWindow](MaalausInfoWindow.java)读取
   - 持有`PropertyChangeSupport`，数据变更时触发事件通知监听方
 - [MaalausDrawingService](MaalausDrawingService.java)〔Service / 业务逻辑层〕：
-  - 封装所有与绘制相关的业务操作（`startDrawing`、`addControlPoint`、`confirmSec`、`undoLastSec`、`commitAll`、`abort`、`pauseDrawing`、`continueDrawing`）
+  - 封装所有与绘制相关的业务操作（`startDrawing`、`addControlPoint`、`confirmSec`、`clearPendingControlPoints`、`undoLastSec`、`commitAll`、`abort`、`pauseDrawing`、`continueDrawing`）
   - 操作[MaalausSessionData](MaalausSessionData.java)的数据写方法以变更会话状态
   - `confirmSec`通过[MaalausSubMode](MaalausSubMode.java)的`createCurveSec()`工厂方法创建曲段，新增子模式时无需修改此方法
   - 负责 JOSM Command 的构建与提交
@@ -26,11 +28,11 @@
   - 外显信息更新方法（接收字符串或计数，不依赖具体业务类）
   - 持有子模式信息面板占位容器，提供子模式信息面板创建入口方法
   - 子模式信息面板的数据刷新通过[MaalausSubMode](MaalausSubMode.java)的`extractDisplayData()`将[MaalausSessionData](MaalausSessionData.java)转为`SecDisplayData` DTO后传递给面板
-  - 按钮事件通过`ButtonListener`接口向外通知，不持有任何 Controller 或 Service 引用
+  - 按钮事件和输入框变更事件通过`UserEventListener`接口向外通知，不持有任何 Controller 或 Service 引用
   - 不依赖`MaalausSessionData`，对外仅接收`SecDisplayData` DTO
-- [PreviewPainter](PreviewPainter.java)〔View〕：
+- [Previewer](Previewer.java)〔View〕：
   - 持有需要预览的数据和预览数据的修改方法
-  - 画布预览实施，由外部调用
+  - 画布预览实施，由外部调用（通过`MapView.addTemporaryLayer()`注册）
 - [MaalausState](MaalausState.java)：
   - 状态枚举（`INIT`、`DRAW`、`INFO`、`DONE`、`ABORT`）
   - 持有各状态的外显描述文本和操作提示
@@ -40,9 +42,10 @@
   - 提供`createCurveSec(ColumbinaEN, ColumbinaEN, List<ColumbinaEN>)`由各子模式常量自行覆写，将起点、切线和控制点列表转化为对应的曲段实例，供[MaalausDrawingService](MaalausDrawingService.java)的`confirmSec`调用；新增子模式时`DrawingService`无需修改
   - 提供`extractDisplayData(MaalausSessionData)`由各子模式常量自行覆写，将 session 原始数据转换为不可变的`SecDisplayData` DTO
   - `extractDisplayData()`中透过曲段类的静态方法（如`LineExtendCurveSec.calculateDisplayData()`）完成具体计算，保持职责向曲段类集中
+  - 提供`generateAllControlPoints(MaalausSessionData, SecDisplayData)`由各子模式常量自行覆写，从完整参数生成全部控制点，统一替代原有的`calculateControlPointFromDisplayData`（已移除）；INFO 状态下编辑输入框时取最后一个点作为预览点，点击「添加曲段」时则清空待提交列表后逐个添加
   - 持有子模式所需的控制点数量和操作提示文本
 - [SecInfoPanel](secInfoPanel/SecInfoPanel.java)〔View / 接口〕：
-  - 曲段信息面板接口，定义`getPanel()`、`updateValues(SecDisplayData)`、`setEditable(boolean)`
+  - 曲段信息面板接口，定义`getPanel()`、`updateValues(SecDisplayData)`、`setEditable(boolean)`、`requestFieldFocus()`
   - 面板不持有任何业务引用，数据通过 DTO 传入
 - [LineExtendSecInfoPanel](secInfoPanel/LineExtendSecInfoPanel.java)〔View / 子面板示例〕：
   - 直线延伸子模式信息面板绘制

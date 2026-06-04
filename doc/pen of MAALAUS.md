@@ -166,21 +166,35 @@ Tab切换子模式时，应当清空当前段的未完成控制点，回到`DRAW
 
 ### 状态管理工具
 
-状态管理不应当散落在各个事件处理方法中，应当集中在`MaalausMapMode`中统一维护，参考RoadRailAlignment的`AlignmentController`（PropertyChangeSupport）设计：
+状态管理采用「Model（纯数据）+ Service（业务逻辑）」分离的架构，统一由`MaalausMapMode`协调，参考RoadRailAlignment的`AlignmentController`（PropertyChangeSupport）设计：
 
 ```java
-public class MaalausController {
+public class MaalausSessionData {
     private MaalausState state = MaalausState.INIT;
     private MaalausSubMode subMode = MaalausSubMode.LINE_EXTEND;
-    private final List<AbstractCurveSec> secs = new ArrayList<>();     // 已完成曲段列表
-    private final List<EastNorth> pendingControlPoints = new ArrayList<>(); // 当前段控制点列表
-    private EastNorth startAnchor;                     // 当前段的起点（=上段终点或起点）
-    private Vector2D startTangent;                     // 当前段起点切线方向
+    private final List<AbstractCurveSec> secs = new ArrayList<>();         // 已完成曲段列表
+    private final List<ColumbinaEN> pendingControlPoints = new ArrayList<>(); // 当前段控制点列表
+    private ColumbinaEN startAnchor;                                       // 当前段的起点
+    private ColumbinaEN startTangent;                                      // 当前段起点切线方向
+    private ColumbinaEN previewPoint;                                      // 预览控制点
     private final PropertyChangeSupport pcs = new PropertyChangeSupport(this);
 
-    public void addPropertyChangeListener(PropertyChangeListener l) { pcs.addPropertyChangeListener(l); }
-    public void setState(MaalausState newState) { ... fire property change ... }
-    public void setSubMode(MaalausSubMode newSubMode) { ... }
+    // 写方法为包级私有，仅 MaalausDrawingService 可调用
+    void setState(MaalausState newState) { ... fire property change ... }
+    void addControlPoint(ColumbinaEN pt) { ... }
+    // ...
+}
+
+public class MaalausDrawingService {
+    private final MaalausSessionData session;
+
+    public void startDrawing(ColumbinaEN anchor, ColumbinaEN tangent) { ... }
+    public void addControlPoint(ColumbinaEN point) { session.addControlPoint(point); }
+    public void clearPendingControlPoints() { session.clearPendingControlPoints(); }
+    public void confirmSec() { ... }   // 调用 subMode.createCurveSec() 工厂
+    public void undoLastSec() { ... }
+    public void commitAll(double tolerance) { ... }
+    public void abort() { session.setState(MaalausState.ABORT); }
     // ...
 }
 ```
@@ -204,24 +218,41 @@ public class MaalausController {
 │  │  MaalausMapMode      │  │  InfoWindow (JWindow)            │ │
 │  │  (extends MapMode)   │  │  ┌─ 子模式标签                   │ │
 │  │                      │  │  ├─ 长度/角度输入框              │ │
-│  │  鼠标事件 → onMoved  │  │  ├─ 复选框                       │ │
-│  │  鼠标事件 → onClicked│  │  ├─ 按钮 (调整/完成/取消)        │ │
-│  │  键盘事件 → onKey    │  │  └─ 统计信息                     │ │
-│  └──────────────────────┘  └──────────────────────────────────┘ │
+│  │  鼠标事件 → onMoved  │  │  ├─ 按钮 (添加曲段/撤销/完成)   │ │
+│  │  鼠标事件 → onClicked│  │  └─ 统计信息                     │ │
+│  │  键盘事件 → KeyDispatcher│  └──────────────────────────────────┘ │
+│  └──────────────────────┘                                         │
 ├─────────────────────────────────────────────────────────────────┤
-│  控制层 (Controller)                                            │
+│  控制层 (Controller)                                             │
 │  ┌─────────────────────────────────────────────────────────────┐│
-│  │  MaalausController                                          ││
-│  │  状态: MaalausState, MaalausSubMode, secs列表, 控制点列表   ││
-│  │  方法: addControlPoint, undoLastSec, commitAll, ...         ││
-│  │  通知: PropertyChangeSupport → MapMode + InfoWindow 监听    ││
+│  │  MaalausMapMode (兼任 Coordinator)                          ││
+│  │  协调 MaalausSessionData ↔ MaalausDrawingService ↔ InfoWindow│
+│  │  实现 UserEventListener 统一处理按钮和输入框事件             ││
+│  │  暂存 lastDisplayData 供「添加曲段」清空重算                 ││
+│  └─────────────────────────────────────────────────────────────┘│
+├─────────────────────────────────────────────────────────────────┤
+│  业务层 (Service)                                                │
+│  ┌─────────────────────────────────────────────────────────────┐│
+│  │  MaalausDrawingService                                      ││
+│  │  封装所有绘制业务操作: startDrawing, addControlPoint,        ││
+│  │  clearPendingControlPoints, confirmSec, undoLastSec, commitAll│
+│  │  confirmSec → subMode.createCurveSec() 工厂方法              ││
+│  └─────────────────────────────────────────────────────────────┘│
+├─────────────────────────────────────────────────────────────────┤
+│  数据层 (Model)                                                 │
+│  ┌─────────────────────────────────────────────────────────────┐│
+│  │  MaalausSessionData (PropertyChangeSupport)                 ││
+│  │  状态: MaalausState, MaalausSubMode, secs列表               ││
+│  │  当前段: pendingControlPoints, startAnchor, startTangent     ││
+│  │  预览: previewPoint                                          ││
+│  │  写方法包级私有(仅DrawingService可调), 读方法公开            ││
 │  └─────────────────────────────────────────────────────────────┘│
 ├─────────────────────────────────────────────────────────────────┤
 │  预览层 (Preview)                                               │
 │  ┌─────────────────────────────────────────────────────────────┐│
-│  │  PreviewPainter (implements MapViewPaintable)               ││
-│  │  负责绘制: 控制点标记、曲段预览、切线方向指示、吸附辅助线 ││
-│  │  注册: mapView.addTemporaryLayer(previewPainter)            ││
+│  │  Previewer (implements MapViewPaintable)                    ││
+│  │  负责绘制: 起点标记、已完成曲段、当前段预览、控制点标记     ││
+│  │  注册: mapView.addTemporaryLayer(previewer)                  ││
 │  └─────────────────────────────────────────────────────────────┘│
 ├─────────────────────────────────────────────────────────────────┤
 │  数据层 (Model)                                                 │
@@ -235,44 +266,43 @@ public class MaalausController {
 
 ### 数据流
 
-为`MaalausController`设置`PropertyChangeSupport`，可参考RoadRailAlignment的`AlignmentController`设计：
+为`MaalausSessionData`设置`PropertyChangeSupport`，数据变更时通知`MaalausMapMode`中的监听器统一刷新预览和信息窗口：
 
 ```
-   鼠标移动/点击
+   鼠标移动/点击 / 键盘快捷键
         │
         ▼
-┌───────────────────┐
-│  MaalausMapMode   │ 事件处理方法中调用各controller的方法
-│  mouseMoved(e) ──→│──→ controller.addControlPoint(point)
-│  mouseClicked(e)  │    controller.undoLastSec()
-│  keyPressed(e)    │    controller.commitAll()
-└───────────────────┘    等其他函数
+┌─────────────────────────────────┐
+│  MaalausMapMode                 │ 事件处理方法中调用 Service
+│  mouseMoved(e) ────────────────→│──→ drawingService.setPreviewPoint(point)
+│  mouseClicked(e)                │──→ drawingService.addControlPoint(point)
+│  keyDispatcher (全局拦截)       │──→ drawingService.undoLastSec() / abort() / commitAll()
+│  UserEventListener              │──→ drawingService.clearPendingControlPoints()
+│    onAddCurveSec                │    drawingService.confirmSec()
+│    onSecInputChanged ──────────→│──→ subMode.generateAllControlPoints() → setPreviewPoint()
+│    onUndo / onCommit / onCancel │
+└─────────────────────────────────┘
         │                          │
-        │ PropertyChange           │ PropertyChange
-        │ "state"                  │ "controlPoints"
-        │ "subMode"                │ "sampledPreview"
+        │ SessionData PCE          │
+        │ "state" / "controlPoints"│
+        │ "previewPoint"           │
         ▼                          ▼
-┌───────────────┐         ┌──────────────────────┐
-│  InfoWindow   │         │  PreviewPainter      │
-│  刷新按钮状态 │         │  setPreview()        │
-│  刷新参数显示 │         │  → mapView.repaint() │
-│  刷新提示信息 │         └──────────────────────┘
-└───────────────┘
+┌───────────────────┐    ┌───────────────────────┐
+│  刷新 InfoWindow  │    │  refreshPreview()     │
+│  状态标签/按钮状态 │    │  → Previewer 数据更新 │
+│  updateSecInfo()  │    │  → mapView.repaint()  │
+│  setEditable()    │    └───────────────────────┘
+└───────────────────┘
 ```
 
 具体地：
-1. 鼠标在MapView上移动 → `MapMode.mouseMoved` → 根据当前状态决定是否更新控制点位置 → 调用`controller.samplePreview(...)` → 通过PropertyChange通知`PreviewPainter.setPreview(controlPoints, sampledPoints)` → `mapView.repaint()`。
-2. 鼠标左键点击 → `MapMode.mouseClicked` → 调用`controller.addControlPoint(snappedPoint)` → 如果当前段控制点数已满 → 构造`CurveSec`并添加至`secs`列表 → 清空`pendingControlPoints` → 更新`startAnchor` 和 `startTangent` 为本段终点 → 触发PropertyChange → `PreviewPainter`刷新预览。
-3. 鼠标右键点击/按下指定键 → 触发切换到`INFO`状态 → 聚焦到对应输入框 → 鼠标不再影响控制点位置。
-4. 信息窗口中的「调整」按钮 → `controller.refreshPreview()` → 根据输入框中的数值重新计算控制点位置 → 回到 `DRAW`状态 → `PreviewPainter`刷新预览。
-5. Enter/完成绘制按钮 → `controller.commitAll()`：
-   a. `CurveSecUtils.sampleAll(secs, interval)` → 拼接全部曲段的离散点列
-   b. 调用JOSM的`MapView.getDataSet()`获得数据集
-   c. 为每个采样点构造Node意图：无吸附则创建`AddThisNodeIfOK`意图，有吸附则创建`MergeExistToThisIfOK`意图（对于离散得到的节点，一般是控制点为终点且吸附到既有路径时存在该情况）
-   d. 构造Way意图：创建`AddThisWayIfOK`意图
-   e. `ColumbinaOutputIntent.toCommands(intents, ds)` → 统一协调冲突并生成Command列表
-   f. `SequenceCommand` → `UndoRedoHandler.getInstance().add()`提交
-   g. 调用`MapMode.exitMode()`退出绘制模式
+1. **INIT 状态**：鼠标在MapView上点击 → `mouseClicked` → `drawingService.startDrawing(clickEN, tangent)` → 进入`DRAW`状态。
+2. **DRAW 状态**：鼠标移动 → `mouseMoved` → `drawingService.setPreviewPoint(mouseEN)` → PCE "previewPoint" → `refreshPreview()` + 信息窗口更新参数。
+3. **DRAW 状态**：鼠标左键点击 → `mouseClicked` → `drawingService.addControlPoint(clickEN)` → `confirmSec()`（控制点够数则创建曲段并进入下一段）。
+4. **INFO 状态**（Space/右键切换）：输入框编辑 → `onSecInputChanged` → `subMode.generateAllControlPoints(session, data)` → 取最后一个点 `setPreviewPoint()` → 渲染预览。
+5. **INFO → 添加曲段**：`onAddCurveSec` → `drawingService.clearPendingControlPoints()` → `generateAllControlPoints()`逐个添加 → `confirmSec()`。
+6. **撤销**：BackSpace / 撤销按钮 → `drawingService.undoLastSec()` → 回退上一段。
+7. **完成**：Enter / 完成按钮 → `drawingService.commitAll(tolerance)` → 产生JOSM Command → 退出模式。
 
 ## 预览渲染与JOSM API
 
@@ -280,61 +310,51 @@ public class MaalausController {
 
 可参考RoadRailAlignment的实现方式：
 
-1. `PreviewPainter`实现`MapViewPaintable`接口：
+1. `Previewer`实现`MapViewPaintable`接口：
    ```java
-   public class PreviewPainter implements MapViewPaintable {
-       private List<EastNorth> previewPoints = Collections.emptyList();
-       private List<EastNorth> controlPoints = Collections.emptyList();
+   public class Previewer implements MapViewPaintable {
+       private ColumbinaEN startPoint;
+       private List<ColumbinaEN> committedPoints = Collections.emptyList();
+       private List<ColumbinaEN> previewPoints = Collections.emptyList();
+       private List<ColumbinaEN> controlPoints = Collections.emptyList();
 
-       public void setPreview(List<EastNorth> preview, List<EastNorth> controls) {
-           this.previewPoints = Collections.unmodifiableList(new ArrayList<>(preview));
-           this.controlPoints = Collections.unmodifiableList(new ArrayList<>(controls));
-       }
+       public void setStartPoint(ColumbinaEN point) { ... }
+       public void setCommittedPoints(List<ColumbinaEN> points) { ... }
+       public void setPreview(List<ColumbinaEN> preview, List<ColumbinaEN> controls) { ... }
 
        @Override
        public void paint(Graphics2D g, MapView mv, Bounds bbox) {
-           // 只在有数据时绘制
-           if (previewPoints.isEmpty()) return;
-
-           Graphics2D g2 = (Graphics2D) g.create();
-           g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-
-           // 绘制预览线
-           g2.setStroke(new BasicStroke(3f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
-           g2.setColor(new Color(0, 120, 255, 180));  // 半透明蓝色
-           Point prev = null;
-           for (EastNorth en : previewPoints) {
-               Point p = mv.getPoint(en);
-               if (prev != null) g2.drawLine(prev.x, prev.y, p.x, p.y);
-               prev = p;
+           if (committedPoints.size() > 1) {
+               // 绘制已完成曲段（绿色实线）
+               g2.setColor(new Color(0, 180, 80, 200));
+               drawPolyline(g2, mv, committedPoints);
            }
-
-           // 绘制控制点
-           g2.setColor(new Color(255, 80, 80, 200));  // 半透明红色圆圈
-           for (EastNorth en : controlPoints) {
-               Point p = mv.getPoint(en);
-               g2.fillOval(p.x - 5, p.y - 5, 10, 10);
+           if (previewPoints.size() > 1) {
+               // 绘制当前段预览（蓝色实线）
+               g2.setColor(new Color(0, 120, 255, 180));
+               drawPolyline(g2, mv, previewPoints);
            }
-
-           g2.dispose();
+           // 绘制起点标记/控制点标记...
        }
    }
    ```
 
-2. 在`MaalausMapMode.enterMode()`中注册到MapView：
+2. 在`MaalausMapMode.enterMode()`中注册到MapView，键盘事件通过`KeyEventDispatcher`全局拦截：
    ```java
    @Override
    public void enterMode() {
        super.enterMode();
        MapView mv = MainApplication.getMap().mapView;
-       previewPainter = new PreviewPainter();
-       mv.addTemporaryLayer(previewPainter);
+       previewer = new Previewer();
+       mv.addTemporaryLayer(previewer);
        // 注册鼠标/键盘监听器
-       mv.addMouseListener(mouseHandler);
-       mv.addMouseMotionListener(mouseHandler);
-       mv.addKeyListener(keyHandler);
+       mv.addMouseListener(this);
+       mv.addMouseMotionListener(this);
+       // 使用 KeyEventDispatcher 全局拦截键盘事件
+       KeyboardFocusManager.getCurrentKeyboardFocusManager()
+           .addKeyEventDispatcher(keyDispatcher);
        mv.setFocusable(true);
-       mv.requestFocusInWindow();
+       requestFocusInMapView();
        // 显示信息窗口
        infoWindow.setVisible(true);
    }
@@ -343,12 +363,15 @@ public class MaalausController {
    public void exitMode() {
        super.exitMode();
        MapView mv = MainApplication.getMap().mapView;
-       mv.removeTemporaryLayer(previewPainter);
-       mv.removeMouseListener(mouseHandler);
-       mv.removeMouseMotionListener(mouseHandler);
-       mv.removeKeyListener(keyHandler);
+       mv.removeTemporaryLayer(previewer);
+       mv.removeMouseListener(this);
+       mv.removeMouseMotionListener(this);
+       KeyboardFocusManager.getCurrentKeyboardFocusManager()
+           .removeKeyEventDispatcher(keyDispatcher);
+       previewer.clear();
        infoWindow.setVisible(false);
-       controller.reset();
+       infoWindow.dispose();
+       session.reset();
    }
    ```
 
@@ -503,6 +526,68 @@ public void commitAll(double interval, String featureTagKey, String featureTagVa
 * 起点自动吸附到上一段的`endEN`，`startTangent`取上一段的`endAngleRad`
 
 不同的是，Maalaus默认连续绘制，直到用户放弃或完成绘制。
+
+### 键盘事件处理：KeyEventDispatcher
+
+Maalaus 信息窗口使用 `JWindow`，其组件（输入框、按钮）获得焦点后，`MapView` 上的 `KeyListener` 不再收到键盘事件，导致 Space（切换状态）、ESC（放弃）、Enter（完成）等快捷键失效。
+
+解决方案：使用 `KeyEventDispatcher` 全局拦截键盘事件，在事件到达焦点组件前先行处理快捷键。在`MaalausMapMode`中以内部类实现：
+
+```java
+private class MaalausKeyDispatcher implements KeyEventDispatcher {
+    @Override
+    public boolean dispatchKeyEvent(KeyEvent event) {
+        if (event.getID() != KeyEvent.KEY_PRESSED) return false;
+
+        Component focusOwner = KeyboardFocusManager
+            .getCurrentKeyboardFocusManager().getFocusOwner();
+
+        switch (event.getKeyCode()) {
+            case KeyEvent.VK_ESCAPE → service.abort(); return true;
+            case KeyEvent.VK_ENTER  → service.commitAll(20); return true;
+            case KeyEvent.VK_SPACE  → toggleDrawInfo(); return true;
+            case KeyEvent.VK_BACK_SPACE:
+                if (!(focusOwner instanceof JTextComponent))
+                    service.undoLastSec();  // 输入框中放行，让退格删字符
+                return true;
+            case KeyEvent.VK_TAB → // TODO: 切换子模式
+                return true;
+            default → return false;  // 放行
+        }
+    }
+}
+```
+
+在`enterMode()`中注册、`exitMode()`中注销：
+- `KeyboardFocusManager.getCurrentKeyboardFocusManager().addKeyEventDispatcher(keyDispatcher);`
+- `KeyboardFocusManager.getCurrentKeyboardFocusManager().removeKeyEventDispatcher(keyDispatcher);`
+
+### INFO 状态下输入框编辑 → 控制点计算流程
+
+用户切换到 INFO 状态后，修改输入框参数时：
+
+```
+输入框变更 → UserEventListener.onSecInputChanged(data)
+  → MapMode 暂存 lastDisplayData = data
+  → subMode.generateAllControlPoints(session, data)
+  → 取列表最后一个点 → service.setPreviewPoint(point)
+  → PCE "previewPoint" → refreshPreview() + repaint
+```
+
+点击「添加曲段」时：
+
+```
+onAddCurveSec() (INFO 路径)
+  → service.clearPendingControlPoints()
+  → subMode.generateAllControlPoints(session, lastDisplayData)
+  → 逐个 addControlPoint
+  → service.confirmSec()  // 由 confirmSec 检查控制点是否足够
+```
+
+特点：
+- 输入框编辑**仅更新预览**，不修改待提交队列
+- 点击「添加曲段」时才**清空并重算**所有控制点（因为从完整参数算出的控制点可能与之前鼠标点击的点不匹配）
+- 输入框可编辑性**仅由状态决定**（`state == INFO`），不受控制点数量限制——用户可以在 0 个控制点时直接输入参数
 
 ## 文件分包
 

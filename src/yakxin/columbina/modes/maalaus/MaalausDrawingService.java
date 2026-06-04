@@ -61,6 +61,13 @@ public class MaalausDrawingService {
     }
 
     /**
+     * 清空当前待提交控制点列表
+     */
+    public void clearPendingControlPoints() {
+        session.clearPendingControlPoints();
+    }
+
+    /**
      * 确认当前段并添加到曲段列表
      * <p>通过 {@link MaalausSubMode#createCurveSec} 工厂方法创建曲段，
      * 新增子模式时无需修改此方法。

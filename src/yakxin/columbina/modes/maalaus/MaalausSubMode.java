@@ -45,12 +45,14 @@ public enum MaalausSubMode {
         }
 
         @Override
-        public ColumbinaEN calculateControlPointFromDisplayData(MaalausSessionData session, SecDisplayData data) {
-            if (!(data instanceof LineExtendDisplayData)) return null;
+        public List<ColumbinaEN> generateAllControlPoints(MaalausSessionData session, SecDisplayData data) {
+            if (!(data instanceof LineExtendDisplayData)) return List.of();
             ColumbinaEN start = session.getStartAnchor();
-            if (start == null) return null;
+            if (start == null) return List.of();
             LineExtendDisplayData led = (LineExtendDisplayData) data;
-            return LineExtendCurveSec.calculateControlPoint(start, led.bearingDeg, led.lengthM);
+            ColumbinaEN cp = LineExtendCurveSec.calculateControlPoint(start, led.bearingDeg, led.lengthM);
+            if (cp == null) return List.of();
+            return List.of(cp);
         }
     },
     // 起点曲线延伸：需要1个控制点
@@ -75,8 +77,8 @@ public enum MaalausSubMode {
         }
 
         @Override
-        public ColumbinaEN calculateControlPointFromDisplayData(MaalausSessionData session, SecDisplayData data) {
-            return null;
+        public List<ColumbinaEN> generateAllControlPoints(MaalausSessionData session, SecDisplayData data) {
+            return List.of();
         }
     },
     // 交点曲线延伸：需要2个控制点（交点+方向点）
@@ -103,8 +105,8 @@ public enum MaalausSubMode {
         }
 
         @Override
-        public ColumbinaEN calculateControlPointFromDisplayData(MaalausSessionData session, SecDisplayData data) {
-            return null;
+        public List<ColumbinaEN> generateAllControlPoints(MaalausSessionData session, SecDisplayData data) {
+            return List.of();
         }
     };
 
@@ -159,12 +161,12 @@ public enum MaalausSubMode {
     abstract public SecDisplayData extractDisplayData(MaalausSessionData session);
 
     /**
-     * 根据显示数据反算控制点坐标
-     * <p>在 INFO 状态下用户编辑输入框时，将解析后的显示数据转换为控制点坐标，
-     * 以便更新待提交控制点列表和画布预览。
-     * @param session 当前会话数据（提供起点等上下文）
+     * 根据完整的显示数据生成该子模式所需的全部控制点
+     * <p>INFO 状态下用户点击「添加曲段」时调用，清空当前待提交列表后依次添加返回的每个点。
+     * 在 INFO 状态下编辑输入框时，取列表中的最后一个点作为预览点。
+     * @param session 当前会话数据
      * @param data 显示数据（由输入框解析而来）
-     * @return 控制点坐标，返回 {@code null} 表示无法计算
+     * @return 控制点列表（空列表表示无法生成）
      */
-    abstract public ColumbinaEN calculateControlPointFromDisplayData(MaalausSessionData session, SecDisplayData data);
+    abstract public List<ColumbinaEN> generateAllControlPoints(MaalausSessionData session, SecDisplayData data);
 }

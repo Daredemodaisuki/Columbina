@@ -43,6 +43,7 @@ public class MaalausMapMode extends MapMode implements MaalausInfoWindow.UserEve
     private final KeyEventDispatcher keyDispatcher;
     private final java.beans.PropertyChangeListener sessionListener;
     private MaalausInfoWindow infoWindow;
+    private SecDisplayData lastDisplayData;  // 用户最近一次在 INFO 状态下输入的完整参数
 
     /**
      * 构造函数
@@ -161,14 +162,17 @@ public class MaalausMapMode extends MapMode implements MaalausInfoWindow.UserEve
     @Override
     public void onAddCurveSec() {
         MaalausState state = session.getState();
-        if (state != MaalausState.DRAW && state != MaalausState.INFO) return;
-
-        // DRAW 模式下 previewPoint 由 mouseMoved 更新，INFO 模式下由 onSecInputChanged 更新
-        // 两者均通过 service.setPreviewPoint() 写入 session
-        ColumbinaEN point = session.getPreviewPoint();
-        if (point == null) return;
-
-        service.addControlPoint(point);
+        if (state != MaalausState.INFO) return;
+        
+        // INFO 模式：从完整参数生成所有控制点，清空并重算
+        if (lastDisplayData == null) return;
+        List<ColumbinaEN> allCPs = session.getSubMode().generateAllControlPoints(session, lastDisplayData);
+        if (allCPs.isEmpty()) return;
+        
+        service.clearPendingControlPoints();
+        for (ColumbinaEN cp : allCPs) {
+            service.addControlPoint(cp);
+        }
         service.confirmSec();
         service.setPreviewPoint(null);
     }
@@ -194,13 +198,15 @@ public class MaalausMapMode extends MapMode implements MaalausInfoWindow.UserEve
     public void onSecInputChanged(SecDisplayData data) {
         if (session.getState() != MaalausState.INFO) return;
 
-        // 根据输入参数反算完整的控制点（未来模式可能返回多个点，这里先以单点处理）
-        // 反算结果仅更新预览，不提交到待提交队列
-        ColumbinaEN newPoint = session.getSubMode().calculateControlPointFromDisplayData(session, data);
-        if (newPoint == null) return;
+        // 保存最近一次输入的完整参数，供 onAddCurveSec INFO 路径使用
+        this.lastDisplayData = data;
 
-        service.setPreviewPoint(newPoint);
-        // 这里不需要刷新，setPreviewPoint会触发"previewPoint" PCE → sessionListener → refreshPreview + repaint
+        // 由参数生成全部控制点，用最后一个作为预览点
+        List<ColumbinaEN> allCPs = session.getSubMode().generateAllControlPoints(session, data);
+        if (allCPs.isEmpty()) return;
+
+        service.setPreviewPoint(allCPs.get(allCPs.size() - 1));
+        // setPreviewPoint 会触发 "previewPoint" PCE → sessionListener → refreshPreview + repaint
     }
 
 
