@@ -6,6 +6,7 @@ import org.openstreetmap.josm.tools.I18n;
 import yakxin.columbina.abstractClasses.AbstractCurveSec;
 import yakxin.columbina.data.ColumbinaEN;
 import yakxin.columbina.data.columbinaCurveSection.LineExtendCurveSec;
+import yakxin.columbina.data.dto.modelsDTO.maalaus.LineExtendDisplayData;
 import yakxin.columbina.data.dto.modelsDTO.maalaus.SecDisplayData;
 import yakxin.columbina.modes.maalaus.secInfoPanel.LineExtendSecInfoPanel;
 import yakxin.columbina.modes.maalaus.secInfoPanel.SecInfoPanel;
@@ -42,6 +43,15 @@ public enum MaalausSubMode {
                     : session.getPreviewPoint();
             return LineExtendCurveSec.calculateDisplayData(start, end);
         }
+
+        @Override
+        public ColumbinaEN calculateControlPointFromDisplayData(MaalausSessionData session, SecDisplayData data) {
+            if (!(data instanceof LineExtendDisplayData)) return null;
+            ColumbinaEN start = session.getStartAnchor();
+            if (start == null) return null;
+            LineExtendDisplayData led = (LineExtendDisplayData) data;
+            return LineExtendCurveSec.calculateControlPoint(start, led.bearingDeg, led.lengthM);
+        }
     },
     // 起点曲线延伸：需要1个控制点
     ARC_EXTEND(
@@ -61,6 +71,11 @@ public enum MaalausSubMode {
 
         @Override
         public SecDisplayData extractDisplayData(MaalausSessionData session) {
+            return null;
+        }
+
+        @Override
+        public ColumbinaEN calculateControlPointFromDisplayData(MaalausSessionData session, SecDisplayData data) {
             return null;
         }
     },
@@ -84,6 +99,11 @@ public enum MaalausSubMode {
 
         @Override
         public SecDisplayData extractDisplayData(MaalausSessionData session) {
+            return null;
+        }
+
+        @Override
+        public ColumbinaEN calculateControlPointFromDisplayData(MaalausSessionData session, SecDisplayData data) {
             return null;
         }
     };
@@ -137,4 +157,14 @@ public enum MaalausSubMode {
      * @return 显示数据对象，返回 {@code null} 表示无数据可显示
      */
     abstract public SecDisplayData extractDisplayData(MaalausSessionData session);
+
+    /**
+     * 根据显示数据反算控制点坐标
+     * <p>在 INFO 状态下用户编辑输入框时，将解析后的显示数据转换为控制点坐标，
+     * 以便更新待提交控制点列表和画布预览。
+     * @param session 当前会话数据（提供起点等上下文）
+     * @param data 显示数据（由输入框解析而来）
+     * @return 控制点坐标，返回 {@code null} 表示无法计算
+     */
+    abstract public ColumbinaEN calculateControlPointFromDisplayData(MaalausSessionData session, SecDisplayData data);
 }

@@ -1,5 +1,6 @@
 package yakxin.columbina.modes.maalaus;
 
+import org.openstreetmap.josm.gui.MainApplication;
 import org.openstreetmap.josm.tools.GBC;
 import org.openstreetmap.josm.tools.I18n;
 import yakxin.columbina.data.dto.modelsDTO.maalaus.SecDisplayData;
@@ -28,19 +29,24 @@ import javax.swing.JWindow;
 public class MaalausInfoWindow extends JWindow {
 
     /**
-     * 按钮事件监听接口，供 MaalausMapMode 实现以统一处理用户输入
+     * 用户事件监听接口，供 MaalausMapMode 统一实现用户输入处理
+     * <p>包含按钮点击和曲段信息面板输入框变更。
      */
-    public interface ButtonListener {
+    public interface UserEventListener {
+        void onAddCurveSec();
         void onUndo();
         void onCommit();
         void onCancel();
+        void onSecInputChanged(SecDisplayData data);  // 曲段信息面板输入框数值变更（用户编辑时触发）
     }
 
+    private final UserEventListener userEventListener;
     private final JLabel modeLabel;
     private final JLabel statusLabel;
     private final JLabel statusInfoLabel;
     private final JLabel countLabel;
     private final JLabel infoLabel;
+    private final JButton addPointButton;
     private final JButton undoButton;
     private final JButton commitButton;
     private final JButton cancelButton;
@@ -50,8 +56,11 @@ public class MaalausInfoWindow extends JWindow {
     /**
      * 构造函数
      */
-    public MaalausInfoWindow(ButtonListener listener) {
-        setLayout(new BorderLayout());  // JWindow 本身布局保持 BorderLayout 以便放置 mainPanel
+    public MaalausInfoWindow(UserEventListener userEventListener) {
+        super(MainApplication.getMainFrame());  // 传入主窗口作为 owner，确保窗口和子面板可获得焦点
+        
+        this.userEventListener = userEventListener;
+        setLayout(new BorderLayout());
         setAlwaysOnTop(true);
         
         JPanel mainPanel = new JPanel(new GridBagLayout());
@@ -99,9 +108,10 @@ public class MaalausInfoWindow extends JWindow {
         // 按钮面板
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 4, 2));
         buttonPanel.setOpaque(false);
-        undoButton = UtilsUI.addButton(buttonPanel, I18n.tr("Undo"), (ActionEvent e) -> listener.onUndo(), GBC.std());
-        commitButton = UtilsUI.addButton(buttonPanel, I18n.tr("Finish"), (ActionEvent e) -> listener.onCommit(), GBC.std());
-        cancelButton = UtilsUI.addButton(buttonPanel, I18n.tr("Cancel"), (ActionEvent e) -> listener.onCancel());
+        addPointButton = UtilsUI.addButton(buttonPanel, I18n.tr("Add Section"), (ActionEvent e) -> userEventListener.onAddCurveSec(), GBC.std());
+        undoButton = UtilsUI.addButton(buttonPanel, I18n.tr("Undo"), (ActionEvent e) -> userEventListener.onUndo(), GBC.std());
+        commitButton = UtilsUI.addButton(buttonPanel, I18n.tr("Finish"), (ActionEvent e) -> userEventListener.onCommit(), GBC.std());
+        cancelButton = UtilsUI.addButton(buttonPanel, I18n.tr("Cancel"), (ActionEvent e) -> userEventListener.onCancel());
         UtilsUI.addSpace(mainPanel, 5);
         mainPanel.add(buttonPanel, GBC.eol());
         
@@ -152,6 +162,7 @@ public class MaalausInfoWindow extends JWindow {
     /**
      * 根据子模式重建曲段信息子面板
      * <p>委托给 {@link SecInfoPanel}，由子模式自行构建面板内容。
+     * 自动桥接子面板的输入变更事件到 {@link UserEventListener#onSecInputChanged}。
      * @param subMode 当前子模式
      */
     public void rebuildSecInfo(MaalausSubMode subMode) {
@@ -160,6 +171,8 @@ public class MaalausInfoWindow extends JWindow {
         if (currentSecInfoPanel != null) {
             currentSecInfoPanel.getPanel().setVisible(true);
             secInfoPlaceholder.add(currentSecInfoPanel.getPanel(), BorderLayout.CENTER);
+            // 自动桥接输入变更事件到listener，等价于(SecDisplayData data) -> userEventListener.onSecInputChanged(data)
+            currentSecInfoPanel.setInputChangeListener(userEventListener::onSecInputChanged);
         }
         secInfoPlaceholder.revalidate();
         secInfoPlaceholder.repaint();
@@ -185,7 +198,7 @@ public class MaalausInfoWindow extends JWindow {
             currentSecInfoPanel.setEditable(editable);
         }
     }
-
+    
     /**
      * 更新窗口位置到鼠标附近
      * @param screenX 鼠标屏幕 X 坐标
@@ -199,6 +212,7 @@ public class MaalausInfoWindow extends JWindow {
     // 按钮访问
     // ----------------------------------------------------------------
 
+    public JButton getAddPointButton() { return addPointButton; }
     public JButton getUndoButton() { return undoButton; }
     public JButton getCommitButton() { return commitButton; }
     public JButton getCancelButton() { return cancelButton; }

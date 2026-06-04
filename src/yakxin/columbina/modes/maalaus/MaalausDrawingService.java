@@ -75,6 +75,7 @@ public class MaalausDrawingService {
         );
         if (sec == null) return;
 
+        // 更新起点和起点方向
         session.addSec(sec);
         session.setStartAnchor(sec.getEndEN());
         session.setStartTangent(new ColumbinaEN(
@@ -83,7 +84,7 @@ public class MaalausDrawingService {
         ));
         session.clearPendingControlPoints();
         session.setPreviewPoint(null);
-        session.setState(MaalausState.DRAW);
+        // session.setState(MaalausState.DRAW);  // 不强制状态切换
     }
 
     /**
@@ -92,6 +93,16 @@ public class MaalausDrawingService {
      */
     public void setPreviewPoint(ColumbinaEN point) {
         session.setPreviewPoint(point);
+    }
+
+    /**
+     * 更新最后一个待提交控制点的坐标
+     * <p>在 INFO 状态下用户编辑输入框时调用，根据反算的控制点更新预览。
+     * @param point 新的控制点坐标
+     */
+    public void updateLastControlPoint(ColumbinaEN point) {
+        // TODO：可能弃用
+        session.updateLastControlPoint(point);
     }
 
     /**

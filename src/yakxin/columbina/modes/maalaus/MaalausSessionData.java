@@ -91,6 +91,12 @@ public class MaalausSessionData {
         propertyEventSource.firePropertyChange("controlPoints", null, pendingControlPoints);
     }
 
+    void updateLastControlPoint(ColumbinaEN point) {
+        if (pendingControlPoints.isEmpty()) return;
+        pendingControlPoints.set(pendingControlPoints.size() - 1, point);
+        propertyEventSource.firePropertyChange("controlPoints", null, pendingControlPoints);
+    }
+
     // ----------------------------------------------------------------
     // 重置（静默，不触发事件）
     // ----------------------------------------------------------------

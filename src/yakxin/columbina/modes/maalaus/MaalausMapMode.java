@@ -1,15 +1,19 @@
 package yakxin.columbina.modes.maalaus;
 
+import java.awt.Component;
 import java.awt.Cursor;
+import java.awt.KeyEventDispatcher;
+import java.awt.KeyboardFocusManager;
 import java.awt.MouseInfo;
 import java.awt.Point;
 import java.awt.PointerInfo;
 import java.awt.event.KeyEvent;
-import java.awt.event.KeyListener;
 import java.awt.event.MouseEvent;
 import java.beans.PropertyChangeEvent;
 import java.util.ArrayList;
 import java.util.List;
+
+import javax.swing.text.JTextComponent;
 
 import org.openstreetmap.josm.actions.mapmode.MapMode;
 import org.openstreetmap.josm.data.coor.LatLon;
@@ -20,6 +24,7 @@ import org.openstreetmap.josm.tools.Shortcut;
 
 import yakxin.columbina.data.ColumbinaEN;
 import yakxin.columbina.abstractClasses.AbstractCurveSec;
+import yakxin.columbina.data.dto.modelsDTO.maalaus.SecDisplayData;
 import yakxin.columbina.utils.UtilsUI;
 import yakxin.columbina.utils.utilsView.Previewer;
 
@@ -30,12 +35,12 @@ import yakxin.columbina.utils.utilsView.Previewer;
  * {@link Previewer} 和 {@link MaalausInfoWindow} 之间的交互。
  * <p> 当前仅实现直线延伸（LINE_EXTEND）模式。
  */
-public class MaalausMapMode extends MapMode implements MaalausInfoWindow.ButtonListener {
+public class MaalausMapMode extends MapMode implements MaalausInfoWindow.UserEventListener {
 
     private final MaalausSessionData session;
     private final MaalausDrawingService service;
     private final Previewer previewer;
-    private final KeyListener keyHandler;
+    private final KeyEventDispatcher keyDispatcher;
     private final java.beans.PropertyChangeListener sessionListener;
     private MaalausInfoWindow infoWindow;
 
@@ -53,7 +58,7 @@ public class MaalausMapMode extends MapMode implements MaalausInfoWindow.ButtonL
         this.session = new MaalausSessionData();
         this.service = new MaalausDrawingService(session);
         this.previewer = new Previewer();
-        this.keyHandler = new MaalausKeyHandler();
+        this.keyDispatcher = new MaalausKeyDispatcher();
 
         // 定义统一的监听器（注册到MaalausSessionData的PropertyChangeSupport后，会话状态变更时触发，于进入模式时注册，退出模式时注销）
         this.sessionListener = (PropertyChangeEvent event) -> {
@@ -71,6 +76,8 @@ public class MaalausMapMode extends MapMode implements MaalausInfoWindow.ButtonL
                 infoWindow.updateStatus(session.getState().name(), session.getState().getStatusInfo());
                 infoWindow.updateSecCount(session.getSecs().size());
                 infoWindow.updateInfo(session.getSubMode().getInfo());
+                // 判断状态切换输入框可编辑性
+                infoWindow.setSecInfoEditable(session.getState() == MaalausState.INFO);
             }
             refreshPreview();
             if (MainApplication.getMap() != null && MainApplication.getMap().mapView != null) {
@@ -98,13 +105,13 @@ public class MaalausMapMode extends MapMode implements MaalausInfoWindow.ButtonL
         mv.addMouseListener(this);
         mv.addMouseMotionListener(this);
 
-        // 注册键盘监听
-        mv.addKeyListener(keyHandler);
+        // 注册全局键盘事件分发器（可截获发往任意组件的按键，解决 InfoWindow 聚焦后快捷键失效的问题）
+        KeyboardFocusManager.getCurrentKeyboardFocusManager().addKeyEventDispatcher(keyDispatcher);
         mv.setFocusable(true);
         requestFocusInMapView();
 
         // 创建并显示信息窗口
-        infoWindow = new MaalausInfoWindow(this);
+        infoWindow = new MaalausInfoWindow(this);  // 自动传递this中的ButtonListener实现部分
         updateInfoWindowPosition(MouseInfo.getPointerInfo().getLocation().x, MouseInfo.getPointerInfo().getLocation().y);
         infoWindow.setVisible(true);
         infoWindow.rebuildSecInfo(session.getSubMode());
@@ -128,7 +135,7 @@ public class MaalausMapMode extends MapMode implements MaalausInfoWindow.ButtonL
 
         MapView mv = MainApplication.getMap().mapView;
         mv.removeTemporaryLayer(previewer);
-        mv.removeKeyListener(keyHandler);
+        KeyboardFocusManager.getCurrentKeyboardFocusManager().removeKeyEventDispatcher(keyDispatcher);
         mv.removeMouseListener(this);
         mv.removeMouseMotionListener(this);
         previewer.clear();
@@ -148,8 +155,23 @@ public class MaalausMapMode extends MapMode implements MaalausInfoWindow.ButtonL
     }
 
     // ----------------------------------------------------------------
-    // ButtonListener 实现（信息窗口按钮事件）
+    // UserEventListener 实现（信息窗口按钮事件）
     // ----------------------------------------------------------------
+
+    @Override
+    public void onAddCurveSec() {
+        MaalausState state = session.getState();
+        if (state != MaalausState.DRAW && state != MaalausState.INFO) return;
+
+        // DRAW 模式下 previewPoint 由 mouseMoved 更新，INFO 模式下由 onSecInputChanged 更新
+        // 两者均通过 service.setPreviewPoint() 写入 session
+        ColumbinaEN point = session.getPreviewPoint();
+        if (point == null) return;
+
+        service.addControlPoint(point);
+        service.confirmSec();
+        service.setPreviewPoint(null);
+    }
 
     @Override
     public void onUndo() {
@@ -168,9 +190,22 @@ public class MaalausMapMode extends MapMode implements MaalausInfoWindow.ButtonL
         service.abort();
     }
 
+    @Override
+    public void onSecInputChanged(SecDisplayData data) {
+        if (session.getState() != MaalausState.INFO) return;
+
+        // 根据输入参数反算完整的控制点（未来模式可能返回多个点，这里先以单点处理）
+        // 反算结果仅更新预览，不提交到待提交队列
+        ColumbinaEN newPoint = session.getSubMode().calculateControlPointFromDisplayData(session, data);
+        if (newPoint == null) return;
+
+        service.setPreviewPoint(newPoint);
+        // 这里不需要刷新，setPreviewPoint会触发"previewPoint" PCE → sessionListener → refreshPreview + repaint
+    }
+
 
     // ----------------------------------------------------------------
-    // 鼠标事件（MapMode 已实现 MouseListener + MouseMotionListener）
+    // 鼠标事件（MapMode已实现MouseListener和MouseMotionListener）
     // ----------------------------------------------------------------
 
     @Override
@@ -189,8 +224,7 @@ public class MaalausMapMode extends MapMode implements MaalausInfoWindow.ButtonL
         // 根据状态更新画布预览
         if (session.getState() == MaalausState.DRAW) {
             service.setPreviewPoint(mouseEN);
-            refreshPreview();
-            mv.repaint();
+            // 这里不需要刷新，因为setPreviewPoint内会触发状态监听器，里面会刷新
         }
     }
 
@@ -207,14 +241,13 @@ public class MaalausMapMode extends MapMode implements MaalausInfoWindow.ButtonL
         switch (state) {
             case INIT:
                 // 首次点击：设置起点和切线方向，进入收集状态
-                ColumbinaEN initialTangent = new ColumbinaEN(1, 0);
+                ColumbinaEN initialTangent = new ColumbinaEN(1, 0);  // TODO：如果凭空开始，可能没有切线方向，需要手动指定
                 service.startDrawing(clickEN, initialTangent);
-                // TODO：如果凭空开始，可能没有切线方向，需要手动指定
                 break;
             case DRAW:
-                // 添加控制点并确认当前段
+                // 添加待提交控制点并尝试确认当前段
                 service.addControlPoint(clickEN);
-                service.confirmSec();
+                service.confirmSec();  // 如果当前待提交控制点足够（直线1个、曲线多个等），就产生新曲段，否则无操作
                 service.setPreviewPoint(null);
                 break;
             default:
@@ -223,40 +256,47 @@ public class MaalausMapMode extends MapMode implements MaalausInfoWindow.ButtonL
     }
 
     // ----------------------------------------------------------------
-    // 键盘事件（内部 KeyListener）
+    // 键盘事件（全局KeyEventDispatcher，MapMode未实现）
     // ----------------------------------------------------------------
 
-    private class MaalausKeyHandler implements KeyListener {
+    private class MaalausKeyDispatcher implements KeyEventDispatcher {
         @Override
-        public void keyPressed(KeyEvent event) {
+        public boolean dispatchKeyEvent(KeyEvent event) {
+            // 只处理按下事件，释放和输入事件由正常的组件事件流处理
+            if (event.getID() != KeyEvent.KEY_PRESSED) return false;
+
+            // 获取当前焦点所属组件，判断是否为文本编辑器
+            Component focusOwner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
+
             switch (event.getKeyCode()) {
-                case KeyEvent.VK_ENTER:  // 完成绘制
+                case KeyEvent.VK_ESCAPE:  // 取消绘制（始终截获）
+                    service.abort();
+                    return true;
+
+                case KeyEvent.VK_ENTER:  // 完成绘制（始终截获）
                     if (!service.commitAll(20))
                         UtilsUI.warnInfo(I18n.tr("Cannot draw the line."));
-                    break;
-                case KeyEvent.VK_ESCAPE:  // 取消绘制
-                    service.abort();
-                    break;
-                case KeyEvent.VK_BACK_SPACE:  // 撤销上一段
-                    service.undoLastSec();
-                    break;
-                case KeyEvent.VK_SPACE:
+                    return true;
+
+                case KeyEvent.VK_SPACE:  // 切换 DRAW/INFO（始终截获）
                     if (session.getState() != MaalausState.INFO) service.pauseDrawing();
                     else service.continueDrawing();
-                    break;
+                    return true;
+
+                case KeyEvent.VK_BACK_SPACE:  // 撤销上一段（文本编辑器中放行）
+                    if (focusOwner instanceof JTextComponent) {
+                        return false;  // 让文本编辑器正常处理退格
+                    }
+                    service.undoLastSec();
+                    return true;
+
+                case KeyEvent.VK_TAB:  // 切换子模式
+                    // TODO：切换子模式
+                    return true;
+
                 default:
-                    break;
+                    return false;  // 放行所有其他按键
             }
-        }
-
-        @Override
-        public void keyReleased(KeyEvent event) {
-            // 未使用
-        }
-
-        @Override
-        public void keyTyped(KeyEvent event) {
-            // 未使用
         }
     }
 
@@ -283,6 +323,9 @@ public class MaalausMapMode extends MapMode implements MaalausInfoWindow.ButtonL
         previewer.setCommittedPoints(committed);
 
         // 当前段预览：从起点到鼠标位置的直线
+        // TODO：未来扩展模式后重构为由曲段根据参数计算需要渲染的预览直线/曲线的（静态？）方法，
+        //  这里改为调用模式对应的曲段的根据参数需要计算渲染对象的方法
+        //  抽象曲段类添加这个计算预览方法，具体曲段实施
         List<ColumbinaEN> pending = session.getPendingControlPoints();
         ColumbinaEN previewTarget = !pending.isEmpty()
             ? pending.get(pending.size() - 1)

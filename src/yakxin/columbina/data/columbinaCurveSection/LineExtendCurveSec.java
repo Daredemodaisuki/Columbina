@@ -44,4 +44,18 @@ public class LineExtendCurveSec extends AbstractCurveSec {
         bearingDeg = (bearingDeg % 360 + 360) % 360;
         return new LineExtendDisplayData(bearingDeg, dist);
     }
+
+    /**
+     * 根据起点、方位角和长度反算控制点（终点）坐标
+     * @param start 起点坐标
+     * @param bearingDeg 方位角（度，东为0，北正南负）
+     * @param lengthM 长度
+     * @return 控制点坐标
+     */
+    public static ColumbinaEN calculateControlPoint(ColumbinaEN start, double bearingDeg, double lengthM) {
+        // TODO：传具体的参数值还是甩LineExtendDisplayData？
+        if (start == null) return null;
+        double bearingRad = Math.toRadians(bearingDeg);
+        return start.walk(bearingRad, lengthM);
+    }
 }
