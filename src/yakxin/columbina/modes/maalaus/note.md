@@ -40,9 +40,9 @@
   - 子模式枚举（`LINE_EXTEND`、`ARC_EXTEND`、`PI_ARC_EXTEND`）
   - 提供`createSecInfoPanel()`由各子模式常量自行覆写，返回对应的`SecInfoPanel`实例（零参构造，不依赖 Controller）
   - 提供`createCurveSec(ColumbinaEN, ColumbinaEN, List<ColumbinaEN>)`由各子模式常量自行覆写，将起点、切线和控制点列表转化为对应的曲段实例，供[MaalausDrawingService](MaalausDrawingService.java)的`confirmSec`调用；新增子模式时`DrawingService`无需修改
-  - 提供`extractDisplayData(MaalausSessionData)`由各子模式常量自行覆写，将 session 原始数据转换为不可变的`SecDisplayData` DTO
+  - 提供`extractDisplayData(ColumbinaEN, List<ColumbinaEN>)`由各子模式常量自行覆写，将起点和待提交控制点列表转换为不可变的`SecDisplayData` DTO
   - `extractDisplayData()`中透过曲段类的静态方法（如`LineExtendCurveSec.calculateDisplayData()`）完成具体计算，保持职责向曲段类集中
-  - 提供`generateAllControlPoints(MaalausSessionData, SecDisplayData)`由各子模式常量自行覆写，从完整参数生成全部控制点，统一替代原有的`calculateControlPointFromDisplayData`（已移除）；INFO 状态下编辑输入框时取最后一个点作为预览点，点击「添加曲段」时则清空待提交列表后逐个添加
+  - 提供`generateAllControlPoints(ColumbinaEN, SecDisplayData)`由各子模式常量自行覆写，从完整参数生成全部控制点，统一替代原有的`calculateControlPointFromDisplayData`（已移除）；INFO 状态下编辑输入框时取最后一个点作为预览点，点击「添加曲段」时则清空待提交列表后逐个添加
   - 持有子模式所需的控制点数量和操作提示文本
 - [SecInfoPanel](secInfoPanel/SecInfoPanel.java)〔View / 接口〕：
   - 曲段信息面板接口，定义`getPanel()`、`updateValues(SecDisplayData)`、`setEditable(boolean)`、`requestFieldFocus()`

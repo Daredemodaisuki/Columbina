@@ -18,8 +18,8 @@ import yakxin.columbina.data.ColumbinaEN;
 public class MaalausSessionData {
     private MaalausState state = MaalausState.INIT;
     private MaalausSubMode subMode = MaalausSubMode.LINE_EXTEND;
-    private ColumbinaEN startAnchor;
-    private ColumbinaEN startTangent;
+    private ColumbinaEN startAnchor;  // 当前起点坐标
+    private ColumbinaEN startTangent;  // 当前起点方向矢量
     private final List<AbstractCurveSec> secs = new ArrayList<>();
     private final List<ColumbinaEN> pendingControlPoints = new ArrayList<>();
     private ColumbinaEN previewPoint;

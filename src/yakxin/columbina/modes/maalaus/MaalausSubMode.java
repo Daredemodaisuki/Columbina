@@ -13,7 +13,7 @@ import yakxin.columbina.modes.maalaus.secInfoPanel.SecInfoPanel;
 
 /**
  * Maalaus 绘制模式的子模式枚举
- * <p> 其中extractDisplayData()系Maalaus Model->View中间的数据转换器，所以该文件需要引用MaalausSessionData，但不持有数据，
+ * <p> extractDisplayData()系Maalaus Model->View中间的数据转换器，
  *     由Controller（MaalausMapMode）委托View调用（MaalausInfoWindow.updateSecInfoValues()）
  * <p> 每个子模式定义了该模式下完成一段曲段所需的控制点数量。
  */
@@ -34,23 +34,21 @@ public enum MaalausSubMode {
         }
 
         @Override
-        public SecDisplayData extractDisplayData(MaalausSessionData session) {
-            ColumbinaEN start = session.getStartAnchor();
-            if (start == null) return null;
-
-            ColumbinaEN end = !session.getPendingControlPoints().isEmpty()
-                    ? session.getPendingControlPoints().get(session.getPendingControlPoints().size() - 1)
-                    : session.getPreviewPoint();
-            return LineExtendCurveSec.calculateDisplayData(start, end);
+        public SecDisplayData extractDisplayData(ColumbinaEN startAnchor, List<ColumbinaEN> controlPoints) {
+            if (startAnchor == null) return null;
+            ColumbinaEN end = !controlPoints.isEmpty()
+                    ? controlPoints.get(controlPoints.size() - 1)
+                    : null;
+            if (end == null) return null;
+            return LineExtendCurveSec.calculateDisplayData(startAnchor, end);
         }
 
         @Override
-        public List<ColumbinaEN> generateAllControlPoints(MaalausSessionData session, SecDisplayData data) {
+        public List<ColumbinaEN> generateAllControlPoints(ColumbinaEN startAnchor, SecDisplayData data) {
             if (!(data instanceof LineExtendDisplayData)) return List.of();
-            ColumbinaEN start = session.getStartAnchor();
-            if (start == null) return List.of();
+            if (startAnchor == null) return List.of();
             LineExtendDisplayData led = (LineExtendDisplayData) data;
-            ColumbinaEN cp = LineExtendCurveSec.calculateControlPoint(start, led.bearingDeg, led.lengthM);
+            ColumbinaEN cp = LineExtendCurveSec.calculateControlPoint(startAnchor, led.bearingDeg, led.lengthM);
             if (cp == null) return List.of();
             return List.of(cp);
         }
@@ -72,12 +70,12 @@ public enum MaalausSubMode {
         }
 
         @Override
-        public SecDisplayData extractDisplayData(MaalausSessionData session) {
+        public SecDisplayData extractDisplayData(ColumbinaEN startAnchor, List<ColumbinaEN> controlPoints) {
             return null;
         }
 
         @Override
-        public List<ColumbinaEN> generateAllControlPoints(MaalausSessionData session, SecDisplayData data) {
+        public List<ColumbinaEN> generateAllControlPoints(ColumbinaEN startAnchor, SecDisplayData data) {
             return List.of();
         }
     },
@@ -100,12 +98,12 @@ public enum MaalausSubMode {
         }
 
         @Override
-        public SecDisplayData extractDisplayData(MaalausSessionData session) {
+        public SecDisplayData extractDisplayData(ColumbinaEN startAnchor, List<ColumbinaEN> controlPoints) {
             return null;
         }
 
         @Override
-        public List<ColumbinaEN> generateAllControlPoints(MaalausSessionData session, SecDisplayData data) {
+        public List<ColumbinaEN> generateAllControlPoints(ColumbinaEN startAnchor, SecDisplayData data) {
             return List.of();
         }
     };
@@ -152,21 +150,22 @@ public enum MaalausSubMode {
     abstract public AbstractCurveSec createCurveSec(ColumbinaEN startAnchor, ColumbinaEN startTangent, List<ColumbinaEN> controlPoints);
 
     /**
-     * 从当前 session 提取子模式特有的显示数据
-     * <p>各枚举常量将 session 中的原始数据转换为不可变的 {@link SecDisplayData} 对象，
+     * 根据起点和控制点列表提取子模式特有的显示数据
+     * <p>各枚举常量将起点和控制点列表转换为不可变的 {@link SecDisplayData} 对象，
      * 供信息面板的 {@link SecInfoPanel#updateValues(SecDisplayData)} 消费。
-     * @param session 当前会话数据
+     * @param startAnchor          当前段起点
+     * @param controlPoints 当前待提交控制点列表（子模式按需取用）
      * @return 显示数据对象，返回 {@code null} 表示无数据可显示
      */
-    abstract public SecDisplayData extractDisplayData(MaalausSessionData session);
+    abstract public SecDisplayData extractDisplayData(ColumbinaEN startAnchor, List<ColumbinaEN> controlPoints);
 
     /**
      * 根据完整的显示数据生成该子模式所需的全部控制点
      * <p>INFO 状态下用户点击「添加曲段」时调用，清空当前待提交列表后依次添加返回的每个点。
      * 在 INFO 状态下编辑输入框时，取列表中的最后一个点作为预览点。
-     * @param session 当前会话数据
+     * @param startAnchor 当前段起点
      * @param data 显示数据（由输入框解析而来）
      * @return 控制点列表（空列表表示无法生成）
      */
-    abstract public List<ColumbinaEN> generateAllControlPoints(MaalausSessionData session, SecDisplayData data);
+    abstract public List<ColumbinaEN> generateAllControlPoints(ColumbinaEN startAnchor, SecDisplayData data);
 }

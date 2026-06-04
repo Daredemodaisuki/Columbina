@@ -24,6 +24,7 @@ import org.openstreetmap.josm.tools.Shortcut;
 
 import yakxin.columbina.data.ColumbinaEN;
 import yakxin.columbina.abstractClasses.AbstractCurveSec;
+import yakxin.columbina.data.dto.modelsDTO.maalaus.LineExtendDisplayData;
 import yakxin.columbina.data.dto.modelsDTO.maalaus.SecDisplayData;
 import yakxin.columbina.utils.UtilsUI;
 import yakxin.columbina.utils.utilsView.Previewer;
@@ -72,7 +73,11 @@ public class MaalausMapMode extends MapMode implements MaalausInfoWindow.UserEve
                 }
                 // 进入INFO时缓存当前显示数据，确保不修改输入框直接点击「添加曲段」时lastDisplayData不为null
                 if (newState == MaalausState.INFO) {
-                    lastDisplayData = session.getSubMode().extractDisplayData(session);
+                    // 参数通过已确定的待提交控制点+进入INFO前在DRAW下最后一个跟随鼠标滑动的待提交控制点决定
+                    // TODO：把「合并已确定的待提交控制点+最后一个跟随鼠标滑动的待提交控制点」提取为方法「取临预览待提交控制点」
+                    List<ColumbinaEN> pendingControlPointsForUpdate = new ArrayList<>(session.getPendingControlPoints());
+                    pendingControlPointsForUpdate.add(session.getPreviewPoint());
+                    lastDisplayData = session.getSubMode().extractDisplayData(session.getStartAnchor(), pendingControlPointsForUpdate);
                 }
             }
             // 更新信息面板内容
@@ -110,7 +115,7 @@ public class MaalausMapMode extends MapMode implements MaalausInfoWindow.UserEve
         mv.addMouseListener(this);
         mv.addMouseMotionListener(this);
 
-        // 注册全局键盘事件分发器（可截获发往任意组件的按键，解决 InfoWindow 聚焦后快捷键失效的问题）
+        // 注册全局键盘事件分发器（可截获发往任意组件的按键，解决InfoWindow聚焦后快捷键失效的问题）
         KeyboardFocusManager.getCurrentKeyboardFocusManager().addKeyEventDispatcher(keyDispatcher);
         mv.setFocusable(true);
         requestFocusInMapView();
@@ -120,7 +125,7 @@ public class MaalausMapMode extends MapMode implements MaalausInfoWindow.UserEve
         updateInfoWindowPosition(MouseInfo.getPointerInfo().getLocation().x, MouseInfo.getPointerInfo().getLocation().y);
         infoWindow.setVisible(true);
         infoWindow.rebuildSecInfo(session.getSubMode());
-        infoWindow.updateSecInfoValues(session.getSubMode().extractDisplayData(session));
+        infoWindow.updateSecInfoValues(session.getSubMode().extractDisplayData(session.getStartAnchor(), session.getPendingControlPoints()));
 
         // 监听会话属性变更以刷新预览和窗口
         session.addPropertyChangeListener(sessionListener);
@@ -163,16 +168,18 @@ public class MaalausMapMode extends MapMode implements MaalausInfoWindow.UserEve
     // UserEventListener 实现（信息窗口按钮事件）
     // ----------------------------------------------------------------
 
+    /**
+     * 仅INFO状态下按添加曲段按钮触发
+     * 根据子面板输入框中的参数（lastDisplayData，输入框修改时窗口通过监听器调用onSecInputChanged传来的data）生成所有控制点，清空并重算
+     */
     @Override
     public void onAddCurveSec() {
-        MaalausState state = session.getState();
-        if (state != MaalausState.INFO) return;
-        
-        // INFO 模式：从完整参数生成所有控制点，清空并重算
-        if (lastDisplayData == null) return;
-        List<ColumbinaEN> allCPs = session.getSubMode().generateAllControlPoints(session, lastDisplayData);
+        // TODO：检查参数合规性
+        if (session.getState() != MaalausState.INFO || lastDisplayData == null) return;
+
+        List<ColumbinaEN> allCPs = session.getSubMode().generateAllControlPoints(session.getStartAnchor(), lastDisplayData);
         if (allCPs.isEmpty()) return;
-        
+
         service.clearPendingControlPoints();
         for (ColumbinaEN cp : allCPs) {
             service.addControlPoint(cp);
@@ -202,15 +209,15 @@ public class MaalausMapMode extends MapMode implements MaalausInfoWindow.UserEve
     public void onSecInputChanged(SecDisplayData data) {
         if (session.getState() != MaalausState.INFO) return;
 
-        // 保存最近一次输入的完整参数，供 onAddCurveSec INFO 路径使用
+        // 保存最近一次输入的完整参数，供onAddCurveSec使用
         this.lastDisplayData = data;
 
         // 由参数生成全部控制点，用最后一个作为预览点
-        List<ColumbinaEN> allCPs = session.getSubMode().generateAllControlPoints(session, data);
+        List<ColumbinaEN> allCPs = session.getSubMode().generateAllControlPoints(session.getStartAnchor(), data);
         if (allCPs.isEmpty()) return;
 
         service.setPreviewPoint(allCPs.get(allCPs.size() - 1));
-        // setPreviewPoint 会触发 "previewPoint" PCE → sessionListener → refreshPreview + repaint
+        // setPreviewPoint会触发"previewPoint" PCE → sessionListener → refreshPreview + repaint
     }
 
 
@@ -229,7 +236,13 @@ public class MaalausMapMode extends MapMode implements MaalausInfoWindow.UserEve
         // 更新信息窗口位置、子模式信息面板
         if (session.getState() != MaalausState.INFO && infoWindow != null && infoWindow.isVisible()) {
             updateInfoWindowPosition(event.getXOnScreen(), event.getYOnScreen());
-            infoWindow.updateSecInfoValues(session.getSubMode().extractDisplayData(session));
+            // 需要只差1个控制点时才在输入框计算预览参数，此时参数通过已确定的待提交控制点+最后一个跟随鼠标滑动的待提交控制点决定
+            // TODO：未来如果存在只需要部分控制点就可以先行计算部分参数的模式，则考虑在updateSecInfoValues里面做判断，并计算可计算的参数
+            if (session.getPendingControlPoints().size() == session.getSubMode().getRequiredPointCount() - 1) {
+                List<ColumbinaEN> pendingControlPointsForUpdate = new ArrayList<>(session.getPendingControlPoints());
+                pendingControlPointsForUpdate.add(session.getPreviewPoint());
+                infoWindow.updateSecInfoValues(session.getSubMode().extractDisplayData(session.getStartAnchor(), pendingControlPointsForUpdate));
+            }
         }
         // 根据状态更新画布预览
         if (session.getState() == MaalausState.DRAW) {
