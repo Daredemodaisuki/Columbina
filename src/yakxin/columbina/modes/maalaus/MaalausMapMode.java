@@ -74,10 +74,14 @@ public class MaalausMapMode extends MapMode implements MaalausInfoWindow.UserEve
                 // 进入INFO时缓存当前显示数据，确保不修改输入框直接点击「添加曲段」时lastDisplayData不为null
                 if (newState == MaalausState.INFO) {
                     // 参数通过已确定的待提交控制点+进入INFO前在DRAW下最后一个跟随鼠标滑动的待提交控制点决定
-                    // TODO：把「合并已确定的待提交控制点+最后一个跟随鼠标滑动的待提交控制点」提取为方法「取临预览待提交控制点」
+                    // TODO：把「合并已确定的待提交控制点+最后一个跟随鼠标滑动的待提交控制点（预览点）」提取为方法「取临预览待提交控制点」
                     List<ColumbinaEN> pendingControlPointsForUpdate = new ArrayList<>(session.getPendingControlPoints());
                     pendingControlPointsForUpdate.add(session.getPreviewPoint());
-                    lastDisplayData = session.getSubMode().extractDisplayData(session.getStartAnchor(), pendingControlPointsForUpdate);
+                    // 尝试根据现有待提交控制点计算精准参数，如果可以计算，则缓存参数
+                    // 如果不判断，按下左键画曲段后不移动立即按空格INFO，由于confirmSec后临时状态都被清空，extractDisplayData返回null，lastDisplayData=null
+                    // 此时无法在窗口中点添加按钮添加同样参数的曲段
+                    SecDisplayData tryToCalculate = session.getSubMode().extractDisplayData(session.getStartAnchor(), pendingControlPointsForUpdate);
+                    lastDisplayData = tryToCalculate != null ? tryToCalculate : lastDisplayData;
                 }
             }
             // 更新信息面板内容
@@ -241,7 +245,10 @@ public class MaalausMapMode extends MapMode implements MaalausInfoWindow.UserEve
             if (session.getPendingControlPoints().size() == session.getSubMode().getRequiredPointCount() - 1) {
                 List<ColumbinaEN> pendingControlPointsForUpdate = new ArrayList<>(session.getPendingControlPoints());
                 pendingControlPointsForUpdate.add(session.getPreviewPoint());
-                infoWindow.updateSecInfoValues(session.getSubMode().extractDisplayData(session.getStartAnchor(), pendingControlPointsForUpdate));
+                // 尝试根据现有待提交控制点计算精准参数，如果可以计算，则缓存参数，并向面板推送
+                SecDisplayData tryToCalculate = session.getSubMode().extractDisplayData(session.getStartAnchor(), pendingControlPointsForUpdate);
+                lastDisplayData = tryToCalculate != null ? tryToCalculate : lastDisplayData;
+                infoWindow.updateSecInfoValues(lastDisplayData);
             }
         }
         // 根据状态更新画布预览
