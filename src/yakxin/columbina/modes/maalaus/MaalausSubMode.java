@@ -1,5 +1,6 @@
 package yakxin.columbina.modes.maalaus;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import org.openstreetmap.josm.tools.I18n;
@@ -10,6 +11,7 @@ import yakxin.columbina.data.dto.modelsDTO.maalaus.LineExtendDisplayData;
 import yakxin.columbina.data.dto.modelsDTO.maalaus.SecDisplayData;
 import yakxin.columbina.modes.maalaus.secInfoPanel.LineExtendSecInfoPanel;
 import yakxin.columbina.modes.maalaus.secInfoPanel.SecInfoPanel;
+import yakxin.columbina.utils.utilsView.Previewer;
 
 /**
  * Maalaus 绘制模式的子模式枚举
@@ -52,10 +54,23 @@ public enum MaalausSubMode {
             if (cp == null) return List.of();
             return List.of(cp);
         }
+
+        @Override
+        public ColumbinaEN calculatePendingControlPoint(ColumbinaEN startAnchor, ColumbinaEN startTangent,
+                                                        ColumbinaEN mousePos, List<ColumbinaEN> currentPendingCPs) {
+            return mousePos;  // LINE: 恒等映射，鼠标位置即为控制点
+        }
+
+        @Override
+        public List<Previewer.Renderable> calculatePreviewGeometry(ColumbinaEN startAnchor, ColumbinaEN startTangent,
+                                                                    List<ColumbinaEN> pendingCPs, ColumbinaEN previewCP) {
+            return List.of();  // LINE: 无需辅助几何
+        }
     },
-    // 起点曲线延伸：需要1个控制点
+    // 起点曲线延伸：需要2个控制点
     ARC_EXTEND(
-            1,
+            2,
+            // TODO：按照新需求修改描述
             I18n.tr("Mouse click to determine the control point that determines the central angle of the curve.\n")
                     + I18n.tr("The turning direction (left/right or counter/clockwise) will be decided based on whether the control point lies to the left or right side of the current curve's extension line.")
     ) {
@@ -77,6 +92,18 @@ public enum MaalausSubMode {
         @Override
         public List<ColumbinaEN> generateAllControlPoints(ColumbinaEN startAnchor, SecDisplayData data) {
             return List.of();
+        }
+
+        @Override
+        public ColumbinaEN calculatePendingControlPoint(ColumbinaEN startAnchor, ColumbinaEN startTangent,
+                                                        ColumbinaEN mousePos, List<ColumbinaEN> currentPendingCPs) {
+            return mousePos;  // TODO: 实现 ARC_EXTEND 的几何变换（法线投影/圆弧交点）
+        }
+
+        @Override
+        public List<Previewer.Renderable> calculatePreviewGeometry(ColumbinaEN startAnchor, ColumbinaEN startTangent,
+                                                                    List<ColumbinaEN> pendingCPs, ColumbinaEN previewCP) {
+            return List.of();  // TODO: 实现 ARC_EXTEND 的辅助几何（法线/圆心/转角线/弧）
         }
     },
     // 交点曲线延伸：需要2个控制点（交点+方向点）
@@ -105,6 +132,18 @@ public enum MaalausSubMode {
         @Override
         public List<ColumbinaEN> generateAllControlPoints(ColumbinaEN startAnchor, SecDisplayData data) {
             return List.of();
+        }
+
+        @Override
+        public ColumbinaEN calculatePendingControlPoint(ColumbinaEN startAnchor, ColumbinaEN startTangent,
+                                                        ColumbinaEN mousePos, List<ColumbinaEN> currentPendingCPs) {
+            return mousePos;  // TODO: 实现 PI_ARC_EXTEND 的几何变换
+        }
+
+        @Override
+        public List<Previewer.Renderable> calculatePreviewGeometry(ColumbinaEN startAnchor, ColumbinaEN startTangent,
+                                                                    List<ColumbinaEN> pendingCPs, ColumbinaEN previewCP) {
+            return List.of();  // TODO: 实现 PI_ARC_EXTEND 的辅助几何
         }
     };
 
@@ -168,4 +207,38 @@ public enum MaalausSubMode {
      * @return 控制点列表（空列表表示无法生成）
      */
     abstract public List<ColumbinaEN> generateAllControlPoints(ColumbinaEN startAnchor, SecDisplayData data);
+
+    /**
+     * 根据鼠标位置和当前状态计算派生控制点
+     * <p>子模式将鼠标原始坐标映射为实际控制点（如法线投影、圆弧交点等）。
+     * <p>DRAW 状态下鼠标移动和点击时由 Controller 调用，结果用于设置预览点和添加控制点。
+     * @param startAnchor 当前段起点
+     * @param startTangent 当前段起点切线方向
+     * @param mousePos 鼠标原始坐标
+     * @param currentPendingCPs 当前已确定的待提交控制点列表
+     * @return 派生控制点坐标
+     */
+    abstract public ColumbinaEN calculatePendingControlPoint(
+            ColumbinaEN startAnchor,
+            ColumbinaEN startTangent,
+            ColumbinaEN mousePos,
+            List<ColumbinaEN> currentPendingCPs
+    );
+
+    /**
+     * 计算当前阶段的辅助几何渲染原语
+     * <p>子模式返回辅助几何对象列表（法线、圆心、转角线、弧预览等），
+     * 由 {@link Previewer#setRenderables(List)} 统一点绘。
+     * @param startAnchor 当前段起点
+     * @param startTangent 当前段起点切线方向
+     * @param pendingCPs 当前已确定的待提交控制点列表
+     * @param previewCP 当前预览控制点（派生后）
+     * @return 辅助几何渲染原语列表
+     */
+    abstract public List<Previewer.Renderable> calculatePreviewGeometry(
+            ColumbinaEN startAnchor,
+            ColumbinaEN startTangent,
+            List<ColumbinaEN> pendingCPs,
+            ColumbinaEN previewCP
+    );
 }

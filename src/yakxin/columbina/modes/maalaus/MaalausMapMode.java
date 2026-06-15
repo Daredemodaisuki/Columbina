@@ -253,7 +253,10 @@ public class MaalausMapMode extends MapMode implements MaalausInfoWindow.UserEve
         }
         // 根据状态更新画布预览
         if (session.getState() == MaalausState.DRAW) {
-            service.setPreviewPoint(mouseEN);
+            ColumbinaEN derivedCP = session.getSubMode().calculatePendingControlPoint(
+                    session.getStartAnchor(), session.getStartTangent(), mouseEN,
+                    session.getPendingControlPoints());
+            service.setPreviewPoint(derivedCP);
             // 这里不需要刷新，因为setPreviewPoint内会触发状态监听器，里面会刷新
         }
     }
@@ -276,7 +279,10 @@ public class MaalausMapMode extends MapMode implements MaalausInfoWindow.UserEve
                 break;
             case DRAW:
                 // 添加待提交控制点并尝试确认当前段
-                service.addControlPoint(clickEN);
+                ColumbinaEN derivedCP = session.getSubMode().calculatePendingControlPoint(
+                        session.getStartAnchor(), session.getStartTangent(), clickEN,
+                        session.getPendingControlPoints());
+                service.addControlPoint(derivedCP);
                 service.confirmSec();  // 如果当前待提交控制点足够（直线1个、曲线多个等），就产生新曲段，否则无操作
                 service.setPreviewPoint(null);
                 break;
@@ -368,6 +374,11 @@ public class MaalausMapMode extends MapMode implements MaalausInfoWindow.UserEve
         } else {
             previewer.setPreview(null, null);
         }
+
+        // 辅助几何渲染原语（法线虚线/圆心标记/转角线等）—— 由子模式计算、Previewer 统一绘制
+        List<Previewer.Renderable> geo = session.getSubMode().calculatePreviewGeometry(
+                start, session.getStartTangent(), pending, previewTarget);
+        previewer.setRenderables(geo);
     }
 
     /**
