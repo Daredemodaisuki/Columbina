@@ -6,7 +6,8 @@
   - 在Maalaus模式时，监听键鼠，发生键鼠事件时检查状态，根据状态：
     - 调用[MaalausDrawingService](MaalausDrawingService.java)的业务方法（如`startDrawing`、添加控制点、提交曲段）
     - 状态机控制，调用[MaalausDrawingService](MaalausDrawingService.java)的状态变更方法（如`pauseDrawing`、`continueDrawing`）
-    - 设置[Previewer](Previewer.java)中需要画布绘制预览的数据
+    - **鼠标坐标→控制点的变换委托给子模式**：`mouseMoved`/`mouseClicked` 调用 `submode.calculatePendingControlPoint()` 获得派生控制点后再传入 Service，不再直写原始鼠标坐标
+    - **预览渲染委托给子模式**：`refreshPreview` 中调用 `submode.calculatePreviewGeometry()` 获取 `Renderable` 列表，通过 `Previewer.setRenderables()` 统一点绘；不再硬编码 `generateLinePreview()`
   - 实现[MaalausInfoWindow](MaalausInfoWindow.java)的`UserEventListener`接口，作为信息窗口按钮事件和输入框变更事件的统一入口
   - 暂存`lastDisplayData`（最近一次输入的完整参数），供 INFO 模式下点击「添加曲段」时通过`generateAllControlPoints`清空并重算所有控制点
   - 键盘事件通过`KeyEventDispatcher`全局拦截，确保 InfoWindow 组件获得焦点时快捷键（Space/ESC/Enter/Tab）仍然生效
@@ -31,19 +32,23 @@
   - 按钮事件和输入框变更事件通过`UserEventListener`接口向外通知，不持有任何 Controller 或 Service 引用
   - 不依赖`MaalausSessionData`，对外仅接收`SecDisplayData` DTO
 - [Previewer](Previewer.java)〔View〕：
-  - 持有需要预览的数据和预览数据的修改方法
+  - 持有需要预览的数据和预览数据的修改方法（`setPreview`、`setCommittedPoints`、`setStartPoint`）
+  - 新增 `Renderable` 接口及 `RenderableLine`/`RenderablePoint` 实现，支持子模式通过 `setRenderables()` 注入辅助几何渲染原语（法线、圆心、转角线、预览线等）
+  - 当前段预览线已整合至 `Renderable` 管道，不再由 `previewPoints` 通道提供
   - 画布预览实施，由外部调用（通过`MapView.addTemporaryLayer()`注册）
 - [MaalausState](MaalausState.java)：
   - 状态枚举（`INIT`、`DRAW`、`INFO`、`DONE`、`ABORT`）
   - 持有各状态的外显描述文本和操作提示
 - [MaalausSubMode](MaalausSubMode.java)〔Strategy / 工厂〕：
   - 子模式枚举（`LINE_EXTEND`、`ARC_EXTEND`、`PI_ARC_EXTEND`）
-  - 提供`createSecInfoPanel()`由各子模式常量自行覆写，返回对应的`SecInfoPanel`实例（零参构造，不依赖 Controller）
-  - 提供`createCurveSec(ColumbinaEN, ColumbinaEN, List<ColumbinaEN>)`由各子模式常量自行覆写，将起点、切线和控制点列表转化为对应的曲段实例，供[MaalausDrawingService](MaalausDrawingService.java)的`confirmSec`调用；新增子模式时`DrawingService`无需修改
-  - 提供`extractDisplayData(ColumbinaEN, List<ColumbinaEN>)`由各子模式常量自行覆写，将起点和待提交控制点列表转换为不可变的`SecDisplayData` DTO
-  - `extractDisplayData()`中透过曲段类的静态方法（如`LineExtendCurveSec.calculateDisplayData()`）完成具体计算，保持职责向曲段类集中
-  - 提供`generateAllControlPoints(ColumbinaEN, SecDisplayData)`由各子模式常量自行覆写，从完整参数生成全部控制点，统一替代原有的`calculateControlPointFromDisplayData`（已移除）；INFO 状态下编辑输入框时取最后一个点作为预览点，点击「添加曲段」时则清空待提交列表后逐个添加
-  - 持有子模式所需的控制点数量和操作提示文本
+  - 四个原有抽象方法：
+    - `createSecInfoPanel()` — 返回对应子模式信息面板
+    - `createCurveSec()` — 将起点、切线、控制点列表转化为曲段实例
+    - `extractDisplayData()` — 将起点+控制点列表转为 DTO
+    - `generateAllControlPoints()` — 从完整参数生成全部控制点
+  - **新增两个抽象方法**，将控制点变换和预览几何计算委托给子模式：
+    - `calculatePendingControlPoint(startAnchor, startTangent, mousePos, currentPendingCPs)` — 将鼠标坐标映射为实际控制点（法线投影、圆弧交点等），`LINE_EXTEND` 为恒等映射
+    - `calculatePreviewGeometry(startAnchor, startTangent, pendingCPs, previewCP)` — 返回 `List<Previewer.Renderable>`，包含当前段预览线 + 辅助几何（法线、圆心、转角线等），`LINE_EXTEND` 返回蓝色预览线，`ARC_EXTEND`/`PI_ARC_EXTEND` 待实现
 - [SecInfoPanel](secInfoPanel/SecInfoPanel.java)〔View / 接口〕：
   - 曲段信息面板接口，定义`getPanel()`、`updateValues(SecDisplayData)`、`setEditable(boolean)`、`requestFieldFocus()`
   - 面板不持有任何业务引用，数据通过 DTO 传入

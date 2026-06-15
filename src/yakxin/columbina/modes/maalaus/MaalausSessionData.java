@@ -22,7 +22,7 @@ public class MaalausSessionData {
     private ColumbinaEN startTangent;  // 当前起点方向矢量
     private final List<AbstractCurveSec> secs = new ArrayList<>();
     private final List<ColumbinaEN> pendingControlPoints = new ArrayList<>();
-    private ColumbinaEN previewPoint;
+    private ColumbinaEN previewPoint;  // 未确认的预览控制点 ，即跟随鼠标的派生坐标
     private final PropertyChangeSupport propertyEventSource = new PropertyChangeSupport(this);
 
     // ----------------------------------------------------------------

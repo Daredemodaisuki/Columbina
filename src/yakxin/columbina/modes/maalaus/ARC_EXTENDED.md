@@ -206,7 +206,7 @@ mouseMoved(mouseEN)
   │    renderables = submode.calculatePreviewGeometry(
   │        startAnchor, startTangent, pendingCPs, derivedCP)
   │    previewer.setRenderables(renderables)         ← 由 Renderable 接口统一绘制
-  │    previewer.setPreview(curvePoints, controls)   ← 曲线预览点仍用现有通道（可选）
+  │    previewer.setPreview(controls)                ← 仅控制点标记
   │
   └─④ mapView.repaint()（由 PCE 自动触发）
 
@@ -270,19 +270,17 @@ MaalausMapMode.refreshPreview()
 
 | 内容 | 以前（直线）| 改造后（ARC_EXTEND）|
 |------|-----------|-------------------|
-| **预览线**（蓝色半透明） | `MaalausMapMode.generateLinePreview()` 硬编码直线 | `calculatePreviewGeometry` 返回的 `RenderableLine`（含圆弧采样点）|
+| **预览线**（蓝色半透明） | `MaalausMapMode.generateLinePreview()`（已移除，合并至子模式`calculatePreviewGeometry`返回直线采样点） | `calculatePreviewGeometry` 返回的 `RenderableLine`（含圆弧采样点）|
 | **辅助几何**（法线/圆心/转角线） | 不存在 | `calculatePreviewGeometry` 返回的 `RenderableLine`/`RenderablePoint` |
 
 `MaalausMapMode.refreshPreview()` 中的对应调整：
 
 ```java
-// 旧：硬编码直线预览
-List<ColumbinaEN> previewPoints = generateLinePreview(start, target);
-
-// 新：委托给子模式（同时获得辅助几何 + 曲线预览点）
+// 全部委托给子模式（预览线 + 辅助几何统一由 Renderable 管道）
 List<Previewer.Renderable> geo = submode.calculatePreviewGeometry(
     start, startTangent, pendingCPs, previewTarget);
-previewer.setRenderables(geo);
+previewer.setRenderables(geo);            // 预览线、法线、圆心等全部在此
+previewer.setPreview(controls);              // 仅控制点标记走原通道
 ```
 
 #### Previewer 的 `Renderable` 接口
@@ -323,11 +321,10 @@ public class Previewer implements MapViewPaintable {
 #### 绘制顺序（paint 方法）
 
 ```
-1. 已完成曲段（绿色实线）                    ← committedPoints（不变）
-2. 辅助几何（法线虚线/圆心标记/转角线）        ← renderables（★新增）
-3. 当前段预览线（蓝色半透明）                 ← previewPoints（或整合入 renderables）
-4. 起点标记（蓝色圆）                        ← startPoint（不变）
-5. 控制点标记（红色圆）                      ← controlPoints（不变）
+1. 已完成曲段（绿色实线）                    ← committedPoints
+2. 辅助几何 + 当前段预览线（法线/圆心/转角线/蓝色预览线等）  ← renderables（预览线已整合至此）
+3. 起点标记（蓝色圆点）                      ← startPoint
+4. 控制点标记（红色圆点）                    ← controlPoints
 ```
 
 #### ARC_EXTEND 的 `calculatePreviewGeometry` 实现

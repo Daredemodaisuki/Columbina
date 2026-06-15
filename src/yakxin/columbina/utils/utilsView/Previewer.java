@@ -24,7 +24,6 @@ import yakxin.columbina.data.ColumbinaEN;
  * Previewer 统一绘制，不感知具体子模式类型。
  */
 public class Previewer implements MapViewPaintable {
-    private List<ColumbinaEN> previewPoints = Collections.emptyList();  // 当前段预览点列（起点到鼠标/控制点之间的采样点）
     private List<ColumbinaEN> controlPoints = Collections.emptyList();  // 控制点标记（当前段的端控制点）
     private List<ColumbinaEN> committedPoints = Collections.emptyList();  // 已完成曲段的预览点列
     private ColumbinaEN startPoint;  // 起点标记
@@ -35,14 +34,10 @@ public class Previewer implements MapViewPaintable {
     // ================================================================
 
     /**
-     * 设置当前预览数据
-     * @param preview 当前段预览点列
+     * 设置当前控制点标记
      * @param controls 控制点列表
      */
-    public void setPreview(List<ColumbinaEN> preview, List<ColumbinaEN> controls) {
-        this.previewPoints = preview != null
-            ? Collections.unmodifiableList(new ArrayList<>(preview))
-            : Collections.emptyList();
+    public void setPreview(List<ColumbinaEN> controls) {
         this.controlPoints = controls != null
             ? Collections.unmodifiableList(new ArrayList<>(controls))
             : Collections.emptyList();
@@ -82,7 +77,6 @@ public class Previewer implements MapViewPaintable {
      * 清除所有预览数据
      */
     public void clear() {
-        this.previewPoints = Collections.emptyList();
         this.controlPoints = Collections.emptyList();
         this.committedPoints = Collections.emptyList();
         this.startPoint = null;
@@ -167,8 +161,7 @@ public class Previewer implements MapViewPaintable {
 
     @Override
     public void paint(Graphics2D graphics, MapView mv, Bounds bbox) {
-        if (previewPoints.isEmpty() && committedPoints.isEmpty()
-            && startPoint == null && renderables.isEmpty())
+        if (committedPoints.isEmpty() && startPoint == null && renderables.isEmpty())
             return;
 
         Graphics2D graphicsCopy = (Graphics2D) graphics.create();
@@ -186,24 +179,12 @@ public class Previewer implements MapViewPaintable {
             }
         }
 
-        // 2. 绘制辅助几何（法线虚线/圆心标记/转角线等）—— 由子模式计算、Previewer 统一绘制
+        // 2. 绘制辅助几何 + 当前段预览线（法线虚线/圆心标记/转角线/蓝色预览线等）—— 由子模式通过 Renderable 管道提供
         for (Renderable r : renderables) {
             r.draw(graphicsCopy, mv);
         }
 
-        // 3. 绘制当前段预览线（半透明蓝色实线）
-        if (!previewPoints.isEmpty()) {
-            graphicsCopy.setStroke(new BasicStroke(3f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
-            graphicsCopy.setColor(new Color(0, 120, 255, 180));
-            Point prev = null;
-            for (ColumbinaEN en : previewPoints) {
-                Point p = mv.getPoint(en);
-                if (prev != null) graphicsCopy.drawLine(prev.x, prev.y, p.x, p.y);
-                prev = p;
-            }
-        }
-
-        // 4. 绘制起点标记（蓝色圆点）
+        // 3. 绘制起点标记（蓝色圆点）
         if (startPoint != null) {
             graphicsCopy.setColor(new Color(0, 120, 255, 220));
             Point p = mv.getPoint(startPoint);
@@ -213,7 +194,7 @@ public class Previewer implements MapViewPaintable {
             graphicsCopy.drawOval(p.x - 6, p.y - 6, 12, 12);
         }
 
-        // 5. 绘制控制点（红色圆点）
+        // 4. 绘制控制点（红色圆点）
         if (!controlPoints.isEmpty()) {
             graphicsCopy.setColor(new Color(255, 80, 80, 200));
             for (ColumbinaEN en : controlPoints) {

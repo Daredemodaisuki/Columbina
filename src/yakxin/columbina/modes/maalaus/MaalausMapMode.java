@@ -347,7 +347,7 @@ public class MaalausMapMode extends MapMode implements MaalausInfoWindow.UserEve
         ColumbinaEN start = session.getStartAnchor();
         if (start == null) {
             previewer.setStartPoint(null);
-            previewer.setPreview(null, null);
+            previewer.setPreview(null);
             return;
         }
 
@@ -358,45 +358,18 @@ public class MaalausMapMode extends MapMode implements MaalausInfoWindow.UserEve
         List<ColumbinaEN> committed = AbstractCurveSec.sampleAll(session.getSecs(), 2.0);
         previewer.setCommittedPoints(committed);
 
-        // 当前段预览：从起点到鼠标位置的直线
-        // TODO：未来扩展模式后重构为由曲段根据参数计算需要渲染的预览直线/曲线的（静态？）方法，
-        //  这里改为调用模式对应的曲段的根据参数需要计算渲染对象的方法
-        //  抽象曲段类添加这个计算预览方法，具体曲段实施
-        List<ColumbinaEN> pending = session.getPendingControlPoints();
-        ColumbinaEN previewTarget = !pending.isEmpty()
-            ? pending.get(pending.size() - 1)
-            : session.getPreviewPoint();
-        if (previewTarget != null) {
-            List<ColumbinaEN> previewPoints = generateLinePreview(start, previewTarget);
-            List<ColumbinaEN> previewControls = new ArrayList<>();
-            previewControls.add(previewTarget);
-            previewer.setPreview(previewPoints, previewControls);
-        } else {
-            previewer.setPreview(null, null);
+        // 当前段控制点标记（红色圆点）—— 合并已确认控制点 + 鼠标预览派生点
+        List<ColumbinaEN> allControls = new ArrayList<>(session.getPendingControlPoints());
+        if (session.getPreviewPoint() != null) {
+            allControls.add(session.getPreviewPoint());
         }
+        previewer.setPreview(allControls);
 
-        // 辅助几何渲染原语（法线虚线/圆心标记/转角线等）—— 由子模式计算、Previewer 统一绘制
+        // 辅助几何 + 当前段预览线（法线虚线/圆心标记/转角线/蓝色预览线等）—— 由子模式计算、Previewer 统一绘制
         List<Previewer.Renderable> geo = session.getSubMode().calculatePreviewGeometry(
-                start, session.getStartTangent(), pending, previewTarget);
+                start, session.getStartTangent(),
+                session.getPendingControlPoints(), session.getPreviewPoint());
         previewer.setRenderables(geo);
-    }
-
-    /**
-     * 生成直线预览点列（起点到终点之间的等分点）
-     */
-    private static List<ColumbinaEN> generateLinePreview(ColumbinaEN start, ColumbinaEN end) {
-        List<ColumbinaEN> points = new ArrayList<>();
-        double dist = start.distance(end);
-        if (dist <= 0) {
-            points.add(start);
-            return points;
-        }
-        int segments = Math.max(1, (int) Math.ceil(dist / 5.0));
-        for (int i = 0; i <= segments; i++) {
-            double t = (double) i / segments;
-            points.add(new ColumbinaEN(start.interpolate(end, t)));
-        }
-        return points;
     }
 
     /**

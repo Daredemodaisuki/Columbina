@@ -1,5 +1,6 @@
 package yakxin.columbina.modes.maalaus;
 
+import java.awt.Color;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -64,7 +65,17 @@ public enum MaalausSubMode {
         @Override
         public List<Previewer.Renderable> calculatePreviewGeometry(ColumbinaEN startAnchor, ColumbinaEN startTangent,
                                                                     List<ColumbinaEN> pendingCPs, ColumbinaEN previewCP) {
-            return List.of();  // LINE: 无需辅助几何
+            // LINE: 返回直线预览线（蓝色半透明），起点到预览控制点之间的等分线段
+            if (startAnchor == null || previewCP == null) return List.of();
+            double dist = startAnchor.distance(previewCP);
+            if (dist <= 0) return List.of();
+            int segments = Math.max(1, (int) Math.ceil(dist / 5.0));
+            List<ColumbinaEN> pts = new ArrayList<>(segments + 1);
+            for (int i = 0; i <= segments; i++) {
+                double t = (double) i / segments;
+                pts.add(new ColumbinaEN(startAnchor.interpolate(previewCP, t)));
+            }
+            return List.of(new Previewer.RenderableLine(pts, new Color(0, 120, 255, 180), 3f, false));
         }
     },
     // 起点曲线延伸：需要2个控制点

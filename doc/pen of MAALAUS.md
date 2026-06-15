@@ -251,7 +251,9 @@ public class MaalausDrawingService {
 │  预览层 (Preview)                                               │
 │  ┌─────────────────────────────────────────────────────────────┐│
 │  │  Previewer (implements MapViewPaintable)                    ││
-│  │  负责绘制: 起点标记、已完成曲段、当前段预览、控制点标记     ││
+│  │  绘制: 起点标记、已完成曲段、控制点标记                     ││
+│  │  通过 Renderable 管道绘制辅助几何 + 当前段预览线           ││
+│  │  子模式提供 Renderable 列表，Previewer 不感知具体类型       ││
 │  │  注册: mapView.addTemporaryLayer(previewer)                  ││
 │  └─────────────────────────────────────────────────────────────┘│
 ├─────────────────────────────────────────────────────────────────┤
@@ -274,8 +276,10 @@ public class MaalausDrawingService {
         ▼
 ┌─────────────────────────────────┐
 │  MaalausMapMode                 │ 事件处理方法中调用 Service
-│  mouseMoved(e) ────────────────→│──→ drawingService.setPreviewPoint(point)
-│  mouseClicked(e)                │──→ drawingService.addControlPoint(point)
+│  mouseMoved(e) ────────────────→│──→ submode.calculatePendingControlPoint() 将鼠标坐标映射为派生控制点
+│                                 │──→ drawingService.setPreviewPoint(derivedCP)
+│  mouseClicked(e)                │──→ submode.calculatePendingControlPoint() 同上映射
+│                                 │──→ drawingService.addControlPoint(derivedCP)
 │  keyDispatcher (全局拦截)       │──→ drawingService.undoLastSec() / abort() / commitAll()
 │  UserEventListener              │──→ drawingService.clearPendingControlPoints()
 │    onAddCurveSec                │    drawingService.confirmSec()
@@ -297,12 +301,17 @@ public class MaalausDrawingService {
 
 具体地：
 1. **INIT 状态**：鼠标在MapView上点击 → `mouseClicked` → `drawingService.startDrawing(clickEN, tangent)` → 进入`DRAW`状态。
-2. **DRAW 状态**：鼠标移动 → `mouseMoved` → `drawingService.setPreviewPoint(mouseEN)` → PCE "previewPoint" → `refreshPreview()` + 信息窗口更新参数。
-3. **DRAW 状态**：鼠标左键点击 → `mouseClicked` → `drawingService.addControlPoint(clickEN)` → `confirmSec()`（控制点够数则创建曲段并进入下一段）。
+2. **DRAW 状态**（鼠标移动）：`mouseMoved` → `submode.calculatePendingControlPoint()` 将鼠标坐标映射为派生控制点 → `drawingService.setPreviewPoint(derivedCP)` → PCE "previewPoint" → `refreshPreview()` + 信息窗口更新参数。
+3. **DRAW 状态**（左键点击）：`mouseClicked` → `submode.calculatePendingControlPoint()` 映射 → `drawingService.addControlPoint(derivedCP)` → `confirmSec()`。
 4. **INFO 状态**（Space/右键切换）：输入框编辑 → `onSecInputChanged` → `subMode.generateAllControlPoints(session, data)` → 取最后一个点 `setPreviewPoint()` → 渲染预览。
 5. **INFO → 添加曲段**：`onAddCurveSec` → `drawingService.clearPendingControlPoints()` → `generateAllControlPoints()`逐个添加 → `confirmSec()`。
 6. **撤销**：BackSpace / 撤销按钮 → `drawingService.undoLastSec()` → 回退上一段。
 7. **完成**：Enter / 完成按钮 → `drawingService.commitAll(tolerance)` → 产生JOSM Command → 退出模式。
+
+`refreshPreview()` 中的预览渲染逻辑：
+- 由 `submode.calculatePreviewGeometry(start, tangent, pendingCPs, previewCP)` 获取 `List<Renderable>`
+- 包含当前段预览线 + 辅助几何（法线、圆心、转角线等），`Previewer.setRenderables()` 统一绘制
+- 不再硬编码直线预览，所有子模式通过同一管道提供可视数据
 
 ## 预览渲染与JOSM API
 
@@ -315,12 +324,18 @@ public class MaalausDrawingService {
    public class Previewer implements MapViewPaintable {
        private ColumbinaEN startPoint;
        private List<ColumbinaEN> committedPoints = Collections.emptyList();
-       private List<ColumbinaEN> previewPoints = Collections.emptyList();
        private List<ColumbinaEN> controlPoints = Collections.emptyList();
+       private List<Renderable> renderables = Collections.emptyList();  // ★ 辅助几何渲染原语
+
+       // ★ Renderable 接口：子模式计算几何数据，Previewer 统一绘制
+       public interface Renderable { void draw(Graphics2D g, MapView mv); }
+       public static class RenderableLine implements Renderable { ... }
+       public static class RenderablePoint implements Renderable { ... }
 
        public void setStartPoint(ColumbinaEN point) { ... }
        public void setCommittedPoints(List<ColumbinaEN> points) { ... }
-       public void setPreview(List<ColumbinaEN> preview, List<ColumbinaEN> controls) { ... }
+       public void setPreview(List<ColumbinaEN> controls) { ... }
+       public void setRenderables(List<Renderable> renderables) { ... }  // ★ 新增
 
        @Override
        public void paint(Graphics2D g, MapView mv, Bounds bbox) {
@@ -329,11 +344,8 @@ public class MaalausDrawingService {
                g2.setColor(new Color(0, 180, 80, 200));
                drawPolyline(g2, mv, committedPoints);
            }
-           if (previewPoints.size() > 1) {
-               // 绘制当前段预览（蓝色实线）
-               g2.setColor(new Color(0, 120, 255, 180));
-               drawPolyline(g2, mv, previewPoints);
-           }
+           // ★ 渲染辅助几何 + 当前段预览线（子模式通过 Renderable 管道提供）
+           for (Renderable r : renderables) { r.draw(g2, mv); }
            // 绘制起点标记/控制点标记...
        }
    }
