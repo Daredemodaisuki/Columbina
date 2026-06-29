@@ -58,9 +58,9 @@ public abstract class AbstractDrawingAction <
     public final String iconName;
 
     /// 输入输出追踪（由 concludeAddCommands 负责填充）
-    private Map<Way, Way> inputOutputWayPairs = new HashMap<>();  // 输入旧路径 → 输出新路径（用于移除旧路径和选中新路径）
-    private List<OsmPrimitive> outputRepresentatives = new ArrayList<>();  // 输出代表性要素（用于选中新路径）
-    private Map<ColumbinaSingleInput, ColumbinaSingleOutput> lastIoPairs = new HashMap<>();  // 输入输出对（用于失败信息提示）
+    protected Map<Way, Way> inputOutputWayPairs = new HashMap<>();  // 输入旧路径 → 输出新路径（用于移除旧路径和选中新路径）
+    protected List<OsmPrimitive> outputRepresentatives = new ArrayList<>();  // 输出代表性要素（用于选中新路径）
+    protected Map<ColumbinaSingleInput, ColumbinaSingleOutput> lastIoPairs = new HashMap<>();  // 输入输出对（用于失败信息提示）
 
     /// 所有需要由具体action类定义的东西
     /**
@@ -254,24 +254,8 @@ public abstract class AbstractDrawingAction <
             // 记录输入输出对
             lastIoPairs.put(singleInput, singleOutput);
 
-            // 收集新线（目前假定singleOutput只输出一条新线）
-            Way newWay = (Way) singleOutput.representatives.get(0);
-
-            // 复制原Way标签
-            if (copyTag) {
-                Map<String, String> wayTags = getNewWayTags(singleInput);
-                newWay.setKeys(wayTags);
-            }
-
-            intents.addAll(singleOutput.outputIntents);
-            outputRepresentatives.add(newWay);
-
-            // 如果单组输入中有Way，记录输入输出Way对（用于后续移除旧路径）
-            if (singleInput.ways != null && !singleInput.ways.isEmpty()) {
-                // 对于批量路径输入（每组1条Way），记录第一条Way
-                // 对于非批量输入，如果包含Way也可以记录（但通常非批量不需要移除）
-                inputOutputWayPairs.put(singleInput.ways.get(0), newWay);
-            }
+            // 调用钩子处理此单组输出（默认提取 Way 类型代表，覆写后可处理非 Way 输出）
+            onSingleOutputProcessed(singleInput, singleOutput, intents, copyTag);
         }
 
         // 转为指令（toCommands已去重）
@@ -285,6 +269,34 @@ public abstract class AbstractDrawingAction <
         showFailureInfo(lastIoPairs);
 
         return commands;
+    }
+
+    /**
+     * 处理单个输出的回调钩子
+     * <p>默认行为提取 Way 类型的代表要素，适用于"画新路径"类功能。
+     * 如果输出不包含 Way（如 mergeUnusedNodes），需覆写此方法。
+     * @param singleInput  单组输入
+     * @param singleOutput 单组输出
+     * @param intents      累积的意图列表（由此方法填充）
+     * @param copyTag      是否拷贝标签
+     */
+    protected void onSingleOutputProcessed(
+            ColumbinaSingleInput singleInput, ColumbinaSingleOutput singleOutput,
+            List<ColumbinaOutputIntent<?>> intents, boolean copyTag
+    ) {
+        Way newWay = (Way) singleOutput.representatives.get(0);
+
+        if (copyTag) {
+            Map<String, String> wayTags = getNewWayTags(singleInput);
+            newWay.setKeys(wayTags);
+        }
+
+        intents.addAll(singleOutput.outputIntents);
+        outputRepresentatives.add(newWay);
+
+        if (singleInput.ways != null && !singleInput.ways.isEmpty()) {
+            inputOutputWayPairs.put(singleInput.ways.get(0), newWay);
+        }
     }
 
     /**
