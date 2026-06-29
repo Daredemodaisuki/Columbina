@@ -3,6 +3,7 @@ package yakxin.columbina.data.dto.outputs;
 import org.openstreetmap.josm.command.AddCommand;
 import org.openstreetmap.josm.command.ChangeNodesCommand;
 import org.openstreetmap.josm.command.Command;
+import org.openstreetmap.josm.command.DeleteCommand;
 import org.openstreetmap.josm.command.MoveCommand;
 import org.openstreetmap.josm.data.osm.DataSet;
 import org.openstreetmap.josm.data.osm.Node;
@@ -51,6 +52,7 @@ public abstract class ColumbinaOutputIntent <T extends OsmPrimitive> {
         List<Command> mergeCommands = new ArrayList<>();
         List<Command> addWayCommands = new ArrayList<>();
         List<Command> insertCommands = new ArrayList<>();
+        List<Command> deleteCommands = new ArrayList<>();
         
         for (ColumbinaOutputIntent<?> intent : intents) {
             if (intent instanceof AddThisNodeIfOK) {
@@ -101,34 +103,37 @@ public abstract class ColumbinaOutputIntent <T extends OsmPrimitive> {
                     addNodeCommands.add(new AddCommand(ds, intentInstance.feature));  // 希望新插入的节点也是要提交的
                 }
                 insertCommands.add(new ChangeNodesCommand(ds, intentInstance.existingWay, originalWayNodes));
+            } else if (intent instanceof DeleteThisNodeIfOK) {
+                DeleteThisNodeIfOK intentInstance = (DeleteThisNodeIfOK) intent;
+                // 数据集中不存在此节点则不删除
+                if (!ds.containsNode(intentInstance.feature)) continue;
+                // 检查当前引用者是否与"允许的引用者"一致，确认产生意图后没有新增意外引用
+                Set<OsmPrimitive> actualReferrers = new HashSet<>(intentInstance.feature.getReferrers());
+                if (actualReferrers.equals(new HashSet<>(intentInstance.allowedReferrers))) {
+                    deleteCommands.add(new DeleteCommand(ds, intentInstance.feature));
+                }
+                // 如果不一致，不删除——可能有遗漏。TODO: 记录失败信息
             }
         }
         
         // 合并对处理
+        // 第一遍：检查冲突 + 按 Way 分组记录替换信息
         Map<Node, Integer> pairExistNodeCount = new HashMap<>();
-        for (MergePair mergePair : mergeParis)  // 计数
+        Map<Way, List<MergePair>> replacementsByWay = new HashMap<>();
+        List<MergePair> validPairs = new ArrayList<>();
+        
+        for (MergePair mergePair : mergeParis) {
+            // 计数（检查是否多个intent要求把同一个existingNode合并到不同feature中）
             pairExistNodeCount.put(mergePair.existingNode, pairExistNodeCount.getOrDefault(mergePair.existingNode, 0) + 1);
+        }
         for (MergePair mergePair : mergeParis) {
             // 合并没有冲突（没有多个intent要求把同一个existingNode合并到不同feature中）
             if (pairExistNodeCount.get(mergePair.existingNode) == 1) {
-                mergeCommands.add(new MoveCommand(mergePair.existingNode, UtilsMath.toLatLon(mergePair.newNode.getEastNorth())));
-                // 修改使用未提交的feature节点的未提交路径（未提交的feature不可能被数据集中已有的内容引用，只可能会被新产出、未提交的要素引用）
-                // feature.getReferrers查不到未提交节点被哪些未提交路径引用，所以要用Pair中的记录
+                // 无冲突：记录有效合并对，并按 Way 分组
+                validPairs.add(mergePair);
                 for (OsmPrimitive primitive : mergePair.newNodeParents) {
-                    // UtilsUI.testMsgWindow("正在修改" + primitive);
-                    if (primitive instanceof Way) {
-                        List<Node> nodes = ((Way) primitive).getNodes();
-                        int index = 0;
-                        for (Node originalNode : ((Way) primitive).getNodes()) {
-                            if (originalNode.getUniqueId() == mergePair.newNode.getUniqueId())
-                                nodes.set(index, mergePair.existingNode);
-                            index ++;
-                        }
-                        if (!ds.containsWay((Way) primitive))  // 引用者还未提交，修改内存中未提交引用者的节点列表
-                            ((Way) primitive).setNodes(nodes);
-                        else  // 引用者已提交则走修改指令
-                            mergeCommands.add(new ChangeNodesCommand(ds, (Way) primitive, nodes));
-                    }
+                    if (primitive instanceof Way)
+                        replacementsByWay.computeIfAbsent((Way) primitive, k -> new ArrayList<>()).add(mergePair);
                 }
             } else {
                 // 有冲突，都不合并，直接添加feature（newNode），也不修改未提交路径
@@ -139,11 +144,39 @@ public abstract class ColumbinaOutputIntent <T extends OsmPrimitive> {
             }
         }
         
-        // 去重并汇总指令
+        // 第二遍：每条Way只做一次批量替换（因为节点变更还未提交，如果每个ChangeNodesCommand读未提交的Way的节点，然后改一个节点，Command之间会互相覆盖）
+        // 修改使用未提交的feature节点的未提交路径（未提交的feature不可能被数据集中已有的内容引用，只可能会被新产出、未提交的要素引用）
+        // feature.getReferrers查不到未提交节点被哪些未提交路径引用，所以要用Pair中的记录
+        for (Map.Entry<Way, List<MergePair>> entry : replacementsByWay.entrySet()) {
+            Way way = entry.getKey();
+            List<Node> newNodes = new ArrayList<>(way.getNodes());
+            for (MergePair mp : entry.getValue()) {
+                // 把 Way 节点列表中所有等于 mp.newNode 的引用替换为 mp.existingNode
+                for (int i = 0; i < newNodes.size(); i++) {
+                    if (newNodes.get(i).getUniqueId() == mp.newNode.getUniqueId())
+                        newNodes.set(i, mp.existingNode);
+                }
+            }
+            if (!ds.containsWay(way)) {
+                // 引用者还未提交，直接修改内存
+                way.setNodes(newNodes);
+            } else {
+                // 引用者已提交，生成一个整体的 ChangeNodesCommand
+                mergeCommands.add(new ChangeNodesCommand(ds, way, newNodes));
+            }
+        }
+        
+        // 第三遍：移动指令（每个无冲突的 existingNode 只移动一次）
+        for (MergePair mergePair : validPairs) {
+            mergeCommands.add(new MoveCommand(mergePair.existingNode, UtilsMath.toLatLon(mergePair.newNode.getEastNorth())));
+        }
+        
+        // 去重并汇总指令（删除放在最后执行，确保其他意图已先解除引用）
         commands.addAll(addNodeCommands.stream().distinct().collect(Collectors.toList()));
         commands.addAll(mergeCommands.stream().distinct().collect(Collectors.toList()));
         commands.addAll(addWayCommands.stream().distinct().collect(Collectors.toList()));
         commands.addAll(insertCommands.stream().distinct().collect(Collectors.toList()));
+        commands.addAll(deleteCommands.stream().distinct().collect(Collectors.toList()));
         return commands;
     }
     
@@ -226,6 +259,28 @@ public abstract class ColumbinaOutputIntent <T extends OsmPrimitive> {
             this.existingFeature = existingFeature;
             this.featureParents = featureParents;
             this.allowedParents = allowedParents;
+        }
+    }
+    
+    /**
+     * 如果只有允许的引用者引用它，则删除此节点
+     * <p>产生意图时，应已知所有当前引用者，并确认它们将被其他意图解除引用（如通过 ChangeNodesCommand 替换引用）。
+     * 转换成 Command 时，先确认数据集中存在此节点，再确认实际引用者与 allowedReferrers 一致，
+     * 均通过后才创建 DeleteCommand。
+     * 删除应在所有其他类型 Command 之后执行，以确保其他意图已先解除引用。
+     * <p>如果不一致（生成意图后有新增意外引用者），则不创建删除指令，确保安全。
+     */
+    public static class DeleteThisNodeIfOK extends ColumbinaOutputIntent<Node> {
+        /** 生成意图时此节点的所有引用者，确认这些引用者将被其他意图解除引用 */
+        public final List<OsmPrimitive> allowedReferrers;
+        
+        /**
+         * @param node 要删除的节点
+         * @param allowedReferrers 生成意图时此节点的所有引用者（预期其他意图会解除它们的引用）
+         */
+        public DeleteThisNodeIfOK(Node node, List<OsmPrimitive> allowedReferrers) {
+            super(node, Node.class);
+            this.allowedReferrers = allowedReferrers;
         }
     }
 }
