@@ -8,6 +8,7 @@ import yakxin.columbina.features.angleLine.AngleLineAction;
 import yakxin.columbina.features.chamfer.ChamferAction;
 import yakxin.columbina.features.curveConnect.CurveConnectAction;
 import yakxin.columbina.features.fillet.FilletAction;
+import yakxin.columbina.features.mergeUnusedNodes.MergeUnusedNodesAction;
 import yakxin.columbina.features.transitionCurve.TransitionCurveAction;
 import yakxin.columbina.modes.maalaus.MaalausMapMode;
 
@@ -25,10 +26,10 @@ public class Columbina extends Plugin {
         MainMenu.add(MainApplication.getMenu().moreToolsMenu, FilletAction.create());  // 倒圆角
         MainMenu.add(MainApplication.getMenu().moreToolsMenu, ChamferAction.create());  // 倒斜角
         MainMenu.add(MainApplication.getMenu().moreToolsMenu, TransitionCurveAction.create());  // 过渡曲线
-
         MainMenu.add(MainApplication.getMenu().moreToolsMenu, AngleLineAction.create());
         MainMenu.add(MainApplication.getMenu().moreToolsMenu, CurveConnectAction.create());
-
+        MainMenu.add(MainApplication.getMenu().moreToolsMenu, MergeUnusedNodesAction.create());
+        
         MainApplication.getMenu().moreToolsMenu.addSeparator();  // 分隔线
         MainMenu.add(MainApplication.getMenu().moreToolsMenu, new MaalausMapMode());  // Maalaus 绘制模式
     }
