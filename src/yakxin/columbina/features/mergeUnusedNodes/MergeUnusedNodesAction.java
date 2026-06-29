@@ -3,10 +3,10 @@ package yakxin.columbina.features.mergeUnusedNodes;
 import org.openstreetmap.josm.tools.I18n;
 import org.openstreetmap.josm.tools.Shortcut;
 import yakxin.columbina.abstractClasses.AbstractDrawingAction;
-import yakxin.columbina.data.dto.inputs.ColumbinaInput;
-import yakxin.columbina.data.dto.inputs.ColumbinaSingleInput;
-import yakxin.columbina.data.dto.outputs.ColumbinaOutputIntent;
-import yakxin.columbina.data.dto.outputs.ColumbinaSingleOutput;
+import yakxin.columbina.data.dto.featuresDTO.inputs.ColumbinaInput;
+import yakxin.columbina.data.dto.featuresDTO.inputs.ColumbinaSingleInput;
+import yakxin.columbina.data.dto.featuresDTO.outputs.ColumbinaOutputIntent;
+import yakxin.columbina.data.dto.featuresDTO.outputs.ColumbinaSingleOutput;
 
 import java.awt.event.KeyEvent;
 import java.util.List;

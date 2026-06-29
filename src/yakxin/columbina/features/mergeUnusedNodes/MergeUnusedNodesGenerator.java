@@ -5,9 +5,9 @@ import org.openstreetmap.josm.data.osm.Node;
 import org.openstreetmap.josm.data.osm.OsmPrimitive;
 import org.openstreetmap.josm.tools.I18n;
 import yakxin.columbina.abstractClasses.AbstractGenerator;
-import yakxin.columbina.data.dto.inputs.ColumbinaSingleInput;
-import yakxin.columbina.data.dto.outputs.ColumbinaOutputIntent;
-import yakxin.columbina.data.dto.outputs.ColumbinaSingleOutput;
+import yakxin.columbina.data.dto.featuresDTO.inputs.ColumbinaSingleInput;
+import yakxin.columbina.data.dto.featuresDTO.outputs.ColumbinaOutputIntent;
+import yakxin.columbina.data.dto.featuresDTO.outputs.ColumbinaSingleOutput;
 import yakxin.columbina.utils.UtilsData;
 
 import java.util.*;
